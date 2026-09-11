@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "source": "Synthetic numerical unit fixture only. Expected probabilities calculated with Python math.exp; never a trained team model.",
+  "tolerance": 1e-12,
+  "model": {
+    "schemaVersion": 1,
+    "modelVersion": "synthetic-parity-fixture-only",
+    "featureVersion": "pose-geometry-v1",
+    "featureNames": ["knee_angle", "hip_angle", "elbow_angle", "body_verticality", "upper_arm_verticality", "forearm_verticality", "torso_shin_ratio", "wrist_shoulder_y", "hip_shoulder_y", "ankle_hip_y", "wrist_ankle_distance", "shoulder_ankle_distance", "knee_hip_y", "stance_ratio"],
+    "labels": ["squat_top", "squat_bottom", "pushup_top", "pushup_bottom", "other"],
+    "mean": [1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    "scale": [2,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    "layers": [
+      {"weights": [[1,-1],[0.5,2],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]], "bias": [0.1,-0.2], "activation": "relu"},
+      {"weights": [[1,0,-1,0.5,-0.5],[0.2,-0.3,0.4,-0.5,0.6]], "bias": [0.05,0.1,-0.1,0,0.2], "activation": "softmax"}
+    ],
+    "provenance": {"kind": "synthetic-test", "participants": [], "heldOutParticipants": [], "trainedAt": "2026-09-11T00:00:00Z"}
+  },
+  "cases": [
+    {"features": [3,1,0,0,0,0,0,0,0,0,0,0,0,0], "expected": [0.6358340461901455,0.09046269860479934,0.02617847728840589,0.15523461157759627,0.09229016633905279]},
+    {"features": [-3,-2,0,0,0,0,0,0,0,0,0,0,0,0], "expected": [0.1990032825062129,0.20920639898273408,0.17128371258786662,0.18929777789213792,0.23120882803104847]}
+  ]
+}

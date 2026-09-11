@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "VYRA",
+    "slug": "vyra",
+    "version": "0.1.0",
+    "scheme": "vyra",
+    "orientation": "default",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.vyra.fitness",
+      "infoPlist": {
+        "NSCameraUsageDescription": "VYRA uses your camera to count exercise repetitions on your device."
+      }
+    },
+    "android": {
+      "package": "app.vyra.fitness",
+      "permissions": ["CAMERA"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "VYRA"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      ["expo-camera", {
+        "cameraPermission": "Let VYRA count exercise repetitions using your camera. Video stays on your device.",
+        "recordAudioAndroid": false
+      }]
+    ]
+  }
+}

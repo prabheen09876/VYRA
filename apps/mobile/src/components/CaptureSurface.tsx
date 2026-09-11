@@ -1,0 +1,101 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { CaptureControl, CaptureMessage, Exercise } from '@vyra/core';
+import CaptureFrame from './CaptureFrame';
+import { useApp } from '../state/AppProvider';
+import { colors, fonts } from '../theme';
+import { useScreenFocus } from '../lib/useScreenFocus';
+
+interface Props {
+  exercise: Exercise | null;
+  enabled: boolean;
+  suspended?: boolean;
+  resetKey: string;
+  onRep: (message: Extract<CaptureMessage, { type: 'capture.rep' }>) => void;
+  onTracking?: (message: Extract<CaptureMessage, { type: 'capture.tracking' }>) => void;
+}
+
+export default function CaptureSurface({ exercise, enabled, suspended = false, resetKey, onRep, onTracking }: Props) {
+  const { session, announce } = useApp();
+  const focused = useScreenFocus();
+  const [attempt, setAttempt] = useState(0);
+  const [resumeRequired, setResumeRequired] = useState(false);
+  const [ready, setReady] = useState<Extract<CaptureMessage, { type: 'capture.ready' }> | null>(null);
+  const [tracking, setTracking] = useState<Extract<CaptureMessage, { type: 'capture.tracking' }> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const lastCue = useRef({ text: '', at: 0 });
+  useEffect(() => {
+    if (!focused) {
+      setResumeRequired(true);
+      setReady(null);
+      setTracking(null);
+    }
+  }, [focused]);
+  useEffect(() => {
+    if (ready || !focused || suspended || resumeRequired) return;
+    const timer = setTimeout(() => setError('Movement detection did not start. Check that the camera page and model assets are available, then restart the camera.'), 45000);
+    return () => clearTimeout(timer);
+  }, [ready, attempt, focused, suspended, resumeRequired]);
+  const control = useMemo<CaptureControl>(() => ({
+    type: 'capture.configure', exercise, enabled, reset: true,
+  }), [exercise, enabled, resetKey]);
+  const receive = (message: CaptureMessage) => {
+    if (message.type === 'capture.ready') { setReady(message); setError(null); }
+    else if (message.type === 'capture.error') setError(message.message);
+    else if (message.type === 'capture.tracking') {
+      setTracking(message);
+      if (enabled && !suspended) onTracking?.(message);
+      if (enabled && message.cue && message.cue !== lastCue.current.text && Date.now() - lastCue.current.at > 6500) {
+        lastCue.current = { text: message.cue, at: Date.now() };
+        announce(message.cue);
+      }
+    } else if (message.type === 'capture.rep' && !suspended && focused && !resumeRequired) onRep(message);
+  };
+  if (!session.apiUrl) return <View style={styles.unavailable}>
+    <Text style={styles.title}>Connect your server first</Text>
+    <Text style={styles.copy}>Set the VYRA server address in Profile to load the camera.</Text>
+  </View>;
+  if (suspended) return <View style={styles.unavailable}><Text style={styles.title}>Camera stopped</Text><Text style={styles.copy}>This workout is no longer counting movement.</Text></View>;
+  if (!focused) return <View style={styles.unavailable}><Text style={styles.copy}>Camera paused while this screen is inactive.</Text></View>;
+  if (resumeRequired) return <View style={styles.unavailable}>
+    <Text style={styles.title}>Camera paused</Text><Text style={styles.copy}>Resume when you are back in position.</Text>
+    <Pressable accessibilityRole="button" style={styles.retry} onPress={() => { setResumeRequired(false); setAttempt(value => value + 1); }}><Text style={styles.retryText}>Resume camera</Text></Pressable>
+  </View>;
+  return <View style={styles.frame}>
+    <View style={styles.camera}>
+      <CaptureFrame key={attempt} url={session.apiUrl + '/capture/'} control={control} resetKey={resetKey} onMessage={receive} />
+    </View>
+    <View style={styles.status}>
+      <View style={[styles.dot, { backgroundColor: tracking?.visible ? colors.teal : colors.coral }]} />
+      <Text style={styles.statusText}>
+        {error ? 'Camera needs attention' : !ready ? 'Loading movement detection…' : tracking?.cue || 'Stand back so your whole body is visible.'}
+      </Text>
+    </View>
+    <View style={styles.footnote}>
+      <Text style={styles.modelText}>{ready ? ready.inferenceMode === 'learned' ? 'Team-trained movement model' : 'Rule-based movement baseline' : 'On-device camera'}</Text>
+      <Text style={styles.modelText}>Video stays on this device</Text>
+    </View>
+    {error && <View style={styles.error}>
+      <Text style={styles.errorText}>{error}</Text>
+      <Text style={styles.copy}>Use a secure camera address on phones. Camera access must also be allowed in your device settings.</Text>
+      <Pressable accessibilityRole="button" style={styles.retry} onPress={() => { setAttempt(v => v + 1); setError(null); setReady(null); }}><Text style={styles.retryText}>Restart camera</Text></Pressable>
+    </View>}
+  </View>;
+}
+
+const styles = StyleSheet.create({
+  frame: { borderRadius: 24, backgroundColor: '#080F19', overflow: 'hidden', borderColor: colors.line, borderWidth: 1 },
+  camera: { height: 390, minHeight: 320 },
+  status: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingTop: 16 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  statusText: { flex: 1, fontFamily: fonts.body, color: colors.text, fontSize: 15, lineHeight: 22 },
+  footnote: { padding: 18, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 },
+  modelText: { fontFamily: fonts.body, fontSize: 11, color: colors.muted },
+  error: { padding: 18, paddingTop: 0, gap: 12 },
+  errorText: { color: colors.danger, fontFamily: fonts.body, fontSize: 15, lineHeight: 23 },
+  retry: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
+  retryText: { fontFamily: fonts.body, color: colors.teal, fontWeight: '700', fontSize: 15 },
+  unavailable: { minHeight: 320, padding: 28, alignItems: 'center', justifyContent: 'center', gap: 14, borderRadius: 24, backgroundColor: colors.surface },
+  title: { fontFamily: fonts.display, color: colors.text, fontSize: 24, fontWeight: '700' },
+  copy: { fontFamily: fonts.body, fontSize: 14, lineHeight: 22, color: colors.muted },
+});

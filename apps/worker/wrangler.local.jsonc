@@ -1,0 +1,16 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "vyra",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-11",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "durable_objects": { "bindings": [
+    { "name": "MATCHES", "class_name": "MatchRoom" },
+    { "name": "PROFILES", "class_name": "ProfileCoordinator" }
+  ] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MatchRoom", "ProfileCoordinator"] }],
+  "d1_databases": [{ "binding": "DB", "database_name": "vyra", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
+  "vars": { "AI_ENABLED": "false", "CORS_ORIGINS": "http://localhost:8081,http://localhost:19006,http://localhost:5173" },
+  "observability": { "enabled": true, "head_sampling_rate": 1 }
+}

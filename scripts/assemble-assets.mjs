@@ -1,0 +1,10 @@
+import { mkdir, cp, writeFile } from 'node:fs/promises';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const target = resolve(root, 'apps/worker/public');
+await mkdir(target, { recursive: true });
+await cp(resolve(root,'apps/capture/dist'), resolve(target,'capture'), { recursive: true });
+await mkdir(resolve(target,'models'), { recursive: true });
+await writeFile(resolve(target,'index.html'), '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>VYRA Arena</title><body style="background:#112238;color:#e4f2fb;font:18px system-ui;padding:8vw"><h1>VYRA Arena</h1><p>Your arena is online.</p><p>Open the VYRA app to create a battle, or <a style="color:#70dfd1" href="/capture/?lab=1">record movement training data</a>.</p></body></html>');
+console.log('Assembled capture page at /capture/; model files preserved at /models/.');

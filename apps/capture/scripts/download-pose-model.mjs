@@ -1,0 +1,18 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+const outputIndex = process.argv.indexOf('--output');
+if (outputIndex < 0 || !process.argv[outputIndex + 1]) throw new Error('Usage: node scripts/download-pose-model.mjs --output <asset-root>/models/pose_landmarker_lite.task');
+const target = resolve(process.argv[outputIndex + 1]);
+const url = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+const response = await fetch(url);
+if (!response.ok) throw new Error(`Pose model download failed: HTTP ${response.status}`);
+const bytes = Buffer.from(await response.arrayBuffer());
+if (bytes.length < 1_000_000 || bytes.length > 32_000_000) throw new Error('Unexpected pose model size');
+const sha256 = createHash('sha256').update(bytes).digest('hex');
+const expectedSha256 = '59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a';
+if (sha256 !== expectedSha256) throw new Error('The pinned MediaPipe Lite model checksum changed; review the upstream artifact before updating this pin.');
+await mkdir(dirname(target), { recursive: true });
+await writeFile(target, bytes);
+await writeFile(`${target}.sha256`, `${sha256}  pose_landmarker_lite.task\n`);
+console.log(`Saved MediaPipe Pose Landmarker Lite (${bytes.length} bytes, SHA-256 ${sha256}) to ${target}`);

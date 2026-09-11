@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "frozenAt": "2026-09-11",
+  "train": ["P01", "P02", "P03"],
+  "validation": ["P04"],
+  "heldOut": ["P05"]
+}

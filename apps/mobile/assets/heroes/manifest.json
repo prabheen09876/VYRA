@@ -1,0 +1,52 @@
+[
+  {
+    "stage": "starter",
+    "file": "starter.glb",
+    "bulk": 0.78,
+    "stature": 0.91,
+    "absPairs": 1,
+    "uniqueGeometryTriangles": 1536,
+    "generator": "scripts/generate-heroes.mjs",
+    "license": "Original VYRA procedural artwork"
+  },
+  {
+    "stage": "developing",
+    "file": "developing.glb",
+    "bulk": 0.92,
+    "stature": 0.95,
+    "absPairs": 2,
+    "uniqueGeometryTriangles": 1536,
+    "generator": "scripts/generate-heroes.mjs",
+    "license": "Original VYRA procedural artwork"
+  },
+  {
+    "stage": "strong",
+    "file": "strong.glb",
+    "bulk": 1.1,
+    "stature": 1,
+    "absPairs": 3,
+    "uniqueGeometryTriangles": 1536,
+    "generator": "scripts/generate-heroes.mjs",
+    "license": "Original VYRA procedural artwork"
+  },
+  {
+    "stage": "elite",
+    "file": "elite.glb",
+    "bulk": 1.35,
+    "stature": 1.05,
+    "absPairs": 4,
+    "uniqueGeometryTriangles": 1536,
+    "generator": "scripts/generate-heroes.mjs",
+    "license": "Original VYRA procedural artwork"
+  },
+  {
+    "stage": "legendary",
+    "file": "legendary.glb",
+    "bulk": 1.62,
+    "stature": 1.1,
+    "absPairs": 5,
+    "uniqueGeometryTriangles": 1552,
+    "generator": "scripts/generate-heroes.mjs",
+    "license": "Original VYRA procedural artwork"
+  }
+]

@@ -1,0 +1,5 @@
+dist/
+public/wasm/
+public/models/
+.native-spike/
+.native-game/

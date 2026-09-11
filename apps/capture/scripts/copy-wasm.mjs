@@ -1,0 +1,14 @@
+import { createRequire } from 'node:module';
+import { cp, mkdir, readdir } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const here = dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+const packageRoot = dirname(require.resolve('@mediapipe/tasks-vision'));
+const source = join(packageRoot, 'wasm');
+const target = resolve(here, '..', process.argv.includes('--dev') ? 'public/wasm' : 'dist/wasm');
+await mkdir(target, { recursive: true });
+const files = await readdir(source);
+if (!files.some(file => file.endsWith('.wasm'))) throw new Error(`No WASM files found in ${source}`);
+for (const name of files) await cp(join(source, name), join(target, name));
+console.log(`Copied ${files.length} local MediaPipe runtime files to ${target}`);

@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "VYRA Native Pose Spike",
+    "slug": "vyra-native-pose-spike",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "newArchEnabled": true,
+    "android": { "package": "dev.vyra.nativeposespike", "permissions": ["CAMERA"] },
+    "ios": { "bundleIdentifier": "dev.vyra.nativeposespike", "supportsTablet": true },
+    "plugins": [
+      "expo-dev-client",
+      ["react-native-vision-camera", { "cameraPermissionText": "Allow VYRA to process movement on this device", "enableMicrophonePermission": false }],
+      ["react-native-mediapipe-posedetection", { "assetsPaths": ["./assets/models/"] }]
+    ]
+  }
+}
