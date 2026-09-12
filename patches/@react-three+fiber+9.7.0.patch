@@ -1,0 +1,51 @@
+diff --git a/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.dev.js b/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.dev.js
+index fcb4530..8f8513b 100644
+--- a/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.dev.js
++++ b/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.dev.js
+@@ -109,8 +109,10 @@ function CanvasImpl({
+           // Pass mutable reference to onPointerMissed so it's free to update
+           onPointerMissed: (...args) => handlePointerMissed.current == null ? void 0 : handlePointerMissed.current(...args),
+           onCreated: state => {
+-            // Connect to event source
+-            state.events.connect == null ? void 0 : state.events.connect(eventSource ? events.isRef(eventSource) ? eventSource.current : eventSource : divRef.current);
++            // Connect to event source. The component may have unmounted while this
++            // async configure() call was in flight, in which case the refs are null.
++            const target = eventSource ? events.isRef(eventSource) ? eventSource.current : eventSource : divRef.current;
++            if (target) state.events.connect == null ? void 0 : state.events.connect(target);
+             // Set up compute function
+             if (eventPrefix) {
+               state.setEvents({
+diff --git a/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.prod.js b/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.prod.js
+index b3dc28c..50fc0f7 100644
+--- a/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.prod.js
++++ b/node_modules/@react-three/fiber/dist/react-three-fiber.cjs.prod.js
+@@ -109,8 +109,10 @@ function CanvasImpl({
+           // Pass mutable reference to onPointerMissed so it's free to update
+           onPointerMissed: (...args) => handlePointerMissed.current == null ? void 0 : handlePointerMissed.current(...args),
+           onCreated: state => {
+-            // Connect to event source
+-            state.events.connect == null ? void 0 : state.events.connect(eventSource ? events.isRef(eventSource) ? eventSource.current : eventSource : divRef.current);
++            // Connect to event source. The component may have unmounted while this
++            // async configure() call was in flight, in which case the refs are null.
++            const target = eventSource ? events.isRef(eventSource) ? eventSource.current : eventSource : divRef.current;
++            if (target) state.events.connect == null ? void 0 : state.events.connect(target);
+             // Set up compute function
+             if (eventPrefix) {
+               state.setEvents({
+diff --git a/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js b/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js
+index d9d27a0..a8d4c57 100644
+--- a/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js
++++ b/node_modules/@react-three/fiber/dist/react-three-fiber.esm.js
+@@ -82,8 +82,10 @@ function CanvasImpl({
+           // Pass mutable reference to onPointerMissed so it's free to update
+           onPointerMissed: (...args) => handlePointerMissed.current == null ? void 0 : handlePointerMissed.current(...args),
+           onCreated: state => {
+-            // Connect to event source
+-            state.events.connect == null ? void 0 : state.events.connect(eventSource ? isRef(eventSource) ? eventSource.current : eventSource : divRef.current);
++            // Connect to event source. The component may have unmounted while this
++            // async configure() call was in flight, in which case the refs are null.
++            const target = eventSource ? isRef(eventSource) ? eventSource.current : eventSource : divRef.current;
++            if (target) state.events.connect == null ? void 0 : state.events.connect(target);
+             // Set up compute function
+             if (eventPrefix) {
+               state.setEvents({

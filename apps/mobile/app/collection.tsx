@@ -6,7 +6,7 @@ import HeroView from '../src/components/HeroShowcase';
 import { Button, Copy, Heading, Notice, Pill, Screen, layout } from '../src/components/ui';
 import { useApp } from '../src/state/AppProvider';
 import { errorMessage } from '../src/lib/api';
-import { colors, fonts, stageLabel } from '../src/theme';
+import { colors, fonts, radii, stageLabel } from '../src/theme';
 
 export default function CollectionScreen() {
   const { profile, session, equip } = useApp();
@@ -39,7 +39,7 @@ export default function CollectionScreen() {
       <View style={[styles.stageDetails, width >= 850 && { flex: 1 }]}>
         <Heading size={29}>Five stages. Your pace.</Heading>
         <Copy>Your earned evolution grows with XP and active days. A preview never changes your saved progress.</Copy>
-        <View style={styles.stages}>{STAGES.map((item, index) => <Pressable key={item.id} accessibilityRole="radio" accessibilityState={{ checked: item.id === previewStage }} onPress={() => setPreviewStage(item.id)} style={[styles.stageRow, item.id === previewStage && { backgroundColor: '#294055', borderColor: item.color }]}>
+        <View style={styles.stages}>{STAGES.map((item, index) => <Pressable key={item.id} accessibilityRole="radio" accessibilityState={{ checked: item.id === previewStage }} onPress={() => setPreviewStage(item.id)} style={[styles.stageRow, item.id === previewStage && { backgroundColor: colors.glassStrong, borderColor: item.color }]}>
           <View style={[styles.stageGem, { backgroundColor: item.color }]} /><View style={{ flex: 1, gap: 3 }}><Text style={styles.stageTitle}>{item.name}</Text><Text style={styles.stageRequirement}>{item.xp.toLocaleString()} XP{item.days ? ' + ' + item.days + ' active days' : ' to begin'}</Text></View><Text style={[styles.stageState, { color: item.color }]}>{index > earnedIndex ? 'Preview' : index === earnedIndex ? 'Current' : 'Earned'}</Text>
         </Pressable>)}</View>
       </View>
@@ -49,7 +49,7 @@ export default function CollectionScreen() {
       const isOwned = !!profile?.ownedCosmetics.includes(item.id);
       const isEquipped = profile?.equipped[item.slot] === item.id;
       const color = RARITY_COLORS[item.rarity];
-      return <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={item.name + ', ' + item.rarity + ', ' + (isOwned ? 'owned' : 'locked') + '. Preview collectible.'} onPress={() => { setSelected(item); setError(null); }} style={[styles.cosmetic, width >= 850 ? { width: '18.7%' } : width >= 500 ? { width: '31.5%' } : { width: '47.7%' }, selected?.id === item.id && { borderColor: color, backgroundColor: '#253C50' }]}>
+      return <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={item.name + ', ' + item.rarity + ', ' + (isOwned ? 'owned' : 'locked') + '. Preview collectible.'} onPress={() => { setSelected(item); setError(null); }} style={[styles.cosmetic, width >= 850 ? { width: '18.7%' } : width >= 500 ? { width: '31.5%' } : { width: '47.7%' }, selected?.id === item.id && { borderColor: color, backgroundColor: colors.glassStrong }]}>
         <View style={[styles.itemArt, { backgroundColor: color + '15' }]}><CosmeticArt item={item} /><View style={[styles.rarityDot, { backgroundColor: color }]} /></View>
         <Text style={[styles.rarity, { color }]}>{stageLabel(item.rarity)}</Text><Text style={styles.itemName}>{item.name}</Text><Text style={styles.itemStatus}>{isEquipped ? 'Equipped' : isOwned ? 'Owned' : 'Locked'}</Text>
       </Pressable>;
@@ -72,19 +72,19 @@ function CosmeticArt({ item }: { item: Cosmetic }) {
   return <View style={[styles.skin, { backgroundColor: item.color }]}><View style={styles.skinHighlight} /></View>;
 }
 const styles = StyleSheet.create({
-  showcase: { gap: 28 }, viewer: { height: 430, borderRadius: 28, backgroundColor: '#20354A', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  viewerGlow: { position: 'absolute', width: 285, height: 285, borderRadius: 150, backgroundColor: '#304A5D' },
+  showcase: { gap: 28 }, viewer: { height: 430, borderRadius: radii.xl, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.line, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  viewerGlow: { position: 'absolute', width: 285, height: 285, borderRadius: 150, backgroundColor: 'rgba(120,226,208,0.08)' },
   hero: { position: 'absolute', width: '100%', height: '100%' }, previewTag: { position: 'absolute', top: 20, left: 20 },
   viewerBottom: { position: 'absolute', bottom: 25, alignItems: 'center', gap: 7 },
   stageName: { fontFamily: fonts.display, color: colors.text, fontSize: 27, fontWeight: '700' }, stageDescription: { fontFamily: fonts.body, color: colors.muted, fontSize: 12 },
-  stageDetails: { gap: 16 }, stages: { gap: 9 }, stageRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 14, borderWidth: 1, borderColor: colors.line, gap: 13 },
+  stageDetails: { gap: 16 }, stages: { gap: 9 }, stageRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: radii.md, borderWidth: 1, borderColor: colors.line, gap: 13 },
   stageGem: { width: 17, height: 23, borderRadius: 5, transform: [{ rotate: '15deg' }] },
   stageTitle: { fontFamily: fonts.body, color: colors.text, fontWeight: '700', fontSize: 15 }, stageRequirement: { fontFamily: fonts.body, color: colors.muted, fontSize: 11 },
-  stageState: { fontFamily: fonts.body, fontSize: 11, fontWeight: '600' }, collectionCount: { fontFamily: fonts.body, color: colors.muted, fontSize: 13 },
-  cosmetics: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 }, cosmetic: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, borderRadius: 18, padding: 13, gap: 8 },
-  itemArt: { height: 112, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginBottom: 4 }, rarityDot: { width: 5, height: 5, borderRadius: 3, position: 'absolute', bottom: 10, right: 10 },
-  rarity: { fontFamily: fonts.body, fontSize: 11, fontWeight: '600' }, itemName: { fontFamily: fonts.body, color: colors.text, fontSize: 15, fontWeight: '700' }, itemStatus: { fontFamily: fonts.body, color: colors.muted, fontSize: 11 },
-  detail: { marginTop: 24, padding: 24, borderRadius: 22, backgroundColor: colors.surface, gap: 16 }, requirement: { fontFamily: fonts.body, color: colors.gold, fontSize: 14 },
+  stageState: { fontFamily: fonts.body, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }, collectionCount: { fontFamily: fonts.body, color: colors.muted, fontSize: 13 },
+  cosmetics: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 }, cosmetic: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.glass, borderRadius: radii.lg, padding: 13, gap: 8 },
+  itemArt: { height: 112, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', marginBottom: 4 }, rarityDot: { width: 5, height: 5, borderRadius: 3, position: 'absolute', bottom: 10, right: 10 },
+  rarity: { fontFamily: fonts.body, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }, itemName: { fontFamily: fonts.body, color: colors.text, fontSize: 15, fontWeight: '700' }, itemStatus: { fontFamily: fonts.body, color: colors.muted, fontSize: 11 },
+  detail: { marginTop: 24, padding: 26, borderRadius: radii.xl, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.line, gap: 16 }, requirement: { fontFamily: fonts.body, color: colors.gold, fontSize: 14 },
   cosmeticNote: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, lineHeight: 20, textAlign: 'center' },
   suitShoulder: { width: 64, height: 20, borderRadius: 7 }, suitBody: { width: 38, height: 48, borderBottomLeftRadius: 14, borderBottomRightRadius: 14, marginTop: -6 },
   suitCore: { position: 'absolute', top: 18, width: 12, height: 20, backgroundColor: colors.teal, borderRadius: 4 }, bracer: { width: 20, height: 43, borderRadius: 7, borderWidth: 3, borderColor: '#FFD2A7' },

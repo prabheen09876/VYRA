@@ -5,7 +5,7 @@ import type { CaptureMessage, Exercise } from '@vyra/core';
 import CaptureSurface from '../src/components/CaptureSurface';
 import { Button, Copy, Heading, Notice, Pill, Screen, layout } from '../src/components/ui';
 import { useApp } from '../src/state/AppProvider';
-import { colors, fonts } from '../src/theme';
+import { colors, fonts, radii } from '../src/theme';
 
 export default function CalibrationScreen() {
   const params = useLocalSearchParams<{ next?: string; mode?: string; room?: string }>();
@@ -52,12 +52,12 @@ function Check({ complete, title, count }: { complete: boolean; title: string; c
 }
 const styles = StyleSheet.create({
   columns: { gap: 28, marginBottom: 28 }, instructions: { gap: 19, paddingVertical: 8 },
-  stepLabel: { fontFamily: fonts.body, color: colors.teal, fontWeight: '600', fontSize: 14 },
-  count: { fontFamily: fonts.display, color: colors.teal, fontSize: 43, fontWeight: '800' }, countMax: { fontSize: 24, color: colors.muted },
+  stepLabel: { fontFamily: fonts.body, color: colors.teal, fontWeight: '700', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.6 },
+  count: { fontFamily: fonts.display, color: colors.teal, fontSize: 43, fontWeight: '900' }, countMax: { fontSize: 24, color: colors.muted },
   instruction: { fontFamily: fonts.body, color: colors.muted, fontSize: 16, lineHeight: 26 },
   checklist: { gap: 18, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line, paddingVertical: 22 },
-  check: { width: 25, height: 25, borderRadius: 9, borderWidth: 1, borderColor: '#59738B', alignItems: 'center', justifyContent: 'center' },
+  check: { width: 25, height: 25, borderRadius: 9, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
   checkTitle: { color: colors.text, fontFamily: fonts.body, fontSize: 16, fontWeight: '600' }, checkCount: { color: colors.muted, fontFamily: fonts.body, fontSize: 14 },
-  waiting: { borderRadius: 15, padding: 16, backgroundColor: colors.surface }, waitingText: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, textAlign: 'center' },
+  waiting: { borderRadius: radii.md, padding: 16, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.line }, waitingText: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, textAlign: 'center' },
   restart: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }, restartText: { color: colors.teal, fontFamily: fonts.body, fontSize: 14, fontWeight: '600' },
 });

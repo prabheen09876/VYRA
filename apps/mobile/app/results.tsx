@@ -5,7 +5,7 @@ import { COSMETICS, STAGES } from '@vyra/core';
 import HeroView from '../src/components/HeroShowcase';
 import { Button, Copy, Heading, Notice, Pill, Screen, Stat, layout } from '../src/components/ui';
 import { useApp } from '../src/state/AppProvider';
-import { colors, fonts, stageLabel } from '../src/theme';
+import { colors, fonts, radii, stageLabel } from '../src/theme';
 
 export default function ResultsScreen() {
   const { profile, session, snapshot, refreshProfile, resetMatch, rewardStatus, rewardError, retryRewardReceipt } = useApp();
@@ -56,10 +56,10 @@ function RewardLine({ name, value }: { name: string; value: number }) {
 const styles = StyleSheet.create({
   columns: { gap: 30 }, stats: { flexDirection: 'row', gap: 42, paddingVertical: 20, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line },
   rewardRows: { gap: 12 }, rewardName: { color: colors.muted, fontFamily: fonts.body, fontSize: 14 }, rewardValue: { color: colors.text, fontFamily: fonts.body, fontSize: 14, fontWeight: '600' },
-  unlock: { padding: 20, backgroundColor: '#233E47', borderRadius: 18, gap: 13 }, unlockTitle: { color: colors.teal, fontFamily: fonts.body, fontWeight: '700', fontSize: 14 },
+  unlock: { padding: 20, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.line, borderRadius: radii.lg, gap: 13 }, unlockTitle: { color: colors.teal, fontFamily: fonts.body, fontWeight: '700', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.4 },
   unlockName: { color: colors.text, fontFamily: fonts.body, fontSize: 17, fontWeight: '600' },
-  heroStage: { minHeight: 410, height: 430, borderRadius: 30, backgroundColor: '#20364C', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  glow: { width: 300, height: 300, borderRadius: 150, backgroundColor: '#34505F', position: 'absolute' },
+  heroStage: { minHeight: 410, height: 430, alignItems: 'center', justifyContent: 'center' },
+  glow: { width: 300, height: 300, borderRadius: 150, backgroundColor: 'rgba(120,226,208,0.08)', position: 'absolute' },
   hero: { width: '100%', height: '100%', position: 'absolute' }, stageCaption: { position: 'absolute', bottom: 30, alignItems: 'center', gap: 12 },
   stageCopy: { color: colors.muted, fontFamily: fonts.body, fontSize: 13 },
 });

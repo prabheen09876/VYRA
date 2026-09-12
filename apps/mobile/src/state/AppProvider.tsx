@@ -4,13 +4,14 @@ import { usePathname } from 'expo-router';
 import * as Speech from 'expo-speech';
 import {
   PROTOCOL_VERSION, type CaptureMessage, type ClientCommand, type CosmeticSlot,
-  type GuestSession, type MatchCreated, type MatchMode,
+  type GuestSession, type MatchCreated, type MatchMode, type MatchmakingEvent,
   type MatchSnapshot, type Profile, type ServerEvent,
 } from '@vyra/core';
 import { ApiError, errorMessage, normalizeApiUrl, request } from '../lib/api';
 import { readSession, saveSession, type SavedSession } from '../lib/storage';
 import { rememberExerciseWindow, routeCapturedRep } from '../lib/rep-window';
 import { waitForTerminalReceipt } from '../lib/reward-receipt';
+import { ARENA_TEST_MODE } from '../lib/testMode';
 import type { ExerciseWindow } from '@vyra/core/match';
 
 type Connection = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -39,6 +40,9 @@ interface AppContextValue {
   serverOffset: number;
   createMatch: (mode: MatchMode) => Promise<MatchCreated>;
   joinMatch: (roomCode: string) => Promise<MatchCreated>;
+  matchmakingStatus: 'idle' | 'searching';
+  enterMatchmaking: () => Promise<MatchCreated>;
+  cancelMatchmaking: () => void;
   ready: () => void;
   sendRep: (rep: CaptureRep) => void;
   sendTracking: (tracking: CaptureTracking) => void;
@@ -86,6 +90,8 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const trackingRef = useRef({ phaseId: '', sentAt: 0, visible: false });
   const wasMatchRoute = useRef(false);
   const [calibration, setCalibrationState] = useState({ squat: 0, pushup: 0 });
+  const matchmakingSocket = useRef<WebSocket | null>(null);
+  const [matchmakingStatus, setMatchmakingStatus] = useState<'idle' | 'searching'>('idle');
 
   const setRewardState = useCallback((status: RewardStatus, error: string | null = null) => {
     rewardStatusRef.current = status;
@@ -384,6 +390,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
 
   useEffect(() => () => {
     socketRef.current?.close();
+    matchmakingSocket.current?.close();
     if (rewardWaitTimer.current) clearTimeout(rewardWaitTimer.current);
     rewardRecovery.current?.abort();
     rewardAttempt.current += 1;
@@ -452,8 +459,62 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     return created;
   }, [openSocket]);
 
+  const cancelMatchmaking = useCallback(() => {
+    const socket = matchmakingSocket.current;
+    matchmakingSocket.current = null;
+    setMatchmakingStatus('idle');
+    if (socket?.readyState === WebSocket.OPEN) {
+      try { socket.send(JSON.stringify({ type: 'cancel', protocolVersion: PROTOCOL_VERSION })); } catch { /* closing anyway */ }
+    }
+    socket?.close();
+  }, []);
+
+  // "Battle with Randoms": pairs with another waiting player, then hands off into the exact same
+  // openSocket()/MatchRoom path room-code matches already use — no separate battle logic here.
+  const enterMatchmaking = useCallback((): Promise<MatchCreated> => {
+    const current = sessionRef.current;
+    if (!current.token) return Promise.reject(new Error('Connect your player profile before entering the arena.'));
+    setMatchmakingStatus('searching');
+    return new Promise<MatchCreated>((resolve, reject) => {
+      void (async () => {
+        try {
+          const { ticket } = await request<{ ticket: string }>(current.apiUrl, '/api/matchmaking/ticket', { token: current.token!, method: 'POST', body: {} });
+          const url = current.apiUrl.replace(/^http/, 'ws') + '/api/matchmaking/ws?ticket=' + encodeURIComponent(ticket);
+          const socket = new WebSocket(url);
+          matchmakingSocket.current = socket;
+          socket.onmessage = (message) => {
+            if (matchmakingSocket.current !== socket) return;
+            let event: MatchmakingEvent;
+            try { event = JSON.parse(String(message.data)) as MatchmakingEvent; } catch { return; }
+            if (event.type === 'matched') {
+              matchmakingSocket.current = null;
+              setMatchmakingStatus('idle');
+              socket.close(1000, 'Matched');
+              const created: MatchCreated = { matchId: event.matchId, roomCode: event.roomCode };
+              openSocket(created).then(() => resolve(created)).catch(reject);
+            } else if (event.type === 'error') {
+              matchmakingSocket.current = null;
+              setMatchmakingStatus('idle');
+              reject(new Error(event.message));
+            }
+          };
+          socket.onerror = () => {
+            if (matchmakingSocket.current !== socket) return;
+            matchmakingSocket.current = null;
+            setMatchmakingStatus('idle');
+            reject(new Error('The matchmaking connection failed. Try again.'));
+          };
+          socket.onclose = () => { if (matchmakingSocket.current === socket) { matchmakingSocket.current = null; setMatchmakingStatus('idle'); } };
+        } catch (error) {
+          setMatchmakingStatus('idle');
+          reject(error instanceof Error ? error : new Error('Could not start matchmaking.'));
+        }
+      })();
+    });
+  }, [openSocket]);
+
   const ready = useCallback(() => {
-    if (calibration.squat < 2 || calibration.pushup < 2) {
+    if (!ARENA_TEST_MODE && (calibration.squat < 2 || calibration.pushup < 2)) {
       setMatchError('Complete two practice squats and two practice push-ups before getting ready.');
       return;
     }
@@ -515,9 +576,9 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   return <AppContext.Provider value={{
     profile, session, booting, busy, connectionError, connect, refreshProfile, setPreferences, equip,
     snapshot, match, socketStatus, matchError, localStopped, serverOffset,
-    createMatch, joinMatch, ready, sendRep, sendTracking, stopMatch, resetMatch,
+    createMatch, joinMatch, matchmakingStatus, enterMatchmaking, cancelMatchmaking, ready, sendRep, sendTracking, stopMatch, resetMatch,
     rewardStatus, rewardError, retryRewardReceipt,
-    calibration, setCalibration, calibrated: calibration.squat >= 2 && calibration.pushup >= 2, announce,
+    calibration, setCalibration, calibrated: ARENA_TEST_MODE || (calibration.squat >= 2 && calibration.pushup >= 2), announce,
   }}>{children}</AppContext.Provider>;
 }
 

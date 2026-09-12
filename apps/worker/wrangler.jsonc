@@ -7,11 +7,20 @@
   "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
   "durable_objects": { "bindings": [
     { "name": "MATCHES", "class_name": "MatchRoom" },
-    { "name": "PROFILES", "class_name": "ProfileCoordinator" }
+    { "name": "PROFILES", "class_name": "ProfileCoordinator" },
+    { "name": "MATCHMAKING", "class_name": "Matchmaking" }
   ] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MatchRoom", "ProfileCoordinator"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["MatchRoom", "ProfileCoordinator"] },
+    { "tag": "v2", "new_sqlite_classes": ["Matchmaking"] }
+  ],
+  // REQUIRED BEFORE A REAL DEPLOY: this is a placeholder ID. Run `wrangler d1 create vyra`
+  // and paste the returned database_id here. `wrangler deploy` will fail against this value.
   "d1_databases": [{ "binding": "DB", "database_name": "vyra", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
   "ai": { "binding": "AI", "remote": false },
+  // REQUIRED BEFORE A REAL DEPLOY: these are local dev origins only. Replace CORS_ORIGINS with
+  // the exact deployed web/preview origin(s) that should be allowed to call this API — no
+  // wildcards. Flip AI_ENABLED to "true" only after confirming Workers AI quota is available.
   "vars": { "AI_ENABLED": "false", "CORS_ORIGINS": "http://localhost:8081,http://localhost:19006,http://localhost:5173" },
   "observability": { "enabled": true, "head_sampling_rate": 1 }
 }

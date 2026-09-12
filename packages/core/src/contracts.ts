@@ -53,6 +53,14 @@ export interface StageModelArtifact {
   labels: MovementStage[]; mean: number[]; scale: number[]; layers: DenseLayer[];
   provenance: { kind: 'team-recorded' | 'synthetic-test'; participants: string[]; trainedAt: string; heldOutParticipants: string[] };
 }
+export type MatchmakingCommand =
+  | { type: 'cancel'; protocolVersion: 1 }
+  | { type: 'ping'; protocolVersion: 1; sentAt: number };
+export type MatchmakingEvent =
+  | { type: 'searching'; protocolVersion: 1 }
+  | { type: 'matched'; protocolVersion: 1; matchId: string; roomCode: string }
+  | { type: 'error'; code: string; message: string }
+  | { type: 'pong'; sentAt: number; serverNow: number };
 export type CaptureMessage =
   | { type: 'capture.ready'; protocolVersion: 1; modelVersion: string; inferenceMode: 'learned' | 'baseline' }
   | { type: 'capture.tracking'; protocolVersion: 1; visible: boolean; confidence: number; stage: MovementStage; fps: number; formScore?: number; cue: string }

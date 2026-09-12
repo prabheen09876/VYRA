@@ -3,9 +3,17 @@ import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { TIMING, type Exercise, type PlayerState } from '@vyra/core';
 import CaptureSurface from '../src/components/CaptureSurface';
+import SimulatedCaptureSurface from '../src/components/SimulatedCaptureSurface';
+import TestModeBadge from '../src/components/TestModeBadge';
 import { Button, Copy, Heading, Loading, Meter, Notice, Pill, Screen, layout } from '../src/components/ui';
 import { useApp } from '../src/state/AppProvider';
-import { colors, fonts } from '../src/theme';
+import { ARENA_TEST_MODE } from '../src/lib/testMode';
+import { colors, fonts, radii } from '../src/theme';
+
+// Input Provider swap point: same props, same onRep/onTracking pathway into the real backend.
+// Flip ARENA_TEST_MODE off (see src/lib/testMode.ts) to go back to the real camera — nothing
+// else in this screen or in AppProvider needs to change.
+const InputSurface = ARENA_TEST_MODE ? SimulatedCaptureSurface : CaptureSurface;
 
 const phaseCopy = {
   lobby: { title: 'Getting ready', copy: 'Waiting for both players.' },
@@ -39,13 +47,14 @@ export default function BattleScreen() {
   const opponent = snapshot.players.find(player => player.id !== profile?.id);
   const counting = !!exercise && !localStopped && socketStatus === 'connected';
   return <Screen noNav back={stop}>
+    <TestModeBadge />
     <View style={[layout.split, { marginBottom: 18 }]}><Pill color={colors.coral}>Round {snapshot.round} of {TIMING.maxRounds}</Pill><Button variant="quiet" onPress={() => setPreferences({ muted: !session.muted })}>{session.muted ? 'Sound off' : 'Sound on'}</Button></View>
     <View style={styles.scoreboard}>{me && <PlayerBar player={me} yours />}{opponent && <PlayerBar player={opponent} />}</View>
     <View style={styles.phaseHeader}><View style={{ flex: 1, gap: 8 }}><Heading size={width >= 750 ? 39 : 30}>{copy.title}</Heading><Copy>{copy.copy}</Copy></View><View style={styles.timer}><Text style={styles.time}>{remaining}</Text><Text style={styles.seconds}>seconds</Text></View></View>
     <View style={{ marginBottom: 24 }}><Meter value={duration - elapsed} max={duration} color={exercise === 'pushup' ? colors.coral : colors.teal} label="Time remaining in this phase" /></View>
     {matchError && <Notice title={localStopped ? 'Workout interrupted' : 'Arena update'}>{matchError}</Notice>}
     <View style={[styles.columns, width >= 850 && { flexDirection: 'row' }]}>
-      <View style={{ flex: 1.5 }}><CaptureSurface exercise={exercise} enabled={counting} suspended={localStopped || snapshot.phase === 'interrupted' || snapshot.phase === 'finished'} resetKey={snapshot.phaseId} onRep={sendRep} onTracking={sendTracking} /></View>
+      <View style={{ flex: 1.5 }}><InputSurface exercise={exercise} enabled={counting} suspended={localStopped || snapshot.phase === 'interrupted' || snapshot.phase === 'finished'} resetKey={snapshot.phaseId} onRep={sendRep} onTracking={sendTracking} /></View>
       <View style={[styles.side, width >= 850 && { flex: 0.7 }]}>
         <View style={styles.repPanel}><Text style={styles.repLabel}>{exercise === 'pushup' ? 'Your push-ups this round' : 'Your squats this round'}</Text><Text style={[styles.repCount, { color: exercise === 'pushup' ? colors.coral : colors.teal }]}>{exercise === 'pushup' ? me?.pushups ?? 0 : me?.squats ?? 0}</Text><Text style={styles.repCaption}>{counting ? 'Valid reps accepted by the arena' : 'Rep counting is paused during this phase'}</Text></View>
         <View style={styles.coach}><Pill color={colors.blue}>{snapshot.decision.source === 'ai' ? 'AI game master' : 'Rules game master'}</Pill><Text style={styles.coachText}>{snapshot.decision.reason}</Text><Text style={styles.coachSmall}>{snapshot.phase === 'recovery' ? 'Next round: ' : 'Round pace: '}{snapshot.phase === 'recovery' ? snapshot.decision.template : snapshot.template}</Text></View>
@@ -65,11 +74,11 @@ const styles = StyleSheet.create({
   playerName: { fontFamily: fonts.body, color: colors.text, fontSize: 14, fontWeight: '700', flex: 1 }, hp: { fontFamily: fonts.body, fontWeight: '700', fontSize: 13 },
   guard: { fontFamily: fonts.body, color: colors.muted, fontSize: 11 },
   phaseHeader: { flexDirection: 'row', alignItems: 'center', gap: 18, marginBottom: 20 },
-  timer: { minWidth: 76, alignItems: 'center', gap: 0 }, time: { fontFamily: fonts.display, fontSize: 52, lineHeight: 58, fontWeight: '800', color: colors.text, fontVariant: ['tabular-nums'] },
-  seconds: { fontFamily: fonts.body, color: colors.muted, fontSize: 11 },
+  timer: { minWidth: 76, alignItems: 'center', gap: 0 }, time: { fontFamily: fonts.display, fontSize: 52, lineHeight: 58, fontWeight: '900', color: colors.text, fontVariant: ['tabular-nums'] },
+  seconds: { fontFamily: fonts.body, color: colors.muted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2 },
   columns: { gap: 24 }, side: { gap: 20 },
-  repPanel: { padding: 22, backgroundColor: colors.surface, borderRadius: 23, alignItems: 'center', gap: 7 },
-  repLabel: { fontFamily: fonts.body, color: colors.text, fontSize: 14, textAlign: 'center' }, repCount: { fontFamily: fonts.display, fontSize: 78, lineHeight: 91, fontWeight: '800' },
+  repPanel: { padding: 24, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.line, borderRadius: radii.xl, alignItems: 'center', gap: 7 },
+  repLabel: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1.2 }, repCount: { fontFamily: fonts.display, fontSize: 78, lineHeight: 91, fontWeight: '900' },
   repCaption: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: 'center' },
   coach: { gap: 12, paddingVertical: 6 }, coachText: { fontFamily: fonts.body, fontSize: 15, lineHeight: 24, color: colors.text },
   coachSmall: { fontFamily: fonts.body, fontSize: 12, color: colors.muted }, totalLabel: { fontFamily: fonts.body, color: colors.muted, fontSize: 14 },

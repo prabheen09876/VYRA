@@ -2,13 +2,12 @@ import { COSMETICS } from '@vyra/core';
 import type { CosmeticSlot, GuestSession, MatchCreated } from '@vyra/core';
 import { createProgression } from '@vyra/core/progression';
 import { authenticate, corsHeaders, hashToken, HttpError, randomToken, readJson } from './http';
+import { createPvpMatchRecord } from './matches';
 export { MatchRoom } from './match-room';
 export { ProfileCoordinator } from './profile';
+export { Matchmaking } from './matchmaking';
 
-function roomCode(): string {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  return Array.from(crypto.getRandomValues(new Uint8Array(6)), n => alphabet[n % alphabet.length]).join('');
-}
+const MATCHMAKING_QUEUE_NAME = 'global';
 async function route(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url), path = url.pathname;
   if (!path.startsWith('/api/')) return env.ASSETS.fetch(request);
@@ -26,6 +25,7 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
   const ws = /^\/api\/matches\/([a-f0-9-]{36})\/ws$/.exec(path);
   if (ws && request.method === 'GET') return env.MATCHES.getByName(ws[1]).fetch(request);
+  if (path === '/api/matchmaking/ws' && request.method === 'GET') return env.MATCHMAKING.getByName(MATCHMAKING_QUEUE_NAME).fetch(request);
   const playerId = await authenticate(request, env);
   const profiles = env.PROFILES.getByName(playerId);
   if (path === '/api/profile' && request.method === 'GET') {
@@ -45,14 +45,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (body.mode !== 'solo' && body.mode !== 'pvp') throw new HttpError(400, 'INVALID_MODE', 'Choose solo or pvp.');
     const profile = await profiles.getProfile(playerId);
     if (!profile) throw new HttpError(404, 'PROFILE_NOT_FOUND', 'Profile not found.');
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const matchId = crypto.randomUUID(), code = roomCode();
-      const insertion = await env.DB.prepare('INSERT OR IGNORE INTO matches (id, room_code, mode, created_at) VALUES (?, ?, ?, ?)').bind(matchId, code, body.mode, Date.now()).run();
-      if (!insertion.meta.changes) continue;
-      await env.MATCHES.getByName(matchId).initialize({ id: matchId, roomCode: code, mode: body.mode, host: { id: playerId, name: profile.name } });
-      return Response.json({ matchId, roomCode: code } satisfies MatchCreated, { status: 201 });
-    }
-    throw new HttpError(503, 'ROOM_UNAVAILABLE', 'Please try creating a room again.');
+    const created = await createPvpMatchRecord(env, body.mode, { id: playerId, name: profile.name });
+    return Response.json(created satisfies MatchCreated, { status: 201 });
   }
   const join = /^\/api\/rooms\/([A-Za-z0-9]{6})\/join$/.exec(path);
   if (join && request.method === 'POST') {
@@ -69,6 +63,12 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (ticket && request.method === 'POST') {
     const value = await env.MATCHES.getByName(ticket[1]).mintTicket(playerId);
     if (!value) throw new HttpError(403, 'MATCH_MEMBERSHIP_REQUIRED', 'Join this match before connecting.');
+    return Response.json({ ticket: value });
+  }
+  if (path === '/api/matchmaking/ticket' && request.method === 'POST') {
+    const profile = await profiles.getProfile(playerId);
+    if (!profile) throw new HttpError(404, 'PROFILE_NOT_FOUND', 'Profile not found.');
+    const value = await env.MATCHMAKING.getByName(MATCHMAKING_QUEUE_NAME).mintTicket(playerId, profile.name);
     return Response.json({ ticket: value });
   }
   throw new HttpError(404, 'NOT_FOUND', 'API route not found.');

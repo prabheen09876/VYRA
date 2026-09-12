@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advanceMatch, createMatch, damageFor, fallbackDecision, guardFor, hasReliableTracking, interruptMatch, joinMatch, missingHeartbeat, readyPlayer, recordRep, recordTracking, validateDecision, type MatchState } from './match';
+import { advanceMatch, createMatch, damageFor, fallbackDecision, guardFor, hasReliableTracking, interruptMatch, joinMatch, lobbyAbandoned, missingHeartbeat, readyPlayer, recordRep, recordTracking, validateDecision, type MatchState } from './match';
 import type { Phase } from './contracts';
 
 const host = { id: 'a', name: 'A' }, guest = { id: 'b', name: 'B' };
@@ -106,6 +106,17 @@ describe('shared match engine', () => {
     expect(hasReliableTracking(state)).toBe(false);
     expect(fallbackDecision(state).template).toBe('balanced');
     expect(recordTracking(state, 'a', 'stale', true, 0.9, state.snapshot.phaseEndsAt - 500)).toBe(false);
+  });
+  it('flags an abandoned two-player lobby but never a lone host waiting for a room code, and never solo mode', () => {
+    const state = createMatch('match', 'ABC234', 'pvp', host, 0);
+    expect(lobbyAbandoned(state, 13000)).toBe(false); // only one seat filled
+    joinMatch(state, guest, 0);
+    expect(lobbyAbandoned(state, 11000)).toBe(false); // within the heartbeat window
+    expect(lobbyAbandoned(state, 13000)).toBe(true); // guest joined but never connected/pinged
+    readyPlayer(state, 'a', 13000);
+    expect(lobbyAbandoned(state, 13000)).toBe(true); // one-sided ready does not exempt the room
+    const solo = createMatch('solo-match', 'XYZ987', 'solo', host, 0);
+    expect(lobbyAbandoned(solo, 999999)).toBe(false); // solo lobby wait is unbounded by design
   });
   it('allows initial camera calibration without hiding later tracking loss', () => {
     const state = start();

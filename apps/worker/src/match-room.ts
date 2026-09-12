@@ -2,7 +2,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { ClientCommand, MatchMode, MatchSnapshot, ServerEvent } from '@vyra/core';
 import {
   advanceMatch, createMatch, HEARTBEAT_TIMEOUT, interruptMatch, isActive, joinMatch,
-  missingHeartbeat, readyPlayer, recordRep, recordTracking, type MatchState
+  lobbyAbandoned, missingHeartbeat, readyPlayer, recordRep, recordTracking, type MatchState
 } from '@vyra/core/match';
 import { chooseNextRound } from './game-master';
 import { hashToken, randomToken } from './http';
@@ -28,6 +28,7 @@ export class MatchRoom extends DurableObject<Env> {
     const disconnected = isActive(state.snapshot.phase) && state.snapshot.players.some(p =>
       !p.isBot && !this.ctx.getWebSockets(p.id).some(socket => socket.readyState === WebSocket.OPEN));
     if (disconnected || missingHeartbeat(state, now)) interruptMatch(state, 'Connection lost. Start a new friendly match when both players are ready.', now);
+    else if (lobbyAbandoned(state, now)) interruptMatch(state, 'The other player never connected. Start a new match when ready.', now);
     else advanceMatch(state, now);
   }
   private async publish(): Promise<void> {
@@ -46,10 +47,16 @@ export class MatchRoom extends DurableObject<Env> {
   }
   private async schedule(): Promise<void> {
     const state = this.load(); if (!state) return;
-    if (isActive(state.snapshot.phase)) {
-      const heartbeatDeadline = Math.min(...state.snapshot.players.filter(p => !p.isBot).map(p => (state.heartbeats[p.id] ?? 0) + HEARTBEAT_TIMEOUT + 1));
-      await this.ctx.storage.setAlarm(Math.max(Date.now() + 1, Math.min(Date.now() + 1000, state.snapshot.phaseEndsAt, heartbeatDeadline)));
-    } else if (state.snapshot.phase === 'finished' && state.snapshot.players.some(p => !p.isBot && !state.snapshot.rewards?.[p.id])) {
+    const s = state.snapshot;
+    if (isActive(s.phase)) {
+      const heartbeatDeadline = Math.min(...s.players.filter(p => !p.isBot).map(p => (state.heartbeats[p.id] ?? 0) + HEARTBEAT_TIMEOUT + 1));
+      await this.ctx.storage.setAlarm(Math.max(Date.now() + 1, Math.min(Date.now() + 1000, s.phaseEndsAt, heartbeatDeadline)));
+    } else if (s.phase === 'lobby' && s.mode === 'pvp' && s.players.length === 2) {
+      // Both seats are filled (room-code join or matchmaking pairing); make sure an absent
+      // second player eventually times the room out instead of waiting in lobby forever.
+      const heartbeatDeadline = Math.min(...s.players.filter(p => !p.isBot).map(p => (state.heartbeats[p.id] ?? 0) + HEARTBEAT_TIMEOUT + 1));
+      await this.ctx.storage.setAlarm(Math.max(Date.now() + 1, heartbeatDeadline));
+    } else if (s.phase === 'finished' && s.players.some(p => !p.isBot && !s.rewards?.[p.id])) {
       await this.ctx.storage.setAlarm(Date.now() + 3000);
     } else await this.ctx.storage.deleteAlarm();
   }

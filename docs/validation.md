@@ -38,6 +38,36 @@ The separate SDK 54 fallback retains high build-tool advisories in Metro's `imag
 
 The native check also found no configured Android SDK or `adb`; Java 17 is available. A successful Hermes export is not an APK build. The installed pose plugin's actual result types/serializers and the SDK 54 legacy filesystem route were checked during integration; coordinate orientation still needs a real-device pass.
 
+## Backend hardening and matchmaking pass (this revision)
+
+Scope: backend only (Worker, shared core, D1/Durable Objects). No UI, no ML/pose model changes.
+Verified locally against a running `wrangler dev --local` instance on 2026-09-12.
+
+| Check | Observed result |
+| --- | --- |
+| Full workspace typecheck | Capture, mobile, Worker and shared core all passed after every change below |
+| Vitest suite | 74 passed; one external-model parity test intentionally skipped (unchanged); grew from 50 to 74 via new `matchmaking.test.ts` (8), `http.test.ts` (15) and one added `match.test.ts` case |
+| New `http.test.ts` | `readJson` content-type/malformed/array/oversized-body handling including the exact 8192-byte boundary; `authenticate` missing/malformed/unknown-token paths; `corsHeaders` allowed/rejected origin and no-wildcard behavior — this layer had no dedicated unit coverage before |
+| Live HTTP edge cases (manual, against running worker) | 401-before-404 routing order, CORS preflight/actual-request headers for allowed and disallowed origins, malformed JSON, missing content-type, oversized body, empty name, ticket invalidation on re-mint, idempotent duplicate room-join — all matched documented/expected behavior |
+| `smoke.mjs` (base) | PASS — guest auth, locked equip rejection, room membership, single-use tickets, interruption, no XP |
+| `smoke.mjs --full` | PASS — timed solo match, persisted XP/unlock, reconnect without duplicate reward |
+| `smoke.mjs --pvp-full` | PASS — two independent real WebSocket clients, identical phase deadlines, simultaneous HP settlement (100/100→71/49→42/0), both reward ledgers, reconnect deduplication |
+| `smoke.mjs --matchmaking-full` (new) | PASS — two real guests paired atomically via the new matchmaking queue; a disconnected searcher is not later ghost-matched; a duplicate concurrent connection for the same player is rejected; cancelling frees the queue slot; the paired match hands off into the **unmodified** MatchRoom engine, and the battle does not start until both independently send `ready` |
+| Lobby-abandonment hardening (new) | Verified live: a pvp match with both seats filled where one side never connects now auto-interrupts after ~12s (`reason: "The other player never connected..."`) instead of waiting in `lobby` forever. Verified a lone host still waiting for a room-code join is *not* affected (unbounded wait preserved), and solo-mode lobbies are unaffected |
+| Read-only D1 inspection | Confirmed real persisted rows after this session's runs: 47 profiles, 16 pvp + 3 solo matches, 6 reward ledger entries — genuine writes, not asserted from unit tests alone |
+| Deploy dry run | `wrangler deploy --dry-run` passed with the new `Matchmaking` Durable Object binding included; `wrangler.jsonc` now has explicit inline comments marking the D1 `database_id` and `CORS_ORIGINS` as required edits before a real deploy |
+
+New backend surface added: `POST /api/matchmaking/ticket`, `GET /api/matchmaking/ws`, and the
+`Matchmaking` Durable Object (`apps/worker/src/matchmaking.ts`), backed by pure, fully unit-tested
+queue logic in `packages/core/src/matchmaking.ts`. The existing room-code flow, `MatchRoom` state
+machine, reward settlement, and progression logic were **not** rewritten — only the pre-existing
+lobby-timeout gap described above was patched, plus a defensive fallback if match creation fails
+mid-pairing (see `docs/api-contract.md`). Full contract, including the new matchmaking protocol,
+is documented in `docs/api-contract.md`.
+
+`wrangler whoami` confirms no Cloudflare account is authenticated in this environment — no deploy
+was attempted, and none is claimed.
+
 ## Still requiring external evidence
 
 - Confirmation of the intended Cloudflare account, provisioning and an HTTPS deployment. A CLI login exists; no account is selected for new resources without the user's answer.
@@ -46,5 +76,6 @@ The native check also found no configured Android SDK or `adb`; Java 17 is avail
 - Compiled and device-tested native Android fallback if WebView capture fails.
 - Measured camera responsiveness, viewer 30 FPS target, orientation, heat and navigation memory.
 - A completed real-camera solo and two-device PvP demo, followed by saved rewards and earned evolution.
+- Matchmaking queue behavior under real concurrent load from many simultaneous players (verified correct for 2–4 sequential/paired entrants locally; not load-tested).
 
 No result in this repository should be cited as a pass for one of those items until a tester records the actual evidence.

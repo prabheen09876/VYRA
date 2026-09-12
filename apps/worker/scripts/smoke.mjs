@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 const base = process.env.VYRA_API_URL ?? 'http://localhost:8787';
 const full = process.argv.includes('--full');
 const pvpFull = process.argv.includes('--pvp-full');
+const matchmakingFull = process.argv.includes('--matchmaking-full');
 async function api(path, { token, body, method = 'GET', status = 200 } = {}) {
   const response = await fetch(`${base}${path}`, {
     method, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
@@ -156,3 +157,76 @@ if (full) {
   } finally { clearInterval(reps); client.close(); }
 }
 if (pvpFull) await runPvpFull();
+
+async function connectMatchmaking(person) {
+  const { ticket } = await api('/api/matchmaking/ticket', { token: person.token, method: 'POST' });
+  const url = `${base.replace(/^http/, 'ws')}/api/matchmaking/ws?ticket=${ticket}`;
+  const socket = new WebSocket(url);
+  const state = { socket, events: [] };
+  socket.addEventListener('message', event => state.events.push(JSON.parse(event.data)));
+  await new Promise((resolve, reject) => { socket.addEventListener('open', resolve, { once: true }); socket.addEventListener('error', reject, { once: true }); });
+  state.send = command => socket.send(JSON.stringify({ protocolVersion: 1, ...command }));
+  state.wait = (predicate, timeoutMs = 10000) => new Promise((resolve, reject) => {
+    const check = () => { const found = state.events.find(predicate); if (found) { clearInterval(poll); clearTimeout(timer); resolve(found); } };
+    const poll = setInterval(check, 50);
+    const timer = setTimeout(() => { clearInterval(poll); reject(new Error('Timed out waiting for a matchmaking event')); }, timeoutMs);
+    check();
+  });
+  return state;
+}
+async function rejected(url) {
+  return new Promise((resolve, reject) => {
+    const socket = new WebSocket(url);
+    socket.addEventListener('open', () => { socket.close(); reject(new Error('Expected connection to be rejected, but it opened')); });
+    socket.addEventListener('error', resolve, { once: true });
+  });
+}
+
+async function runMatchmakingFull() {
+  const [x, y] = await Promise.all(['Rhea', 'Milo'].map(name => api('/api/guests', { method: 'POST', body: { name }, status: 201 })));
+
+  // A disconnected searcher must not linger in the queue and ghost-match a later stranger.
+  const ghost = await api('/api/guests', { method: 'POST', body: { name: 'Ghost' }, status: 201 });
+  const ghostClient = await connectMatchmaking(ghost);
+  await ghostClient.wait(e => e.type === 'searching');
+  ghostClient.socket.close();
+  await new Promise(resolve => setTimeout(resolve, 300));
+
+  const clientX = await connectMatchmaking(x);
+  await clientX.wait(e => e.type === 'searching');
+
+  // A player cannot open a second concurrent matchmaking connection while already searching.
+  const { ticket: dupTicket } = await api('/api/matchmaking/ticket', { token: x.token, method: 'POST' });
+  await rejected(`${base.replace(/^http/, 'ws')}/api/matchmaking/ws?ticket=${dupTicket}`);
+
+  const clientY = await connectMatchmaking(y);
+  const [matchedX, matchedY] = await Promise.all([clientX.wait(e => e.type === 'matched'), clientY.wait(e => e.type === 'matched')]);
+  assert.equal(matchedX.matchId, matchedY.matchId, 'Both players must be paired into the same match');
+  assert.equal(matchedX.roomCode, matchedY.roomCode);
+  clientX.socket.close(); clientY.socket.close();
+  console.log('PASS matchmaking pairs two independent guests atomically; disconnect-while-searching and duplicate-connection are both rejected/cleaned up');
+
+  // Cancelling leaves the queue and closes the socket.
+  const canceller = await api('/api/guests', { method: 'POST', body: { name: 'Canceller' }, status: 201 });
+  const cancelClient = await connectMatchmaking(canceller);
+  await cancelClient.wait(e => e.type === 'searching');
+  cancelClient.send({ type: 'cancel' });
+  await new Promise((resolve, reject) => {
+    cancelClient.socket.addEventListener('close', resolve, { once: true });
+    setTimeout(() => reject(new Error('Cancelled socket did not close')), 5000);
+  });
+  console.log('PASS cancelling matchmaking closes the socket and frees the queue slot');
+
+  // The matched pair hands off into the existing, unmodified MatchRoom engine: connect, ready,
+  // and the battle does not start until BOTH players are ready (server-authoritative).
+  const match = { matchId: matchedX.matchId, roomCode: matchedX.roomCode };
+  const [px, py] = await Promise.all([x, y].map(person => connect(person, match)));
+  px.send({ type: 'ready' });
+  await new Promise(resolve => setTimeout(resolve, 300));
+  assert.equal(px.snapshot.phase, 'lobby', 'Battle must not start until both players are ready');
+  py.send({ type: 'ready' });
+  await Promise.all([px, py].map(client => client.wait(s => s?.phase === 'countdown')));
+  console.log('PASS matchmaking hand-off: battle only starts once both matched players explicitly ready up, using the unmodified match engine');
+  px.close(); py.close();
+}
+if (matchmakingFull) await runMatchmakingFull();

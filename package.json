@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "npm run dev -w @vyra/mobile",
     "dev:worker": "npm run dev -w @vyra/worker",
@@ -17,16 +20,20 @@
     "model:download": "node apps/capture/scripts/download-pose-model.mjs --output apps/worker/public/models/pose_landmarker_lite.task",
     "worker:types": "npm run types -w @vyra/worker",
     "db:local": "npm run db:local -w @vyra/worker",
-    "mobile:web": "npm run web -w @vyra/mobile"
+    "mobile:web": "npm run web -w @vyra/mobile",
+    "postinstall": "patch-package"
   },
   "devDependencies": {
     "@gltf-transform/core": "^4.2.1",
     "@types/node": "^22.15.0",
     "@types/three": "^0.180.0",
+    "patch-package": "^8.0.1",
     "three": "^0.180.0",
     "typescript": "~6.0.3",
     "vite": "7.3.6",
     "vitest": "4.1.11"
   },
-  "engines": { "node": ">=22.13.0" }
+  "engines": {
+    "node": ">=22.13.0"
+  }
 }

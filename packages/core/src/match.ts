@@ -186,6 +186,14 @@ export function hasReliableTracking(state: MatchState): boolean {
 export function missingHeartbeat(state: MatchState, now: number): boolean {
   return isActive(state.snapshot.phase) && state.snapshot.players.some(p => !p.isBot && now - (state.heartbeats[p.id] ?? 0) > HEARTBEAT_TIMEOUT);
 }
+/** A pvp room with both seats filled can otherwise wait in lobby forever if one side joined
+ *  (room-code or matchmaking) but never actually connects. Deliberately excludes a lone host
+ *  still waiting for someone to use their room code — that wait is expected to be unbounded. */
+export function lobbyAbandoned(state: MatchState, now: number): boolean {
+  const s = state.snapshot;
+  return s.phase === 'lobby' && s.mode === 'pvp' && s.players.length === 2 &&
+    s.players.some(p => !p.isBot && now - (state.heartbeats[p.id] ?? 0) > HEARTBEAT_TIMEOUT);
+}
 export function fallbackDecision(_state?: MatchState): GameMasterDecision {
   return { template: 'balanced', source: 'fallback', reason: 'A balanced pair keeps the pace steady while the Game Master is unavailable.' };
 }

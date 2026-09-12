@@ -5,7 +5,7 @@ import { STAGES } from '@vyra/core';
 import { Button, Copy, Heading, Loading, Meter, Notice, Pill, Screen, Stat, layout } from '../src/components/ui';
 import { useApp } from '../src/state/AppProvider';
 import { errorMessage } from '../src/lib/api';
-import { colors, fonts } from '../src/theme';
+import { colors, fonts, radii } from '../src/theme';
 
 export default function ProfileScreen() {
   const { profile, session, booting, busy, connect, connectionError, refreshProfile, setPreferences } = useApp();
@@ -36,8 +36,8 @@ export default function ProfileScreen() {
       </View>
       <View style={[styles.settings, { flex: 1 }]}>
         <View style={layout.panel}><Heading size={25}>{profile ? 'Connection' : 'Create your player'}</Heading>
-          <View><Text style={layout.label}>Player name</Text><TextInput accessibilityLabel="Player name" value={name} onChangeText={setName} editable={!profile || apiUrl.trim().replace(/\/+$/, '') !== session.apiUrl} placeholder="What should we call you?" placeholderTextColor="#7E96AF" maxLength={24} autoComplete="nickname" autoCorrect={false} style={[layout.input, !!profile && { opacity: 0.8 }]} /></View>
-          <View><Text style={layout.label}>VYRA server address</Text><TextInput accessibilityLabel="VYRA server address" value={apiUrl} onChangeText={setApiUrl} placeholder="https://your-vyra-server.example" placeholderTextColor="#7E96AF" autoCapitalize="none" autoCorrect={false} keyboardType="url" style={layout.input} /></View>
+          <View><Text style={layout.label}>Player name</Text><TextInput accessibilityLabel="Player name" value={name} onChangeText={setName} editable={!profile || apiUrl.trim().replace(/\/+$/, '') !== session.apiUrl} placeholder="What should we call you?" placeholderTextColor={colors.faint} maxLength={24} autoComplete="nickname" autoCorrect={false} style={[layout.input, !!profile && { opacity: 0.8 }]} /></View>
+          <View><Text style={layout.label}>VYRA server address</Text><TextInput accessibilityLabel="VYRA server address" value={apiUrl} onChangeText={setApiUrl} placeholder="https://your-vyra-server.example" placeholderTextColor={colors.faint} autoCapitalize="none" autoCorrect={false} keyboardType="url" style={layout.input} /></View>
           <Text style={styles.setupHint}>{Platform.OS === 'web' ? 'For local setup, start the VYRA server at http://localhost:8787. Your camera also needs the capture app served at /capture/.' : 'Use a server address your phone can reach. For camera capture on a phone, use HTTPS. localhost points to the phone itself.'}</Text>
           {profile && apiUrl.trim().replace(/\/+$/, '') !== session.apiUrl && <Text style={styles.setupHint}>Each server has a separate player. This device keeps your saved guest identity for each address, so you can switch back.</Text>}
           {(formError || connectionError) && <Text accessibilityLiveRegion="polite" style={layout.error}>{formError || connectionError}</Text>}
@@ -46,8 +46,8 @@ export default function ProfileScreen() {
           {profile && saved && <Button variant="secondary" onPress={() => router.push('/arena')}>Enter the arena</Button>}
         </View>
         <View style={styles.preferences}><Heading size={24}>Make it comfortable.</Heading>
-          <View style={styles.setting}><View style={styles.settingCopy}><Text style={styles.settingTitle}>Audio cues</Text><Text style={styles.settingDescription}>Hear movement instructions and round changes.</Text></View><Switch accessibilityLabel="Audio cues" value={!session.muted} onValueChange={value => setPreferences({ muted: !value })} trackColor={{ false: '#485A70', true: '#458D82' }} thumbColor={!session.muted ? colors.teal : '#CBD5E1'} /></View>
-          <View style={styles.setting}><View style={styles.settingCopy}><Text style={styles.settingTitle}>Reduce motion</Text><Text style={styles.settingDescription}>Keep the hero still outside interactions.</Text></View><Switch accessibilityLabel="Reduce motion" value={session.reducedMotion} onValueChange={value => setPreferences({ reducedMotion: value })} trackColor={{ false: '#485A70', true: '#458D82' }} thumbColor={session.reducedMotion ? colors.teal : '#CBD5E1'} /></View>
+          <View style={styles.setting}><View style={styles.settingCopy}><Text style={styles.settingTitle}>Audio cues</Text><Text style={styles.settingDescription}>Hear movement instructions and round changes.</Text></View><Switch accessibilityLabel="Audio cues" value={!session.muted} onValueChange={value => setPreferences({ muted: !value })} trackColor={{ false: colors.glassStrong, true: 'rgba(120,226,208,0.45)' }} thumbColor={!session.muted ? colors.teal : colors.muted} /></View>
+          <View style={styles.setting}><View style={styles.settingCopy}><Text style={styles.settingTitle}>Reduce motion</Text><Text style={styles.settingDescription}>Keep the hero still outside interactions.</Text></View><Switch accessibilityLabel="Reduce motion" value={session.reducedMotion} onValueChange={value => setPreferences({ reducedMotion: value })} trackColor={{ false: colors.glassStrong, true: 'rgba(120,226,208,0.45)' }} thumbColor={session.reducedMotion ? colors.teal : colors.muted} /></View>
         </View>
         <View style={styles.privacy}><Text style={styles.settingTitle}>Your camera, your device.</Text><Text style={styles.settingDescription}>Pose detection runs on your device. Repetition events and tracking status reach the arena; video stays here. Your profile is saved with a guest session on this device; keep its app data to keep access.</Text></View>
       </View>
@@ -58,8 +58,8 @@ function Record({ label, value }: { label: string; value: number }) {
   return <View style={layout.split}><Text style={styles.muted}>{label}</Text><Text style={styles.value}>{value}</Text></View>;
 }
 const styles = StyleSheet.create({
-  columns: { gap: 32 }, identity: { flexDirection: 'row', gap: 20, alignItems: 'center' }, avatar: { width: 83, height: 94, borderRadius: 26, backgroundColor: '#2C515F', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#477887' },
-  initial: { fontFamily: fonts.display, color: colors.teal, fontSize: 41, fontWeight: '800' }, name: { fontFamily: fonts.display, color: colors.text, fontSize: 30, fontWeight: '800' },
+  columns: { gap: 32 }, identity: { flexDirection: 'row', gap: 20, alignItems: 'center' }, avatar: { width: 83, height: 94, borderRadius: radii.lg, backgroundColor: colors.glass, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.lineStrong },
+  initial: { fontFamily: fonts.display, color: colors.teal, fontSize: 41, fontWeight: '900' }, name: { fontFamily: fonts.display, color: colors.text, fontSize: 30, fontWeight: '900' },
   stats: { flexDirection: 'row', justifyContent: 'space-between', gap: 16, paddingVertical: 23, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line },
   muted: { fontFamily: fonts.body, color: colors.muted, fontSize: 14 }, value: { fontFamily: fonts.body, color: colors.text, fontSize: 14, fontWeight: '600' },
   records: { gap: 23, paddingHorizontal: 3 }, settings: { gap: 26 },
@@ -67,6 +67,6 @@ const styles = StyleSheet.create({
   preferences: { gap: 21, paddingHorizontal: 2 }, setting: { flexDirection: 'row', gap: 20, alignItems: 'center' }, settingCopy: { flex: 1, gap: 5 },
   settingTitle: { fontFamily: fonts.body, color: colors.text, fontWeight: '600', fontSize: 15 }, settingDescription: { fontFamily: fonts.body, color: colors.muted, fontSize: 13, lineHeight: 21 },
   privacy: { gap: 8, paddingTop: 20, borderTopWidth: 1, borderTopColor: colors.line },
-  welcome: { gap: 25, paddingVertical: 10 }, welcomeSymbol: { height: 100, width: 92, borderRadius: 27, backgroundColor: '#294D59', alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-6deg' }] },
-  welcomeGlyph: { fontFamily: fonts.display, fontSize: 59, fontWeight: '800', color: colors.teal }, promise: { gap: 14, marginTop: 5 }, promiseText: { color: colors.text, fontFamily: fonts.body, fontSize: 16 },
+  welcome: { gap: 25, paddingVertical: 10 }, welcomeSymbol: { height: 100, width: 92, borderRadius: radii.lg, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-6deg' }] },
+  welcomeGlyph: { fontFamily: fonts.display, fontSize: 59, fontWeight: '900', color: colors.teal }, promise: { gap: 14, marginTop: 5 }, promiseText: { color: colors.text, fontFamily: fonts.body, fontSize: 16 },
 });
