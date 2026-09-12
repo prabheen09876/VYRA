@@ -17,6 +17,7 @@ import {
   CHROME_HEIGHT, CONTENT_PAD_TOP,
 } from '../src/components/ui';
 import { useApp } from '../src/state/AppProvider';
+import { useCoach } from '../src/state/CoachProvider';
 import { colors, displayGradient, displayWeight, fonts, glow, radii } from '../src/theme';
 
 // Two-column cinematic hero: copy + character select on the left, the 3D character on the right.
@@ -134,6 +135,12 @@ function HeroCard({ character, active, onPress, disabled = false }: { character:
 
 export default function HomeScreen() {
   const { profile, session, booting, connectionError, refreshProfile, selectCharacter } = useApp();
+  const { openCoach } = useCoach();
+  const enterArena = (mode: 'solo' | 'pvp') => {
+    if (!profile) { router.push('/profile'); return; }
+    if (!profile.fitness) { router.push('/onboarding'); return; }
+    router.push({ pathname: '/arena', params: { mode } });
+  };
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const wide = width >= 850;
@@ -237,10 +244,10 @@ export default function HomeScreen() {
           {/* One Text, not two. displayGradient clips a single background box to the glyphs; split
               across two elements each line gets its own box and the ramp restarts on line two. */}
           <Heading size={headingSize} textStyle={[styles.display, { lineHeight: headingSize * 0.94 }, displayGradient]}>{HEADLINE_LINES.join('\n')}</Heading>
-          <Copy style={styles.lead}>Move in the real world. Grow a hero that shows exactly how far you’ve come — no shortcuts, no filters.</Copy>
+          <Copy style={styles.lead}>Train solo or go head-to-head. Every real rep grows your hero. Find an opponent or invite a friend.</Copy>
           <View style={styles.actions}>
-            <Button onPress={() => router.push(profile ? profile.fitness ? '/arena' : '/onboarding' : '/profile')} icon={<Triangle size={5} color={colors.text} style={{ marginLeft: 1 }} />}>{profile ? profile.fitness ? 'Enter the arena' : 'Set my goal' : 'Create your player'}</Button>
-            <Button variant="secondary" onPress={() => router.push('/calibrate')}>Check my camera</Button>
+            <Button onPress={() => enterArena('pvp')} icon={<Triangle size={5} color={colors.text} style={{ marginLeft: 1 }} />}>Play multiplayer</Button>
+            <Button variant="secondary" onPress={() => enterArena('solo')}>Train solo</Button>
           </View>
         </View>
         {cards}
@@ -270,6 +277,17 @@ export default function HomeScreen() {
         </View>
       </Animated.View>
     </View>
+    <View style={[styles.bottomSection, wide && { flexDirection: 'row' }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Play multiplayer: find an opponent or invite a friend" onPress={() => enterArena('pvp')} style={styles.challenge}>
+        <View style={styles.challengeGraphic} accessible={false}><View style={[styles.fist, { transform: [{ rotate: '-12deg' }] }]} /><View style={[styles.fist, { backgroundColor: colors.spark, transform: [{ rotate: '12deg' }] }]} /></View>
+        <View style={{ flex: 1, gap: 5 }}><Text style={styles.challengeTitle}>Multiplayer arena</Text><Text style={styles.challengeCopy}>Find an opponent or invite a friend to a private 1v1. Get into a room, then prepare your camera.</Text></View><Text style={styles.chevron}>›</Text>
+      </Pressable>
+      <View style={styles.practice}>
+        <Text style={styles.practiceTitle}>A little guidance. A stronger next rep.</Text>
+        <Text style={styles.challengeCopy}>Ask the Coach about training and recovery, or practise with a live avatar that follows your movement.</Text>
+        <Button variant="quiet" onPress={openCoach} style={{ alignSelf: 'flex-start', paddingHorizontal: 0 }}>Ask your Coach</Button>
+      </View>
+    </View>
     {/* Evolution progress. It used to sit in the hero copy stack; the hero is now the headline, the
         two actions and the character rail, so progress lives here — still above the stats, but
         below the fold. Only rendered for a signed-in player, so there is no empty-state band. */}
@@ -285,17 +303,6 @@ export default function HomeScreen() {
       <View style={styles.statDivider} />
       <Stat value={profile.ownedCosmetics.length} label="collectibles earned" color={colors.accent} />
     </View>}
-    <View style={[styles.bottomSection, wide && { flexDirection: 'row' }]}>
-      <Pressable accessibilityRole="button" onPress={() => profile?.fitness ? router.push({ pathname: '/arena', params: { mode: 'pvp' } }) : router.push(profile ? '/onboarding' : '/profile')} style={styles.challenge}>
-        <View style={styles.challengeGraphic}><View style={[styles.fist, { transform: [{ rotate: '-12deg' }] }]} /><View style={[styles.fist, { backgroundColor: colors.spark, transform: [{ rotate: '12deg' }] }]} /></View>
-        <View style={{ flex: 1, gap: 5 }}><Text style={styles.challengeTitle}>Better with a rival.</Text><Text style={styles.challengeCopy}>Invite a friend to a private 1v1 workout.</Text></View><Text style={styles.chevron}>›</Text>
-      </Pressable>
-      <View style={styles.practice}>
-        <Text style={styles.practiceTitle}>A little guidance. A stronger next rep.</Text>
-        <Text style={styles.challengeCopy}>Ask the Coach about training and recovery, or practise with a live avatar that follows your movement.</Text>
-        <Button variant="quiet" onPress={() => router.push('/coach')} style={{ alignSelf: 'flex-start', paddingHorizontal: 0 }}>Meet your Coach</Button>
-      </View>
-    </View>
   </Screen>;
 }
 const styles = StyleSheet.create({
@@ -361,12 +368,12 @@ const styles = StyleSheet.create({
   stats: { marginTop: 40, paddingVertical: 26, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', borderTopColor: colors.line, borderBottomColor: colors.line, borderTopWidth: 1, borderBottomWidth: 1 },
   statDivider: { width: 1, height: 37, backgroundColor: colors.line },
   bottomSection: { gap: 24, marginTop: 40 },
-  challenge: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 18, padding: 26, borderRadius: radii.xl, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.line, minHeight: 150 },
+  challenge: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 18, padding: 26, borderRadius: radii.xl, backgroundColor: colors.glassStrong, borderWidth: 1, borderColor: colors.brand, minHeight: 150 },
   challengeGraphic: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   fist: { height: 43, width: 22, borderRadius: 8, backgroundColor: colors.brand },
   challengeTitle: { fontFamily: fonts.display, fontSize: 23, fontWeight: displayWeight.heavy, color: colors.text, letterSpacing: -0.6 },
   challengeCopy: { fontFamily: fonts.body, color: colors.muted, fontSize: 14, lineHeight: 22, maxWidth: 360 },
-  chevron: { fontSize: 30, color: colors.muted },
+  chevron: { fontSize: 30, color: colors.brand },
   practice: { flex: 1, padding: 26, borderRadius: radii.xl, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.line, gap: 10, justifyContent: 'center' },
   practiceTitle: { fontFamily: fonts.display, color: colors.text, fontSize: 22, fontWeight: displayWeight.heavy, letterSpacing: -0.6 },
 });

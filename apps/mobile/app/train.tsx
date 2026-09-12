@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
-import { characterFor, isLivePoseFresh, type CaptureCameraState, type CaptureMessage, type CapturePoseMessage, type Exercise } from '@vyra/core';
+import { CHARACTERS, characterFor, isLivePoseFresh, type CharacterId, type CaptureCameraState, type CaptureMessage, type CapturePoseMessage, type Exercise } from '@vyra/core';
 import { Button, Copy, Eyebrow, Heading, Screen, Stat } from '../src/components/ui';
 import CaptureSurface from '../src/components/CaptureSurface';
 import HeroView from '../src/components/HeroView';
-import { TRAINING_CHARACTERS, isTrainingCharacter, type TrainingCharacter } from '../src/lib/liveCharacter';
+import { displayFitnessStage } from '../src/components/FitnessUI';
+import { isTrainingCharacter } from '../src/lib/liveCharacter';
 import { useScreenFocus } from '../src/lib/useScreenFocus';
 import { useApp } from '../src/state/AppProvider';
+import { useCoach } from '../src/state/CoachProvider';
 import { colors, displayWeight, fonts } from '../src/theme';
 
 type Tracking = Extract<CaptureMessage, { type: 'capture.tracking' }>;
@@ -20,13 +22,16 @@ const timeLabel = (milliseconds: number) => {
 
 export default function TrainingScreen() {
   const { profile, session } = useApp();
+  const { isOpen: coachOpen, openCoach } = useCoach();
   const { width } = useWindowDimensions();
   const focused = useScreenFocus();
   const wide = width >= 950;
-  const [avatar, setAvatar] = useState<TrainingCharacter>(() => isTrainingCharacter(profile?.characterId) ? profile.characterId : 'base-male');
+  const [avatar, setAvatar] = useState<CharacterId>(() => characterFor(profile?.characterId).id);
+  const liveAvatar = isTrainingCharacter(avatar);
+  const stage = displayFitnessStage(profile?.stage);
   const [exercise, setExercise] = useState<Exercise>('squat');
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [overlay, setOverlay] = useState(false);
+  const [overlay, setOverlay] = useState(true);
   const [phase, setPhase] = useState<SetPhase>('ready');
   const [generation, setGeneration] = useState(0);
   const [tracking, setTracking] = useState<Tracking | null>(null);
@@ -40,7 +45,7 @@ export default function TrainingScreen() {
   const counting = useRef(false);
   const latestExercise = useRef(exercise);
   latestExercise.current = exercise;
-  counting.current = focused && cameraOpen && phase === 'running';
+  counting.current = focused && cameraOpen && !coachOpen && phase === 'running';
 
   const pause = useCallback(() => {
     counting.current = false;
@@ -51,6 +56,8 @@ export default function TrainingScreen() {
     }
     setPhase(current => current === 'running' ? 'paused' : current);
   }, []);
+  useEffect(() => { if (coachOpen) pause(); }, [coachOpen, pause]);
+  useEffect(() => { setAvatar(characterFor(profile?.characterId).id); }, [profile?.id, profile?.characterId]);
   useEffect(() => {
     if (!focused) { pause(); setCameraOpen(false); livePose.current = null; setTracking(null); }
   }, [focused, pause]);
@@ -81,7 +88,7 @@ export default function TrainingScreen() {
     lastRepAt.current = 0; setGeneration(value => value + 1); livePose.current = null; setTracking(null);
   };
   const start = () => {
-    if (!focused || !cameraOpen || !isLivePoseFresh(livePose.current)) return;
+    if (!focused || !cameraOpen || coachOpen || !isLivePoseFresh(livePose.current)) return;
     runningSince.current = Date.now(); setNow(runningSince.current); setPhase('running');
   };
   const finish = () => { pause(); setPhase('finished'); setCameraOpen(false); livePose.current = null; setTracking(null); };
@@ -93,7 +100,7 @@ export default function TrainingScreen() {
     <View style={styles.heading}>
       <Eyebrow>Live training</Eyebrow>
       <Heading size={wide ? 52 : 38}>Your movement, on screen.</Heading>
-      <Copy>Practise your form with a moving avatar and real rep tracking. Take your next workout to the Arena to earn XP.</Copy>
+      <Copy>Practise your form with live body tracking and your character beside you. Take your next workout to the Arena to earn XP.</Copy>
     </View>
     <View style={[styles.toolbar, wide && { flexDirection: 'row', justifyContent: 'space-between' }]}>
       <View style={styles.choices}>{(['squat', 'pushup'] as const).map(value => <Pressable key={value} accessibilityRole="button"
@@ -115,14 +122,15 @@ export default function TrainingScreen() {
         </View>}
       </View>
       <View style={styles.column}>
-        <View style={styles.avatarHeading}><Text style={styles.label}>TRAINING AVATAR</Text><Text style={[styles.liveLabel, visible && { color: colors.brand }]}>{visible ? 'Following you' : 'Waiting for movement'}</Text></View>
+        <View style={styles.avatarHeading}><Text style={styles.label}>{liveAvatar ? 'LIVE AVATAR' : 'YOUR CHARACTER'}</Text><Text style={[styles.liveLabel, liveAvatar && visible && { color: colors.brand }]}>{liveAvatar ? visible ? 'Following you' : 'Waiting for movement' : 'Character preview'}</Text></View>
         <View style={styles.avatarStage}>
-          {focused && <HeroView characterId={avatar} stage={profile?.stage ?? 'starter'} livePose={livePose} active={focused} style={{ height: 390 }} />}
-          <View style={styles.avatarOptions}>{TRAINING_CHARACTERS.map(id => <Pressable key={id} accessibilityRole="button" accessibilityState={{ selected: avatar === id }}
-            onPress={() => setAvatar(id)} style={[styles.avatarChoice, avatar === id && styles.selected]}>
-            <Text style={[styles.choiceText, avatar === id && { color: colors.brand }]}>{characterFor(id).name}</Text>
+          {focused && <HeroView characterId={avatar} stage={stage.id} livePose={liveAvatar ? livePose : undefined} active={focused && liveAvatar} style={{ height: 390 }} />}
+          <View style={styles.avatarOptions}>{CHARACTERS.map(character => <Pressable key={character.id} accessibilityRole="radio" accessibilityLabel={`${character.name}, ${isTrainingCharacter(character.id) ? 'live avatar' : 'character preview'}`} accessibilityState={{ checked: avatar === character.id }}
+            onPress={() => setAvatar(character.id)} style={[styles.avatarChoice, avatar === character.id && styles.selected]}>
+            <Text style={[styles.choiceText, styles.avatarName, avatar === character.id && { color: colors.brand }]}>{character.name}</Text>
+            <Text style={[styles.avatarKind, isTrainingCharacter(character.id) && { color: colors.accent }]}>{isTrainingCharacter(character.id) ? 'Live avatar' : 'Preview'}</Text>
           </Pressable>)}</View>
-          <Text style={styles.avatarNote}>Choose a training avatar. Your saved hero stays the same.</Text>
+          <Text style={styles.avatarNote}>Body tracking and reps work with every character. Base Male and Nami also follow your pose. This choice is for your practice session.</Text>
         </View>
       </View>
     </View>
@@ -143,7 +151,7 @@ export default function TrainingScreen() {
         <View style={[styles.toggleBox, overlay && styles.toggleOn]}><Text style={styles.check}>{overlay ? '✓' : ''}</Text></View><Text style={styles.choiceText}>Show tracking overlay</Text>
       </Pressable>
       {cameraOpen && <Button variant="quiet" onPress={() => { pause(); setCameraOpen(false); livePose.current = null; setTracking(null); }}>Turn camera off</Button>}
-      <Button variant="quiet" onPress={() => { finish(); router.push('/coach'); }}>Ask the Coach</Button>
+      <Button variant="quiet" onPress={() => { pause(); openCoach(); }}>Ask the Coach</Button>
       <Button variant="secondary" onPress={() => { finish(); router.push(profile?.fitness ? '/arena' : profile ? '/onboarding' : '/profile'); }}>Work out for XP</Button>
     </View>
   </Screen>;
@@ -165,8 +173,10 @@ const styles = StyleSheet.create({
   avatarHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   liveLabel: { fontFamily: fonts.body, color: colors.faint, fontSize: 11 },
   avatarStage: { minHeight: 492, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.backgroundElevated, borderRadius: 24, overflow: 'hidden', paddingBottom: 18, gap: 13 },
-  avatarOptions: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
-  avatarChoice: { minHeight: 40, justifyContent: 'center', borderWidth: 1, borderColor: colors.lineControl, borderRadius: 20, paddingHorizontal: 20 },
+  avatarOptions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, paddingHorizontal: 16 },
+  avatarChoice: { flexBasis: '28%', flexGrow: 1, minWidth: 80, maxWidth: 160, minHeight: 58, gap: 4, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.lineControl, borderRadius: 16, paddingHorizontal: 8, paddingVertical: 8 },
+  avatarName: { fontSize: 13, textAlign: 'center' },
+  avatarKind: { fontFamily: fonts.body, fontSize: 10, lineHeight: 15, color: colors.muted },
   avatarNote: { fontFamily: fonts.body, fontSize: 12, lineHeight: 18, color: colors.muted, textAlign: 'center', paddingHorizontal: 16 },
   setBar: { paddingVertical: 24, borderBottomWidth: 1, borderBottomColor: colors.line, gap: 24 },
   metrics: { flex: 1, flexDirection: 'row', justifyContent: 'space-around', gap: 12 },

@@ -951,7 +951,7 @@ export const COACH_KNOWLEDGE: readonly KnowledgeChunk[] = [
     "documentId": "user_manual",
     "title": "Using VYRA",
     "section": "Arena opponent search and private battles",
-    "content": "In Arena, create a private 1v1 room, join a room with a code, or search for a random opponent. Opponent search happens before camera preparation. Once both players are in the lobby, use Prepare my camera, allow camera access, get into position, and complete calibration before marking yourself ready.\n\nYour friend may still be preparing their camera while you wait in the lobby. The normal workout flow uses real camera rep tracking, not simulated repetitions."
+    "content": "Open Multiplayer from the navigation or choose Play multiplayer on the home page. Find an opponent, create a private 1v1 room, or join a room with a code. Opponent search happens before camera preparation. Once both players are in the lobby, use Prepare my camera, allow camera access, get into position, and complete calibration before marking yourself ready.\n\nYour friend may still be preparing their camera while you wait in the lobby. The normal workout flow uses real camera rep tracking, not simulated repetitions."
   },
   {
     "id": "user_manual:solo-workouts-and-camera-setup:1",
@@ -993,6 +993,6 @@ export const COACH_KNOWLEDGE: readonly KnowledgeChunk[] = [
     "documentId": "user_manual",
     "title": "Using VYRA",
     "section": "Coach questions and sources",
-    "content": "Ask Coach about exercise technique, strength, muscle gain, running, stamina, recovery, everyday food choices, or how VYRA works. Coach retrieves relevant passages from this bundled guide and shows the sources. When an AI provider is enabled, it can phrase an answer from those passages; otherwise you receive guide excerpts directly.\n\nYour question and the recent conversation you submit may be sent to the configured AI provider. Profile measurements are not attached automatically. Source passages are general information and may not answer individual medical or nutrition questions."
+    "content": "Use the floating Ask Coach button to open chat over your current page. Ask about exercise technique, strength, muscle gain, running, stamina, recovery, everyday food choices, or how VYRA works. Minimize and reopen the chat to continue your conversation. Coach retrieves relevant passages from this bundled guide and shows the sources. When an AI provider is enabled, it can phrase an answer from those passages; otherwise you receive guide excerpts directly.\n\nYour question and the recent conversation you submit may be sent to the configured AI provider. Profile measurements are not attached automatically. Source passages are general information and may not answer individual medical or nutrition questions."
   }
 ];

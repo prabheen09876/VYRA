@@ -95,7 +95,7 @@ export default function CaptureSurface({ exercise, enabled, suspended = false, r
       </Text>
     </View>
     <View style={styles.footnote}>
-      <Text style={styles.modelText}>{debugOverlay && ready ? ready.inferenceMode === 'learned' ? 'Team-trained movement model' : 'Rule-based movement baseline' : 'On-device rep tracking'}</Text>
+      <Text style={styles.modelText}>{debugOverlay ? 'Live body tracking' : 'On-device rep tracking'}</Text>
       <Text style={styles.modelText}>Video stays on this device</Text>
     </View>
     {error && <View style={styles.error}>

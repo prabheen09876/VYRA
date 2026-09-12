@@ -118,19 +118,26 @@ describe('capture camera and local pose lifecycle', () => {
     expect(poses().at(-1)!.landmarks).toEqual(first.landmarks);
     configure({ debugOverlay: true }); frame(300);
     expect(node('overlay').hidden).toBe(false); expect(node('overlay').context.stroke).toHaveBeenCalled();
-    expect(node('mode').textContent).toBe('Rule-based movement baseline');
+    expect(node('mode').textContent).toBe('Live body tracking');
     expect(camera).toHaveBeenCalledTimes(1);
   });
 
   it('throttles pose delivery and clears both dropped tracking and frozen video', async () => {
-    configure(); await enableCamera(); frame(100);
+    configure({ debugOverlay: true }); await enableCamera(); frame(100);
     const count = poses().length; frame(120);
     expect(poses()).toHaveLength(count);
     pose = []; frame(200);
     expect(poses().at(-1)).toMatchObject({ visible: false, confidence: 0, landmarks: [] });
     pose = standing(); frame(300);
     expect(poses().at(-1)!.visible).toBe(true);
+    expect(node('overlay').context.stroke).toHaveBeenCalled();
+    node('overlay').context.clearRect.mockClear();
     frame(1100, false);
+    expect(node('overlay').context.clearRect).toHaveBeenCalledOnce();
+    expect(node('status').textContent).toBe('Camera feed paused');
+    expect(node('status').dataset.visible).toBe('false');
+    expect(node('cue').textContent).toContain('Camera feed paused');
+    expect(node('confidence').textContent).toBe('Not in view');
     expect(poses().at(-1)).toMatchObject({ visible: false, confidence: 0, landmarks: [] });
     expect(messages().at(-1)).toMatchObject({ type: 'capture.tracking', visible: false, cue: expect.stringContaining('paused') });
   });

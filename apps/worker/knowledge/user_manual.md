@@ -20,7 +20,7 @@ Weight cannot measure muscle or fitness on its own. The reports support the goal
 
 ## Arena opponent search and private battles
 
-In Arena, create a private 1v1 room, join a room with a code, or search for a random opponent. Opponent search happens before camera preparation. Once both players are in the lobby, use Prepare my camera, allow camera access, get into position, and complete calibration before marking yourself ready.
+Open Multiplayer from the navigation or choose Play multiplayer on the home page. Find an opponent, create a private 1v1 room, or join a room with a code. Opponent search happens before camera preparation. Once both players are in the lobby, use Prepare my camera, allow camera access, get into position, and complete calibration before marking yourself ready.
 
 Your friend may still be preparing their camera while you wait in the lobby. The normal workout flow uses real camera rep tracking, not simulated repetitions.
 
@@ -55,6 +55,6 @@ Equip an owned effect, remove it from its slot, or restore the character's origi
 
 ## Coach questions and sources
 
-Ask Coach about exercise technique, strength, muscle gain, running, stamina, recovery, everyday food choices, or how VYRA works. Coach retrieves relevant passages from this bundled guide and shows the sources. When an AI provider is enabled, it can phrase an answer from those passages; otherwise you receive guide excerpts directly.
+Use the floating Ask Coach button to open chat over your current page. Ask about exercise technique, strength, muscle gain, running, stamina, recovery, everyday food choices, or how VYRA works. Minimize and reopen the chat to continue your conversation. Coach retrieves relevant passages from this bundled guide and shows the sources. When an AI provider is enabled, it can phrase an answer from those passages; otherwise you receive guide excerpts directly.
 
 Your question and the recent conversation you submit may be sent to the configured AI provider. Profile measurements are not attached automatically. Source passages are general information and may not answer individual medical or nutrition questions.

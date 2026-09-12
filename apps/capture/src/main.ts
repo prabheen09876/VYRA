@@ -69,7 +69,7 @@ if (bridge.embedded) { mode.parentElement!.removeChild(mode); element<HTMLElemen
 const modelVersion = () => stageModel?.modelVersion ?? BASELINE_VERSION;
 const emit = (message: CaptureMessage) => bridge.send(message);
 const emitCameraState = (state: CaptureCameraState) => emit({ type: 'capture.camera', protocolVersion: 1, state });
-const updateModelLabel = () => { mode.textContent = control.debugOverlay ? modelDetail : 'On-device tracking'; };
+const updateModelLabel = () => { mode.textContent = labMode ? modelDetail : control.debugOverlay ? 'Live body tracking' : 'On-device tracking'; };
 function setError(code: string, message: string) {
   errorBox.textContent = message;
   emitCameraState('stopped');
@@ -127,7 +127,7 @@ async function loadStageModel() {
     modelDetail = `Team-trained stage model · ${stageModel.modelVersion}`; updateModelLabel();
   } catch (error) {
     modelDetail = 'Rule-based movement baseline · training model unavailable'; updateModelLabel();
-    if (control.debugOverlay) errorBox.textContent = `Continuing with the movement baseline. ${error instanceof Error ? error.message : 'The trained model could not be loaded.'}`;
+    if (labMode) errorBox.textContent = `Continuing with the movement baseline. ${error instanceof Error ? error.message : 'The trained model could not be loaded.'}`;
   }
 }
 
@@ -190,11 +190,15 @@ function stopCamera() {
   emit({ type: 'capture.tracking', protocolVersion: 1, visible: false, confidence: 0, stage: 'other', fps: 0, cue: 'Camera paused. Tap Enable camera to resume.' });
 }
 
-const CONNECTIONS = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,29],[29,31],[28,30],[30,32]];
+const CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,7],[0,4],[4,5],[5,6],[6,8],[9,10],
+  [11,12],[11,13],[13,15],[12,14],[14,16],[15,17],[17,19],[19,15],[15,21],[16,18],[18,20],[20,16],[16,22],
+  [11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,29],[29,31],[27,31],[28,30],[30,32],[28,32],
+];
 function drawPose(landmarks: PoseLandmark[], visible: boolean) {
   if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) { canvas.width = video.videoWidth; canvas.height = video.videoHeight; }
   context.clearRect(0, 0, canvas.width, canvas.height);
-  // Nocturne spark / danger / text, the same pair as the `--track` / `--alert` badge dot in
+  // Halo spark / danger / text, the same pair as the `--track` / `--alert` badge dot in
   // styles.css and CaptureSurface.tsx's status dot. All three read the same tracking state, so
   // they move together or the screen shows one state in three colours.
   context.lineWidth = Math.max(2, canvas.width / 240); context.strokeStyle = visible ? '#3D7BFF' : '#FF5A5F'; context.fillStyle = '#F2F5F8';
@@ -203,8 +207,8 @@ function drawPose(landmarks: PoseLandmark[], visible: boolean) {
     if (!a || !b || (a.visibility ?? 0) < 0.5 || (b.visibility ?? 0) < 0.5) continue;
     context.beginPath(); context.moveTo(a.x * canvas.width, a.y * canvas.height); context.lineTo(b.x * canvas.width, b.y * canvas.height); context.stroke();
   }
-  for (const index of [11,12,13,14,15,16,23,24,25,26,27,28]) {
-    const point = landmarks[index]; if (!point || (point.visibility ?? 0) < 0.5) continue;
+  for (const point of landmarks) {
+    if (!point || (point.visibility ?? 0) < 0.5) continue;
     context.beginPath(); context.arc(point.x * canvas.width, point.y * canvas.height, Math.max(3, canvas.width / 150), 0, Math.PI * 2); context.fill();
   }
 }
@@ -214,7 +218,11 @@ function processFrame(now: number) {
   if (video.readyState < 2 || video.currentTime === lastVideoTime) {
     if (Number.isFinite(lastFrameProcessed) && now - lastFrameProcessed > LIVE_POSE_MAX_AGE_MS && !frameStale) {
       frameStale = true; clearCalibration(); clearLivePose();
-      emit({ type: 'capture.tracking', protocolVersion: 1, visible: false, confidence: 0, stage: 'other', fps: 0, cue: 'Camera feed paused. Check your camera or restart it.' });
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      status.textContent = 'Camera feed paused'; status.dataset.visible = 'false';
+      cue.textContent = 'Camera feed paused. Check your camera or restart it.';
+      element<HTMLElement>('fps').textContent = '—'; element<HTMLElement>('confidence').textContent = 'Not in view';
+      emit({ type: 'capture.tracking', protocolVersion: 1, visible: false, confidence: 0, stage: 'other', fps: 0, cue: cue.textContent });
     }
     frameRequest = requestAnimationFrame(processFrame); return;
   }

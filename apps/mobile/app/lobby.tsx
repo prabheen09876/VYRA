@@ -19,7 +19,7 @@ export default function LobbyScreen() {
     if (!match) return;
     if (Platform.OS === 'web') {
       try { await navigator.clipboard.writeText(match.roomCode); setCopied(true); } catch { setCopied(false); }
-    } else await Share.share({ message: 'Join my VYRA workout. Open Private 1v1 and enter room code ' + match.roomCode + '.' });
+    } else await Share.share({ message: 'Join my VYRA workout. Open Multiplayer and enter room code ' + match.roomCode + '.' });
   };
   const me = snapshot?.players.find(player => player.id === profile?.id);
   if (!match) return <Screen noNav><Notice title="No room is open" action={() => router.replace('/arena')} actionLabel="Choose a workout">Start a solo session or create a room to enter the arena.</Notice></Screen>;

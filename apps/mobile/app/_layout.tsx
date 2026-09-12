@@ -3,15 +3,20 @@ import { Stack, router, usePathname, useRootNavigationState } from 'expo-router'
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider, useApp } from '../src/state/AppProvider';
+import { CoachProvider } from '../src/state/CoachProvider';
+import FloatingCoach from '../src/components/FloatingCoach';
 import { colors } from '../src/theme';
 export { ErrorBoundary } from 'expo-router';
 
 export default function RootLayout() {
   return <SafeAreaProvider>
     <AppProvider>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background }, animation: 'none' }} />
-      <FitnessSetupGate />
+      <CoachProvider>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background }, animation: 'none' }} />
+        <FitnessSetupGate />
+        <FloatingCoach />
+      </CoachProvider>
     </AppProvider>
   </SafeAreaProvider>;
 }
