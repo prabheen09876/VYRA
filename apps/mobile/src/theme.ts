@@ -1,21 +1,47 @@
-import { Platform } from 'react-native';
+import { Platform, type TextStyle } from 'react-native';
 
-// Near-black cinematic base with a controlled accent palette. Content colors
-// (stage/rarity colors from @vyra/core) stay separate and are used as-is —
-// this is the chrome/UI palette only.
+// Deep-space cinematic chrome: near-black with a midnight-navy cast, silver type and a
+// cyan/mint accent. Content colors (stage/rarity colors from @vyra/core) stay separate
+// and are used as-is — this is the chrome/UI palette only.
 export const colors = {
-  background: '#07080A', backgroundElevated: '#0B0D11', surface: '#111318', surfaceRaised: '#191C22',
-  glass: 'rgba(255,255,255,0.045)', glassStrong: 'rgba(255,255,255,0.08)',
-  line: 'rgba(255,255,255,0.10)', lineStrong: 'rgba(255,255,255,0.20)',
-  text: '#F6F8FB', muted: '#8D96A5', faint: '#565F6C',
-  teal: '#78E2D0', coral: '#FF987E', gold: '#FFD17B', blue: '#85BBED', purple: '#BE9AFF',
-  danger: '#FF9C8C', ink: '#08090B',
+  background: '#04060C', backgroundElevated: '#070B15', surface: '#0A1020', surfaceRaised: '#101A2E',
+  glass: 'rgba(140,180,255,0.055)', glassStrong: 'rgba(150,195,255,0.105)',
+  line: 'rgba(150,190,255,0.14)', lineStrong: 'rgba(160,200,255,0.28)',
+  text: '#EEF4FF', muted: '#93A4C2', faint: '#5A6B87',
+  teal: '#6FE9DA', coral: '#FF9E86', gold: '#FFD17B', blue: '#6EA8FF', purple: '#B99CFF',
+  danger: '#FF9C8C', ink: '#050810',
+};
+
+// Atmosphere stops shared by SpaceBackdrop (full-bleed starfield) and the hero orb, so the
+// page and the character stage read as one continuous sky rather than two separate washes.
+export const atmosphere = {
+  void: '#04060C', deep: '#050A16', mid: '#061128', horizon: '#07173A',
+  haze: 'rgba(46,134,255,0.52)', hazeSoft: 'rgba(58,118,214,0.22)',
 };
 
 export const fonts = {
-  display: Platform.select({ ios: 'Avenir Next', android: 'sans-serif-condensed', default: "'Arial Black', 'Helvetica Neue', Arial, sans-serif" }),
+  // Heavy condensed display face for the hero wordmark/headings. The web stack prefers the
+  // blackest grotesque actually installed on the host (no webfont download, so nothing to
+  // block first paint); body stays on the neutral UI face.
+  display: Platform.select({
+    ios: 'Avenir Next Condensed',
+    android: 'sans-serif-condensed',
+    // Ordered blackest-and-most-condensed first. The macOS face has to be named by its
+    // PostScript name — Chrome will not resolve "Helvetica Neue Condensed Black" as a family.
+    default: "'HelveticaNeue-CondensedBlack', 'Avenir Next Condensed', Haettenschweiler, Impact, 'Arial Black', Helvetica, Arial, sans-serif",
+  }),
   body: Platform.select({ ios: 'Avenir Next', android: 'sans-serif', default: "'Helvetica Neue', Arial, sans-serif" }),
 };
+
+// Brushed silver-to-steel fill for the hero display type. Web-only (clipping a gradient to
+// glyphs has no RN equivalent); everywhere else the solid `colors.text` underneath shows
+// through, so this is purely additive.
+export const displayGradient = (Platform.OS === 'web' ? {
+  backgroundImage: 'linear-gradient(177deg, #FFFFFF 0%, #EAF2FF 34%, #B7CAE6 68%, #8AA0C2 100%)',
+  backgroundClip: 'text',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+} : null) as unknown as TextStyle | null;
 
 // Shared numeric scales so new work stays consistent without hard-coding
 // one-off numbers. Existing screens may still use their own values —

@@ -1,10 +1,20 @@
 import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, usePathname } from 'expo-router';
-import { colors, fonts, radii, type } from '../theme';
+import { colors, fonts, glow, radii, type } from '../theme';
 import { useApp } from '../state/AppProvider';
+
+// Chrome metrics a screen needs in order to size a block against the fold. Exported (and used
+// below) so the numbers can never drift out of sync with the styles they describe. A screen pins
+// a block to the fold with `windowHeight - insets.top - CHROME_HEIGHT - CONTENT_PAD_TOP` — vh
+// units are not an option (a TS error against DimensionValue, and silently dropped by Yoga on
+// native, where the block would collapse to its content height).
+export const HEADER_HEIGHT = 86;
+export const HEADER_BORDER = 1;
+export const CHROME_HEIGHT = HEADER_HEIGHT + HEADER_BORDER;
+export const CONTENT_PAD_TOP = 30;
 
 export function Button({ children, onPress, variant = 'primary', disabled, loading, style, accessibilityLabel, icon }: {
   children: React.ReactNode; onPress: () => void | Promise<void>; variant?: 'primary' | 'secondary' | 'quiet' | 'danger';
@@ -43,8 +53,8 @@ function FadeIn({ children, skip }: React.PropsWithChildren<{ skip?: boolean }>)
   </Animated.View>;
 }
 
-export function Screen({ children, noNav = false, back, style }: React.PropsWithChildren<{
-  noNav?: boolean; back?: () => void; style?: StyleProp<ViewStyle>;
+export function Screen({ children, noNav = false, back, style, backdrop }: React.PropsWithChildren<{
+  noNav?: boolean; back?: () => void; style?: StyleProp<ViewStyle>; backdrop?: React.ReactNode;
 }>) {
   const pathname = usePathname();
   const { width } = useWindowDimensions();
@@ -57,7 +67,7 @@ export function Screen({ children, noNav = false, back, style }: React.PropsWith
   ] as const;
   const navMarks = { '/': '◈', '/collection': '◇', '/profile': '◎' } as const;
   return <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-    <LinearGradient pointerEvents="none" colors={['rgba(120,226,208,0.05)', 'transparent']} style={styles.atmosphere} />
+    {backdrop ?? <LinearGradient pointerEvents="none" colors={['rgba(110,168,255,0.07)', 'transparent']} style={styles.atmosphere} />}
     <View style={styles.header}>
       <View style={styles.headerInner}>
         <Pressable accessibilityRole="button" accessibilityLabel={back ? 'Go back' : 'VYRA home'} onPress={back || (() => { if (pathname !== '/') router.push('/'); })} style={styles.brandHit}>
@@ -89,10 +99,14 @@ export function Screen({ children, noNav = false, back, style }: React.PropsWith
   </SafeAreaView>;
 }
 
-export function Heading({ children, size = 34, style }: React.PropsWithChildren<{ size?: number; style?: StyleProp<ViewStyle> }>) {
+export function Heading({ children, size = 34, style, textStyle }: React.PropsWithChildren<{
+  size?: number; style?: StyleProp<ViewStyle>; textStyle?: StyleProp<TextStyle>;
+}>) {
   const tracking = Math.max(-4, -size * 0.035);
   const leading = size >= 48 ? size * 1.03 : size * 1.12;
-  return <View style={style}><Text style={[styles.heading, { fontSize: size, lineHeight: leading, letterSpacing: tracking }]}>{children}</Text></View>;
+  // `style` lands on the wrapper View; `textStyle` reaches the glyphs themselves, which is where
+  // a gradient fill or a tighter display leading has to be applied.
+  return <View style={style}><Text style={[styles.heading, { fontSize: size, lineHeight: leading, letterSpacing: tracking }, textStyle]}>{children}</Text></View>;
 }
 export function Copy({ children, muted = true, style }: React.PropsWithChildren<{ muted?: boolean; style?: StyleProp<ViewStyle> }>) {
   return <View style={style}><Text style={[styles.copy, { color: muted ? colors.muted : colors.text }]}>{children}</Text></View>;
@@ -138,8 +152,8 @@ export const layout = StyleSheet.create({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   atmosphere: { position: 'absolute', top: 0, left: 0, right: 0, height: 420 },
-  header: { paddingHorizontal: 24, borderBottomWidth: 1, borderBottomColor: colors.line },
-  headerInner: { width: '100%', maxWidth: 1320, alignSelf: 'center', minHeight: 86, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  header: { paddingHorizontal: 24, borderBottomWidth: HEADER_BORDER, borderBottomColor: 'rgba(150,190,255,0.08)' },
+  headerInner: { width: '100%', maxWidth: 1320, alignSelf: 'center', minHeight: HEADER_HEIGHT, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brandHit: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 11, minWidth: 100 },
   brandIcon: { width: 24, height: 28, flexDirection: 'row' },
   brandSlash: { width: 9, height: 25, backgroundColor: colors.teal, transform: [{ rotate: '-24deg' }], borderRadius: 2 },
@@ -148,25 +162,25 @@ const styles = StyleSheet.create({
   back: { color: colors.teal, fontSize: 38, lineHeight: 42 },
   avatar: { width: 44, height: 44, borderRadius: radii.md, backgroundColor: colors.glass, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.lineStrong },
   avatarText: { fontFamily: fonts.body, fontWeight: '700', fontSize: 16, color: colors.text },
-  desktopNav: { flexDirection: 'row', gap: 30 },
-  desktopNavItem: { minHeight: 44, justifyContent: 'center', alignItems: 'center', gap: 8 },
-  navIndicator: { height: 2, width: 14, borderRadius: 1, backgroundColor: 'transparent' },
-  navIndicatorActive: { backgroundColor: colors.teal },
-  navText: { fontFamily: fonts.body, color: colors.muted, fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.6 },
+  desktopNav: { flexDirection: 'row', gap: 34 },
+  desktopNavItem: { minHeight: 44, justifyContent: 'center', alignItems: 'stretch', gap: 9 },
+  navIndicator: { height: 2, borderRadius: 1, backgroundColor: 'transparent' },
+  navIndicatorActive: { backgroundColor: colors.teal, ...glow(colors.teal, 10, 0.9) },
+  navText: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, fontWeight: '600', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1.9 },
   navTextActive: { color: colors.text },
   scroll: { flex: 1 },
-  content: { width: '100%', maxWidth: 1320, alignSelf: 'center', paddingHorizontal: 24, paddingTop: 30, paddingBottom: 48 },
+  content: { width: '100%', maxWidth: 1320, alignSelf: 'center', paddingHorizontal: 24, paddingTop: CONTENT_PAD_TOP, paddingBottom: 48 },
   bottomNav: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.backgroundElevated, borderTopColor: colors.line, borderTopWidth: 1 },
   bottomRow: { flexDirection: 'row', justifyContent: 'space-around', minHeight: 76 },
   bottomItem: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 4, minHeight: 64 },
   navMark: { fontSize: 23, lineHeight: 27 },
-  button: { minHeight: 54, paddingHorizontal: 28, paddingVertical: 15, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'transparent', flexDirection: 'row', gap: 12 },
-  primary: { backgroundColor: colors.text },
-  secondary: { backgroundColor: colors.glass, borderColor: colors.lineStrong },
+  button: { minHeight: 56, paddingHorizontal: 30, paddingVertical: 16, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'transparent', flexDirection: 'row', gap: 12 },
+  primary: { backgroundColor: '#FFFFFF', ...glow('rgba(185,215,255,0.9)', 26, 0.3) },
+  secondary: { backgroundColor: 'rgba(10,18,36,0.55)', borderColor: colors.lineStrong },
   quiet: { backgroundColor: 'transparent' },
   danger: { backgroundColor: 'rgba(255,140,120,0.08)', borderColor: 'rgba(255,140,120,0.35)' },
   disabled: { opacity: 0.4 },
-  buttonText: { fontFamily: fonts.body, fontSize: 14, fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1 },
+  buttonText: { fontFamily: fonts.body, fontSize: 13, fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1.4 },
   buttonIcon: { width: 24, height: 24, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   heading: { fontFamily: fonts.display, fontWeight: '900', color: colors.text },
   copy: { fontFamily: fonts.body, fontSize: 16, lineHeight: 26, maxWidth: 650 },

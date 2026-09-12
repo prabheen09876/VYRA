@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vyra-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "web", "-w", "@vyra/mobile", "--", "--port", "8082"],
+      "port": 8082,
+      "autoPort": false
+    }
+  ]
+}
