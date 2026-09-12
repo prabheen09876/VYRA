@@ -1,0 +1,183 @@
+{
+  "source": "Female_Mikasa.glb",
+  "sourceSha256": "c4f56ae444aa2dbc288a637fce0d15c48cdf7f1edc261dc05ddf840f5344b5eb",
+  "static": true,
+  "changedMeshes": [
+    0
+  ],
+  "unchangedMeshes": [
+    1,
+    2
+  ],
+  "unchangedStreams": "All streams except body POSITION/NORMAL; all node transforms, materials and embedded images unchanged.",
+  "bodyFixedBelowZ": 25,
+  "bodyFixedAboveZ": 307,
+  "handsRigidBeyondArmT": 99,
+  "stages": [
+    {
+      "stage": "Starter",
+      "file": "Female_Mikasa_Starter.glb",
+      "bytes": 1953836,
+      "bodyBoundsMin": [
+        -101.93363189697266,
+        -35.654537200927734,
+        6.544765346916392e-05
+      ],
+      "bodyBoundsMax": [
+        101.93377685546875,
+        24.236610412597656,
+        318.4669494628906
+      ],
+      "bodyVertices": 4513,
+      "changedVertices": 4225,
+      "jacobianMin": 0.6369842973576626,
+      "jacobianNonPositive": 0,
+      "maximumDisplacement": 3.5718968150533734,
+      "pocketButtonAttachments": [
+        {
+          "buttonSeedTriangle": 800,
+          "supportTriangle": 53,
+          "vertices": 20,
+          "affineDeterminant": 0.9671989924826593,
+          "additionalClearanceTranslation": 0.0
+        },
+        {
+          "buttonSeedTriangle": 818,
+          "supportTriangle": 240,
+          "vertices": 20,
+          "affineDeterminant": 0.9615271912158256,
+          "additionalClearanceTranslation": 0.01595438121655999
+        }
+      ]
+    },
+    {
+      "stage": "Developing",
+      "file": "Female_Mikasa_Developing.glb",
+      "bytes": 1953824,
+      "bodyBoundsMin": [
+        -103.73363494873047,
+        -35.654537200927734,
+        6.544765346916392e-05
+      ],
+      "bodyBoundsMax": [
+        103.73377990722656,
+        25.537885665893555,
+        318.4669494628906
+      ],
+      "bodyVertices": 4513,
+      "changedVertices": 0,
+      "jacobianMin": 0.9999999999890115,
+      "jacobianNonPositive": 0,
+      "maximumDisplacement": 5.695433295429594e-14,
+      "pocketButtonAttachments": []
+    },
+    {
+      "stage": "Strong",
+      "file": "Female_Mikasa_Strong.glb",
+      "bytes": 1953832,
+      "bodyBoundsMin": [
+        -106.73363494873047,
+        -35.654537200927734,
+        6.544765346916392e-05
+      ],
+      "bodyBoundsMax": [
+        106.73377990722656,
+        27.929988861083984,
+        318.4669494628906
+      ],
+      "bodyVertices": 4513,
+      "changedVertices": 4225,
+      "jacobianMin": 0.9519771592060193,
+      "jacobianNonPositive": 0,
+      "maximumDisplacement": 5.419279904393079,
+      "pocketButtonAttachments": [
+        {
+          "buttonSeedTriangle": 800,
+          "supportTriangle": 53,
+          "vertices": 20,
+          "affineDeterminant": 1.0691644074658602,
+          "additionalClearanceTranslation": 0.0
+        },
+        {
+          "buttonSeedTriangle": 818,
+          "supportTriangle": 240,
+          "vertices": 20,
+          "affineDeterminant": 1.0692006251123782,
+          "additionalClearanceTranslation": 0.0
+        }
+      ]
+    },
+    {
+      "stage": "Elite",
+      "file": "Female_Mikasa_Elite.glb",
+      "bytes": 1953832,
+      "bodyBoundsMin": [
+        -110.53363800048828,
+        -35.654537200927734,
+        6.544765346916392e-05
+      ],
+      "bodyBoundsMax": [
+        110.53378295898438,
+        31.210285186767578,
+        318.4669494628906
+      ],
+      "bodyVertices": 4513,
+      "changedVertices": 4225,
+      "jacobianMin": 0.8932658435726484,
+      "jacobianNonPositive": 0,
+      "maximumDisplacement": 12.318338321270826,
+      "pocketButtonAttachments": [
+        {
+          "buttonSeedTriangle": 800,
+          "supportTriangle": 53,
+          "vertices": 20,
+          "affineDeterminant": 1.1712523351611872,
+          "additionalClearanceTranslation": 0.0
+        },
+        {
+          "buttonSeedTriangle": 818,
+          "supportTriangle": 240,
+          "vertices": 20,
+          "affineDeterminant": 1.1606665816190025,
+          "additionalClearanceTranslation": 0.02724911516425512
+        }
+      ]
+    },
+    {
+      "stage": "Legendary",
+      "file": "Female_Mikasa_Legendary.glb",
+      "bytes": 1953836,
+      "bodyBoundsMin": [
+        -114.93363189697266,
+        -35.654537200927734,
+        6.544765346916392e-05
+      ],
+      "bodyBoundsMax": [
+        114.93377685546875,
+        35.061981201171875,
+        318.4669494628906
+      ],
+      "bodyVertices": 4513,
+      "changedVertices": 4225,
+      "jacobianMin": 0.835454152995795,
+      "jacobianNonPositive": 0,
+      "maximumDisplacement": 20.510328626780087,
+      "pocketButtonAttachments": [
+        {
+          "buttonSeedTriangle": 800,
+          "supportTriangle": 53,
+          "vertices": 20,
+          "affineDeterminant": 1.3151603283142845,
+          "additionalClearanceTranslation": 0.0
+        },
+        {
+          "buttonSeedTriangle": 818,
+          "supportTriangle": 240,
+          "vertices": 20,
+          "affineDeterminant": 1.2774689208835934,
+          "additionalClearanceTranslation": 0.2384388598330936
+        }
+      ]
+    }
+  ]
+}

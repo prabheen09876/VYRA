@@ -1,0 +1,73 @@
+{
+  "createdAt": "2026-09-12T12:15:45.728Z",
+  "source": {
+    "file": "C:\\Users\\ABHISHEK\\Desktop\\coding\\VYRA\\resources\\goku.glb",
+    "bytes": 21781932,
+    "sha256": "4ab389d02c43df731cc9cefa6692fad07c69a7fec48324693523284deb962bdd",
+    "vertexCount": 456681,
+    "triangleCount": 559200,
+    "primitiveCount": 7,
+    "zeroAreaTriangles": 0,
+    "localBounds": {
+      "min": [
+        -0.12896728515625,
+        -0.189910888671875,
+        -0.499847412109375
+      ],
+      "max": [
+        0.1269073486328125,
+        0.1899566650390625,
+        0.499847412109375
+      ]
+    },
+    "minNormalLength": 0.9999999149474185,
+    "maxNormalLength": 1.0000001568588852,
+    "positionsSha256": "e70ee6aa6a0ce9682cc14d7aa43148f52eea042aa01bf06f2de469052d34a5ad",
+    "images": [
+      {
+        "mimeType": "image/jpeg",
+        "bytes": 450013,
+        "sha256": "c90f3a219d63645ac969b3bc132cad87b1f8483877ea5ad82c749009fc8b8ae4"
+      }
+    ],
+    "skins": 0,
+    "animations": 0,
+    "khronos": {
+      "status": "passed",
+      "validatorVersion": "2.0.0-dev.3.10",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 0,
+      "messages": []
+    },
+    "threeLoader": {
+      "status": "passed",
+      "meshes": 7,
+      "vertices": 456681,
+      "triangles": 559200,
+      "meshesWithTexture": 7,
+      "animations": 0,
+      "worldBounds": {
+        "min": [
+          -0.12896728515625,
+          -0.49984742041264446,
+          -0.1899566864772262
+        ],
+        "max": [
+          0.1269073486328125,
+          0.4998474187245108,
+          0.18991091052090014
+        ]
+      },
+      "limitation": "Node loader structure check with stubbed ImageBitmap. Does not test image pixels, WebGL rendering, animation quality, or device performance."
+    }
+  },
+  "commonBase": null,
+  "stages": [],
+  "failures": [],
+  "limitations": [
+    "Geometric validation does not replace front/back/side visual inspection or detect every possible self-intersection.",
+    "The supplied source has no skeleton or animation clips; these checks do not establish gameplay animation support."
+  ],
+  "status": "passed"
+}

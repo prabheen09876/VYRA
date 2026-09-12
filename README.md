@@ -1,8 +1,8 @@
 # VYRA
 
-Real exercise powers a short fitness battle. Consistent workouts evolve Vanguard, an original, deliberately exaggerated 3D hero.
+Real exercise powers a short fitness battle. Choose a character and a personal weight goal, then evolve through consistent workouts and body check-ins, from Starter to Elite.
 
-This repository implements the hackathon prototype: an Expo app, on-device pose capture, solo and private PvP services, persistent progression, five procedural GLB stages, cosmetics, and a participant-separated ML workflow. **The camera currently uses a labeled geometric baseline. No team-trained accuracy, completed physical-device demo, or production readiness is claimed.**
+This repository implements the hackathon prototype: an Expo app, on-device pose capture, solo and PvP services, persistent goal-based progression, six GLB characters, cosmetics, and a participant-separated ML workflow. **The camera currently uses a labeled geometric baseline. No team-trained accuracy, completed physical-device demo, or production readiness is claimed.**
 
 ## Run locally
 
@@ -36,11 +36,11 @@ If npm 10 fails while updating dependencies with `Cannot read properties of null
 
 ## Play
 
-1. Create a persistent guest player in Profile.
-2. Open the arena and calibrate both exercises with real practice reps. Keep the indicated joints in view; practice does not award XP.
-3. Start a solo match or create a private room. A second player joins with the room code. Both players ready up.
+1. Create a persistent guest player in Profile. Set your goal, starting height and weight, target weight, and preferred character.
+2. Open the arena. Private rooms and random opponent searches start immediately; prepare your camera from the matched lobby. Solo workouts start with camera preparation. Calibration uses real practice reps and does not award XP.
+3. In a PvP lobby, both players prepare their cameras and ready up. A friend can join a private room with its room code.
 4. Squats build guard; push-ups build attack. Follow the countdown, posture transition, and recovery cues. The server resolves damage together.
-5. A completed match with at least ten accepted reps qualifies for rewards. Return to the collection to see earned progress and preview locked stages or cosmetics. Preview never grants ownership.
+5. A completed match with at least ten accepted reps qualifies for rewards. Add weight and height check-ins from Profile, ideally weekly. Both workout progress and progress toward your target unlock Developing, Strong, and Elite. Previewing a stage never grants ownership.
 
 Connection loss, backgrounding, stopping, or leaving the battle interrupts the match without a winner or completion rewards. Both modes require a live service connection.
 
@@ -56,11 +56,9 @@ Connection loss, backgrounding, stopping, or leaving the battle interrupts the m
 | `scripts` | Reproducible original character generation and static asset assembly |
 | `docs` | Architecture, deployment, evidence, device checklist and product roadmap |
 
-The hero GLBs are bundled in the app. `npm run assets:generate` rebuilds all five from the same articulated structure. They use simple materials and stable joints/attachments; runtime animations provide idle, flex and victory poses. There are no anatomical morph targets or production skeletal rigs.
+The app includes Goku, Base Male, Base Female, Mikasa, Nami, and Sakura. `npm run assets:characters` copies their validated progression GLBs from `resources/`, generates portrait cards, and rebuilds the static asset registry. Only the selected character and stage are downloaded and decoded on web. Source rigs and clips are retained where present. See [character assets and credits](docs/character-assets.md) and [fitness journey rules](docs/fitness-journey.md).
 
-![Offline study of the five original Vanguard GLB assets](docs/assets/vanguard-evolutions.png)
-
-This contact sheet is rendered offline from the bundled meshes. It is an asset review, not an Expo/device screenshot. Rebuild it with `python scripts/render-hero-study.py` using NumPy and Pillow.
+The earlier procedural Vanguard generator remains available as `npm run assets:generate`; it is separate from the imported character catalogue. Legendary GLBs remain available for compatibility, while the current earned journey finishes at Elite.
 
 ## Check the implementation
 
@@ -69,6 +67,7 @@ npm run worker:types
 npm run typecheck
 npm test
 npm run assets:verify
+node scripts/character-assets.mjs --check
 npm run build
 npm run export:all -w @vyra/mobile
 node apps/worker/scripts/smoke.mjs

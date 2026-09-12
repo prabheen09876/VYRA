@@ -109,14 +109,39 @@ describe('shared match engine', () => {
   });
   it('flags an abandoned two-player lobby but never a lone host waiting for a room code, and never solo mode', () => {
     const state = createMatch('match', 'ABC234', 'pvp', host, 0);
-    expect(lobbyAbandoned(state, 13000)).toBe(false); // only one seat filled
+    expect(lobbyAbandoned(state, 999999)).toBe(false); // only one seat filled
     joinMatch(state, guest, 0);
-    expect(lobbyAbandoned(state, 11000)).toBe(false); // within the heartbeat window
-    expect(lobbyAbandoned(state, 13000)).toBe(true); // guest joined but never connected/pinged
-    readyPlayer(state, 'a', 13000);
-    expect(lobbyAbandoned(state, 13000)).toBe(true); // one-sided ready does not exempt the room
+    expect(lobbyAbandoned(state, 60000)).toBe(false); // within the lobby heartbeat window
+    expect(lobbyAbandoned(state, 60001)).toBe(true); // guest joined but never connected/pinged
+    readyPlayer(state, 'a', 60001);
+    expect(lobbyAbandoned(state, 60001)).toBe(true); // one-sided ready does not exempt the room
     const solo = createMatch('solo-match', 'XYZ987', 'solo', host, 0);
     expect(lobbyAbandoned(solo, 999999)).toBe(false); // solo lobby wait is unbounded by design
+  });
+  it('keeps a paired lobby open during a camera startup delay', () => {
+    const state = createMatch('match', 'ABC234', 'pvp', host, 0);
+    joinMatch(state, guest, 0);
+    for (const now of [13000, 30000, 45000]) {
+      expect(lobbyAbandoned(state, now)).toBe(false);
+      expect(missingHeartbeat(state, now)).toBe(false);
+    }
+  });
+  it('recovers lobby heartbeats that resume before the grace period expires', () => {
+    const state = createMatch('match', 'ABC234', 'pvp', host, 0);
+    joinMatch(state, guest, 0);
+    expect(lobbyAbandoned(state, 45000)).toBe(false);
+    state.heartbeats.a = 45000;
+    state.heartbeats.b = 45000;
+    expect(lobbyAbandoned(state, 60001)).toBe(false);
+    expect(lobbyAbandoned(state, 105000)).toBe(false);
+    expect(lobbyAbandoned(state, 105001)).toBe(true);
+  });
+  it('still enforces the twelve-second heartbeat deadline once a workout starts', () => {
+    const state = start();
+    phase(state, 'squat');
+    expect(missingHeartbeat(state, 12000)).toBe(false);
+    expect(missingHeartbeat(state, 12001)).toBe(true);
+    expect(lobbyAbandoned(state, 12001)).toBe(false);
   });
   it('allows initial camera calibration without hiding later tracking loss', () => {
     const state = start();

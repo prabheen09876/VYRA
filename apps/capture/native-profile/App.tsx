@@ -69,4 +69,7 @@ export default function App() {
     <Text style={styles.note}>This isolated prototype requires a custom development build. Build compatibility, device performance and camera coordinates need physical verification.</Text>
   </SafeAreaView>;
 }
-const styles = StyleSheet.create({ page: { flex: 1, padding: 20, gap: 12, backgroundColor: '#101e32' }, title: { color: '#dcecff', fontSize: 26, fontWeight: '700' }, note: { color: '#adbed2', fontSize: 12, lineHeight: 18 }, camera: { height: '48%', minHeight: 220, overflow: 'hidden', borderRadius: 14, backgroundColor: '#192b40' }, cue: { color: '#eef7ff', fontSize: 15 }, count: { color: '#88d9cb', fontSize: 26, fontWeight: '700' }, buttons: { gap: 8 }, error: { color: '#ffb6a0', fontSize: 12 } });
+// Nocturne literals rather than an import: this harness is copied out of the repo by
+// scripts/prepare-native-profile.mjs into a standalone Expo project that cannot resolve
+// apps/mobile/src/theme.ts. Values mirror it — background/surface/text/muted/accent/danger.
+const styles = StyleSheet.create({ page: { flex: 1, padding: 20, gap: 12, backgroundColor: '#05070A' }, title: { color: '#F2F5F8', fontSize: 26, fontWeight: '700' }, note: { color: '#A8B0BC', fontSize: 12, lineHeight: 18 }, camera: { height: '48%', minHeight: 220, overflow: 'hidden', borderRadius: 14, backgroundColor: '#10141A' }, cue: { color: '#F2F5F8', fontSize: 15 }, count: { color: '#5EEAD4', fontSize: 26, fontWeight: '700' }, buttons: { gap: 8 }, error: { color: '#FF5A5F', fontSize: 12 } });

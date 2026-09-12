@@ -15,6 +15,9 @@
     { "tag": "v2", "new_sqlite_classes": ["Matchmaking"] }
   ],
   "d1_databases": [{ "binding": "DB", "database_name": "vyra", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
-  "vars": { "AI_ENABLED": "false", "CORS_ORIGINS": "http://localhost:8081,http://localhost:19006,http://localhost:5173" },
+  // Local dev origins only. 8081 is `expo start --web`'s default; 8082 is the port .claude/launch.json
+  // pins the web preview to, and without it the previewed app cannot reach this API at all; 5173 is
+  // the capture app's Vite dev server; 19006 is the legacy Expo web port.
+  "vars": { "AI_ENABLED": "false", "CORS_ORIGINS": "http://localhost:8081,http://localhost:8082,http://localhost:19006,http://localhost:5173" },
   "observability": { "enabled": true, "head_sampling_rate": 1 }
 }

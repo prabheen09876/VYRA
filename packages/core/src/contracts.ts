@@ -1,3 +1,5 @@
+import type { CharacterId } from './characters';
+
 export const PROTOCOL_VERSION = 1 as const;
 export type Exercise = 'squat' | 'pushup';
 export type EvolutionStage = 'starter' | 'developing' | 'strong' | 'elite' | 'legendary';
@@ -37,6 +39,20 @@ export interface Profile {
   streak: number; lastActiveDay: string | null; weeklyActiveDays: number;
   totalReps: number; wins: number; qualifiedMatches: number;
   ownedCosmetics: string[]; equipped: Equipment;
+  characterId?: CharacterId;
+  fitness?: FitnessPlan;
+}
+export type FitnessGoal = 'gain_weight' | 'lose_weight' | 'maintain_weight';
+export type StartingBuild = 'thin' | 'average' | 'broad' | 'prefer_not_to_say';
+export interface BodyCheckInInput { weightKg: number; heightCm: number }
+export interface BodyCheckIn extends BodyCheckInInput { day: string; at: number }
+export interface FitnessSetupInput extends BodyCheckInInput {
+  goal: FitnessGoal; startingBuild: StartingBuild; targetWeightKg: number; characterId: CharacterId;
+}
+export interface FitnessPlan {
+  goal: FitnessGoal; startingBuild: StartingBuild; startedAt: number;
+  startWeightKg: number; startHeightCm: number; targetWeightKg: number;
+  checkIns: BodyCheckIn[];
 }
 export interface GuestSession { token: string; profile: Profile }
 export interface MatchCreated { matchId: string; roomCode: string }

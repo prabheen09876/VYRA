@@ -1,5 +1,5 @@
-import { COSMETICS } from '@vyra/core';
-import type { CosmeticSlot, GuestSession, MatchCreated } from '@vyra/core';
+import { COSMETICS, isCharacterId } from '@vyra/core';
+import type { BodyCheckInInput, CosmeticSlot, FitnessSetupInput, GuestSession, MatchCreated } from '@vyra/core';
 import { createProgression } from '@vyra/core/progression';
 import { authenticate, corsHeaders, hashToken, HttpError, randomToken, readJson } from './http';
 import { createPvpMatchRecord } from './matches';
@@ -38,6 +38,42 @@ async function route(request: Request, env: Env): Promise<Response> {
     if (typeof body.slot !== 'string' || typeof body.itemId !== 'string' || !COSMETICS.some(c => c.id === body.itemId && c.slot === body.slot)) throw new HttpError(400, 'INVALID_COSMETIC', 'Select an existing cosmetic and its matching slot.');
     const result = await profiles.equip(playerId, body.slot as CosmeticSlot, body.itemId);
     if (!result.profile) throw new HttpError(403, 'COSMETIC_LOCKED', result.error ?? 'Cosmetic locked.');
+    return Response.json(result.profile);
+  }
+  if (path === '/api/profile/fitness' && request.method === 'POST') {
+    const body = await readJson(request);
+    if ((body.goal !== 'gain_weight' && body.goal !== 'lose_weight' && body.goal !== 'maintain_weight')
+      || (body.startingBuild !== 'thin' && body.startingBuild !== 'average' && body.startingBuild !== 'broad' && body.startingBuild !== 'prefer_not_to_say')
+      || typeof body.heightCm !== 'number' || !Number.isFinite(body.heightCm)
+      || typeof body.weightKg !== 'number' || !Number.isFinite(body.weightKg)
+      || typeof body.targetWeightKg !== 'number' || !Number.isFinite(body.targetWeightKg)
+      || !isCharacterId(body.characterId)) {
+      throw new HttpError(400, 'INVALID_FITNESS', 'Choose a goal, starting build, and character, and enter your height, weight, and target weight as numbers.');
+    }
+    const input: FitnessSetupInput = {
+      goal: body.goal, startingBuild: body.startingBuild, heightCm: body.heightCm,
+      weightKg: body.weightKg, targetWeightKg: body.targetWeightKg, characterId: body.characterId,
+    };
+    const result = await profiles.setupFitness(playerId, input);
+    if (!result.profile) throw new HttpError(result.status, result.code, result.error);
+    return Response.json(result.profile);
+  }
+  if (path === '/api/profile/check-ins' && request.method === 'POST') {
+    const body = await readJson(request);
+    if (typeof body.weightKg !== 'number' || !Number.isFinite(body.weightKg)
+      || typeof body.heightCm !== 'number' || !Number.isFinite(body.heightCm)) {
+      throw new HttpError(400, 'INVALID_CHECK_IN', 'Enter your current weight and height as numbers.');
+    }
+    const input: BodyCheckInInput = { weightKg: body.weightKg, heightCm: body.heightCm };
+    const result = await profiles.recordCheckIn(playerId, input);
+    if (!result.profile) throw new HttpError(result.status, result.code, result.error);
+    return Response.json(result.profile);
+  }
+  if (path === '/api/profile/character' && request.method === 'POST') {
+    const body = await readJson(request);
+    if (!isCharacterId(body.characterId)) throw new HttpError(400, 'INVALID_CHARACTER', 'Choose an available character.');
+    const result = await profiles.selectCharacter(playerId, body.characterId);
+    if (!result.profile) throw new HttpError(result.status, result.code, result.error);
     return Response.json(result.profile);
   }
   if (path === '/api/matches' && request.method === 'POST') {

@@ -1,0 +1,46 @@
+{
+  "renderer": "Blender 5.2 Cycles",
+  "clipsRendered": [
+    {
+      "name": "Walking",
+      "requestedSeconds": 0.4,
+      "evaluatedFrame": 10,
+      "fps": 24
+    }
+  ],
+  "sourceComparedAtSameFrame": true,
+  "reviewImages": [
+    "comparison.png",
+    "animation-comparison.png",
+    "review/source-Walking.png",
+    "review/Legendary-side.png"
+  ],
+  "assets": [
+    {
+      "stage": "Starter",
+      "file": "Female_Name_Starter.glb",
+      "sha256": "b382352a63eebaacbdaef7b1c437f2297aeb877a93e363dc774c95ff9fb26aea"
+    },
+    {
+      "stage": "Developing",
+      "file": "Female_Name_Developing.glb",
+      "sha256": "ff03180a248158306e99e42d6e52f77e88340422f24f34ca5923b5926f15960e"
+    },
+    {
+      "stage": "Strong",
+      "file": "Female_Name_Strong.glb",
+      "sha256": "d08828c63148996923173836ca9700510447b9ef51094d7689be0c85e11af227"
+    },
+    {
+      "stage": "Elite",
+      "file": "Female_Name_Elite.glb",
+      "sha256": "0e2c2f5bb5313d1cfbbc1b9cf772b0e5dde9dccec3ae098599854bb33b89cbad"
+    },
+    {
+      "stage": "Legendary",
+      "file": "Female_Name_Legendary.glb",
+      "sha256": "641ccadb44b51474769e38c9994707c28162f998db2e07ee3c99b2532a440d07"
+    }
+  ],
+  "scope": "Actual textured rest renders for all stages and a shared existing clip frame for all stages, compared to source. This is representative visual QA, not exhaustive testing of every frame in all 14 clips."
+}

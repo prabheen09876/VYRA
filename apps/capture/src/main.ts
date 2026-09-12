@@ -168,7 +168,10 @@ const CONNECTIONS = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23
 function drawPose(landmarks: PoseLandmark[], visible: boolean) {
   if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) { canvas.width = video.videoWidth; canvas.height = video.videoHeight; }
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.lineWidth = Math.max(2, canvas.width / 240); context.strokeStyle = visible ? '#65dfcf' : '#e9c694'; context.fillStyle = '#ecf7ff';
+  // Nocturne spark / danger / text, the same pair as the `--track` / `--alert` badge dot in
+  // styles.css and CaptureSurface.tsx's status dot. All three read the same tracking state, so
+  // they move together or the screen shows one state in three colours.
+  context.lineWidth = Math.max(2, canvas.width / 240); context.strokeStyle = visible ? '#3D7BFF' : '#FF5A5F'; context.fillStyle = '#F2F5F8';
   for (const [start, end] of CONNECTIONS) {
     const a = landmarks[start], b = landmarks[end];
     if (!a || !b || (a.visibility ?? 0) < 0.5 || (b.visibility ?? 0) < 0.5) continue;

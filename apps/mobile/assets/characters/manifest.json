@@ -1,0 +1,465 @@
+{
+  "version": 1,
+  "normalization": "One source-space transform and one camera fit per family across all five stages.",
+  "characters": {
+    "goku": {
+      "sourceStem": "Goku",
+      "scale": 1.8005494721,
+      "position": [
+        0.0018545088099,
+        0.90000000348,
+        -0.011272868453
+      ],
+      "yaw": -1.37,
+      "galleryYaw": -2.71,
+      "accent": "#3D7BFF",
+      "framing": {
+        "fitHeight": 2.12,
+        "fitWidth": 1.5275674304,
+        "centerY": 0.94
+      },
+      "files": {
+        "starter": {
+          "source": "resources/goku-progression/Goku_Starter.glb",
+          "bytes": 10565092,
+          "sha256": "52b3ea1f6f77d5e6a2d8f087a23e548fea62bde377a2f82e96cfedf4ed679cce",
+          "positionsSha256": "e70dba1ac71dd316b4e880f23008efcd51057a11c67b27bcd32149e9127fa6b9",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "developing": {
+          "source": "resources/goku-progression/Goku_Developing.glb",
+          "bytes": 10565100,
+          "sha256": "fa5834584c9cb7f40ae68dd00597ba4336e9441f6c8f6d39b663b8c5b9b756c3",
+          "positionsSha256": "5bc862085ca733e81aab91daf7f20f12bd2650660cd4d8a0adf6d6fd0ed8e924",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "strong": {
+          "source": "resources/goku-progression/Goku_Strong.glb",
+          "bytes": 10565092,
+          "sha256": "c2f32391f72f4c38e7f4e5715323f13d177b0b21f8ffd8dce1104e9bb371f7a4",
+          "positionsSha256": "4bd203a6acf2eaa994d372eac5d391643a81aac7adb500850d5df7fe9b5eaa77",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "elite": {
+          "source": "resources/goku-progression/Goku_Elite.glb",
+          "bytes": 10565088,
+          "sha256": "d85f921d9979c02eb45d7011f009949d33302da001cd57b9b373b1ca81a6c4d6",
+          "positionsSha256": "17b6c050c99b844f9a03e6996d1797089514f784a7c84e0a951558f3e2737512",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "legendary": {
+          "source": "resources/goku-progression/Goku_Legendary.glb",
+          "bytes": 10565100,
+          "sha256": "3b214a7e09be61a30aa87d1a29a6228adc868b3d39247bf00ec9a6cb5d2446a6",
+          "positionsSha256": "4d7a5d0089788f6fcc4a99bf2ab5e31b6311abb74eef2749e9a1c13aea24aeaf",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        }
+      }
+    },
+    "base-male": {
+      "sourceStem": "Base_Male",
+      "scale": 0.005979073207,
+      "position": [
+        0.0040842295636,
+        -0.55072073298,
+        -0.016385331944
+      ],
+      "yaw": 0,
+      "galleryYaw": -0.22,
+      "accent": "#8B5CF6",
+      "framing": {
+        "fitHeight": 2.12,
+        "fitWidth": 3.9975813723,
+        "centerY": 0.94
+      },
+      "files": {
+        "starter": {
+          "source": "resources/base-male-progression/Base_Male_Starter.glb",
+          "bytes": 565116,
+          "sha256": "a28f394d68af8b847266be0d61a587b4837aed8cb9f448d9ec4bbb7e280e0501",
+          "positionsSha256": "29b8a80e8929845172be941f6104d29960245a80e02ded9dd5f22d3661a495b0",
+          "skins": 1,
+          "animations": 0,
+          "animationNames": []
+        },
+        "developing": {
+          "source": "resources/base-male-progression/Base_Male_Developing.glb",
+          "bytes": 565120,
+          "sha256": "bcf7f632f2aab1eec98eb9686f23b647290738ff73bb54cb47d56789d890f182",
+          "positionsSha256": "f0b64eab77a78868f5d4d2bd756fb2093bc83df4db9e1758e3eea98aad75c048",
+          "skins": 1,
+          "animations": 0,
+          "animationNames": []
+        },
+        "strong": {
+          "source": "resources/base-male-progression/Base_Male_Strong.glb",
+          "bytes": 565116,
+          "sha256": "7eaab9a8ffb7af099cef0b3b1295f9784d3aed1710f0985878d59ff905316f75",
+          "positionsSha256": "32c4781f8d4a50f7f100f3e6ecc3f1f291e7657c8f9efec0c90efb12e473fe5e",
+          "skins": 1,
+          "animations": 0,
+          "animationNames": []
+        },
+        "elite": {
+          "source": "resources/base-male-progression/Base_Male_Elite.glb",
+          "bytes": 565116,
+          "sha256": "0751815c3fef868b46e3b59d6c13a367ccc6944b990d520e646d8b1217dd8955",
+          "positionsSha256": "111ab45432e549a22aa2b82bfddb85ed3a29c7a3b92710122708818bb968f365",
+          "skins": 1,
+          "animations": 0,
+          "animationNames": []
+        },
+        "legendary": {
+          "source": "resources/base-male-progression/Base_Male_Legendary.glb",
+          "bytes": 565116,
+          "sha256": "9d89bbe4111c8ab9873a9a9ac2e0eac1a0e9a35152aa586e56c9af629e59cb3f",
+          "positionsSha256": "6b6b2dc59458db36d87a52aef049d646a848752a87ca431af6a8c017d3319ecb",
+          "skins": 1,
+          "animations": 0,
+          "animationNames": []
+        }
+      }
+    },
+    "base-female": {
+      "sourceStem": "Base_Female",
+      "scale": 0.40563990404,
+      "position": [
+        0,
+        -0.0081234730564,
+        0.022286429955
+      ],
+      "yaw": 0,
+      "galleryYaw": -0.22,
+      "accent": "#2DD4BF",
+      "framing": {
+        "fitHeight": 2.12,
+        "fitWidth": 1.4761033124,
+        "centerY": 0.94
+      },
+      "files": {
+        "starter": {
+          "source": "resources/base-female-progression/Base_Female_Starter.glb",
+          "bytes": 614864,
+          "sha256": "c55d0eadf5fa1531dbb148a413cef194256beaaf884e27b3a319b4213361c0a2",
+          "positionsSha256": "bc9917e7efc3ad56603ab7da2116a439c9070481b8ffebfbf9ba0cc90d75dc1f",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "developing": {
+          "source": "resources/base-female-progression/Base_Female_Developing.glb",
+          "bytes": 614864,
+          "sha256": "0ad10cab769fecd07c26883f4a2287080ea9843883d32b9b007a3520eb975129",
+          "positionsSha256": "ebb2580039a3ccb8dc2c837575bcfc9fba3acc6692e3a9dafac2f3ce7315454a",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "strong": {
+          "source": "resources/base-female-progression/Base_Female_Strong.glb",
+          "bytes": 614860,
+          "sha256": "880e0d7413272203565ad3a84db33c0c24772ad112b7efa8b106201dd40d60d9",
+          "positionsSha256": "16a00813e1e35c372fb9a8443086bfe046800434e6a042d3375cb17e0cc2b882",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "elite": {
+          "source": "resources/base-female-progression/Base_Female_Elite.glb",
+          "bytes": 614860,
+          "sha256": "0b4f6d33b579ab1f803b701e11ccccbb3fd0f3f56beec8c3c1ceedcf4a41b0df",
+          "positionsSha256": "f3f823d3e48467f23feb51d340e84d59c0204353895454a8f8726536d673684a",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "legendary": {
+          "source": "resources/base-female-progression/Base_Female_Legendary.glb",
+          "bytes": 614864,
+          "sha256": "a54f3301154235ba6733dbc9ac0626ce1f62fdbcf6298445b9f3b5b0369b0390",
+          "positionsSha256": "107be298bdd5ea74e555b2c4d5e37c14fe6bb09bfc10d17d24b3f95de0f6c40a",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        }
+      }
+    },
+    "mikasa": {
+      "sourceStem": "Female_Mikasa",
+      "scale": 0.50351262144,
+      "position": [
+        -3.7223024882e-7,
+        -3.2448723344e-7,
+        -0.023875037381
+      ],
+      "yaw": 0,
+      "galleryYaw": -0.22,
+      "accent": "#FF5A5F",
+      "framing": {
+        "fitHeight": 2.12,
+        "fitWidth": 1.3840854942,
+        "centerY": 0.94
+      },
+      "files": {
+        "starter": {
+          "source": "resources/female-mikasa-progression/Female_Mikasa_Starter.glb",
+          "bytes": 1953836,
+          "sha256": "9c444e125711ab3f31e21f5fc806e8c4ab1d395f735aedfe0651b322838eb2f5",
+          "positionsSha256": "706794e004f6a18e1e0ec97d551eae587c4de93a20cb02fcbb66cfcdd1fec171",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "developing": {
+          "source": "resources/female-mikasa-progression/Female_Mikasa_Developing.glb",
+          "bytes": 1953824,
+          "sha256": "2fcf8d02c24724790fcdd7295469d9a48b1af7e6e7e19452694def7308df0b3f",
+          "positionsSha256": "30e4b3ac61a631a4f60f1a179cab1c3205df0d9516040b8ae4899523d45bba82",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "strong": {
+          "source": "resources/female-mikasa-progression/Female_Mikasa_Strong.glb",
+          "bytes": 1953832,
+          "sha256": "ca67ba34fa5a7771f39c29ea0a2f816788b575929049f15de29f81beb110d450",
+          "positionsSha256": "df7e9a631fad2ec346dbab39e02bfc16afbc451818b83efa47c9a7d5ca7fb6ea",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "elite": {
+          "source": "resources/female-mikasa-progression/Female_Mikasa_Elite.glb",
+          "bytes": 1953832,
+          "sha256": "ea3e37308289152626e5bb3bdac9225f7cff00d49c4f012de00317f6557ab12d",
+          "positionsSha256": "c3b38ed13d84b9ec64141d22c23050b00060e443d365217fccc5ee44b7090dc5",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "legendary": {
+          "source": "resources/female-mikasa-progression/Female_Mikasa_Legendary.glb",
+          "bytes": 1953836,
+          "sha256": "09fe504773e7a9d5ad598204f1d6add3f02d3c45778fecd436de72e0ceb3d14f",
+          "positionsSha256": "e95e5d088a37c64e9eea78fb0a82c8e1dcf00bc9461be9f3a5fbc56dae976278",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        }
+      }
+    },
+    "nami": {
+      "sourceStem": "Female_Name",
+      "scale": 0.85747976615,
+      "position": [
+        -3.6483129665e-8,
+        5.8128029425e-7,
+        -2.5956185059e-8
+      ],
+      "yaw": 0,
+      "galleryYaw": -0.22,
+      "accent": "#FF6B3D",
+      "framing": {
+        "fitHeight": 2.12,
+        "fitWidth": 1.8841349305,
+        "centerY": 0.94
+      },
+      "files": {
+        "starter": {
+          "source": "resources/female-name-progression/Female_Name_Starter.glb",
+          "bytes": 3788072,
+          "sha256": "b382352a63eebaacbdaef7b1c437f2297aeb877a93e363dc774c95ff9fb26aea",
+          "positionsSha256": "86bad50a3a0310af0faeb8ed990f7344506ff4ccf8345c6f6f838c9e41452a41",
+          "skins": 5,
+          "animations": 14,
+          "animationNames": [
+            "Running",
+            "Walking",
+            "01a08a5f-260e-7737-a830-a2b07f0012d2",
+            "Arise",
+            "Attack",
+            "Boom_Dance",
+            "Casual_Walk",
+            "Dead",
+            "RunFast",
+            "Run_03",
+            "Skill_01",
+            "Skill_03",
+            "Unsteady_Walk",
+            "Walking_Woman"
+          ]
+        },
+        "developing": {
+          "source": "resources/female-name-progression/Female_Name_Developing.glb",
+          "bytes": 3788076,
+          "sha256": "ff03180a248158306e99e42d6e52f77e88340422f24f34ca5923b5926f15960e",
+          "positionsSha256": "10da0875677d7d4dc33b0e3b4df2bdc31f01f5c7fee71e6ff54105312585de12",
+          "skins": 5,
+          "animations": 14,
+          "animationNames": [
+            "Running",
+            "Walking",
+            "01a08a5f-260e-7737-a830-a2b07f0012d2",
+            "Arise",
+            "Attack",
+            "Boom_Dance",
+            "Casual_Walk",
+            "Dead",
+            "RunFast",
+            "Run_03",
+            "Skill_01",
+            "Skill_03",
+            "Unsteady_Walk",
+            "Walking_Woman"
+          ]
+        },
+        "strong": {
+          "source": "resources/female-name-progression/Female_Name_Strong.glb",
+          "bytes": 3788072,
+          "sha256": "d08828c63148996923173836ca9700510447b9ef51094d7689be0c85e11af227",
+          "positionsSha256": "83c78927943154028aebbe97fd0b9799fe350655e85b066ac0b2f5e898a70188",
+          "skins": 5,
+          "animations": 14,
+          "animationNames": [
+            "Running",
+            "Walking",
+            "01a08a5f-260e-7737-a830-a2b07f0012d2",
+            "Arise",
+            "Attack",
+            "Boom_Dance",
+            "Casual_Walk",
+            "Dead",
+            "RunFast",
+            "Run_03",
+            "Skill_01",
+            "Skill_03",
+            "Unsteady_Walk",
+            "Walking_Woman"
+          ]
+        },
+        "elite": {
+          "source": "resources/female-name-progression/Female_Name_Elite.glb",
+          "bytes": 3788072,
+          "sha256": "0e2c2f5bb5313d1cfbbc1b9cf772b0e5dde9dccec3ae098599854bb33b89cbad",
+          "positionsSha256": "db058970f43ba08ebaec0f89be4fecd3cb6ca07734b0dc7c6de93ccaa63a2dcb",
+          "skins": 5,
+          "animations": 14,
+          "animationNames": [
+            "Running",
+            "Walking",
+            "01a08a5f-260e-7737-a830-a2b07f0012d2",
+            "Arise",
+            "Attack",
+            "Boom_Dance",
+            "Casual_Walk",
+            "Dead",
+            "RunFast",
+            "Run_03",
+            "Skill_01",
+            "Skill_03",
+            "Unsteady_Walk",
+            "Walking_Woman"
+          ]
+        },
+        "legendary": {
+          "source": "resources/female-name-progression/Female_Name_Legendary.glb",
+          "bytes": 3788072,
+          "sha256": "641ccadb44b51474769e38c9994707c28162f998db2e07ee3c99b2532a440d07",
+          "positionsSha256": "825401756fac76562e72b0101ea4cd18f5f72840efc0d109b4be01cf205add57",
+          "skins": 5,
+          "animations": 14,
+          "animationNames": [
+            "Running",
+            "Walking",
+            "01a08a5f-260e-7737-a830-a2b07f0012d2",
+            "Arise",
+            "Attack",
+            "Boom_Dance",
+            "Casual_Walk",
+            "Dead",
+            "RunFast",
+            "Run_03",
+            "Skill_01",
+            "Skill_03",
+            "Unsteady_Walk",
+            "Walking_Woman"
+          ]
+        }
+      }
+    },
+    "sakura": {
+      "sourceStem": "Female_Sakura",
+      "scale": 0.011064367878,
+      "position": [
+        -0.000074115867588,
+        0.0040185564184,
+        0.0085832379128
+      ],
+      "yaw": 0,
+      "galleryYaw": -0.22,
+      "accent": "#4ADE80",
+      "framing": {
+        "fitHeight": 2.12,
+        "fitWidth": 1.5718346211,
+        "centerY": 0.94
+      },
+      "files": {
+        "starter": {
+          "source": "resources/female-sakura-progression/Female_Sakura_Starter.glb",
+          "bytes": 2877408,
+          "sha256": "48fcee8eea1cab7f79712be0b0d64a8cf964d9951208954668fc51e2f02cdbd1",
+          "positionsSha256": "77353404ba05335f923d62298d37cf0f8e5924d9c4a13756bf3870957a378946",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "developing": {
+          "source": "resources/female-sakura-progression/Female_Sakura_Developing.glb",
+          "bytes": 2877408,
+          "sha256": "170dd147710e490aae7249aa439c66877864203e2f813f48b44197f03116ecb6",
+          "positionsSha256": "dbc6ee0356378ab9b5ce0e7b499abc3a9392c3bbdbf704c92b860606e49d7969",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "strong": {
+          "source": "resources/female-sakura-progression/Female_Sakura_Strong.glb",
+          "bytes": 2877404,
+          "sha256": "3dea4826aba171297967500a03edea1c43c7a2f013c6dc22cfb22b8b0d5ff91d",
+          "positionsSha256": "4f4853bc31a465115ca48c128b5a14bd001ea424300c6acb500ef62f3b4d1e16",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "elite": {
+          "source": "resources/female-sakura-progression/Female_Sakura_Elite.glb",
+          "bytes": 2877404,
+          "sha256": "4c6283d4f03d72a049da85783d8ba7ac0ffd66cd5ec1fe03aa89d9a8ca451a9c",
+          "positionsSha256": "4a059b845fa27b9eb2211dd5969d12dc2564bb4c9a0bdbf01f54c384a542aefb",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        },
+        "legendary": {
+          "source": "resources/female-sakura-progression/Female_Sakura_Legendary.glb",
+          "bytes": 2877404,
+          "sha256": "1f372cdcce636f5df522202fedc9f9ac67f25621a4a9d9f05e298a4f1605872b",
+          "positionsSha256": "76e517a21380234c112273b9b7df51fed64e91f41672972ca7d6482c569529dd",
+          "skins": 0,
+          "animations": 0,
+          "animationNames": []
+        }
+      }
+    }
+  }
+}

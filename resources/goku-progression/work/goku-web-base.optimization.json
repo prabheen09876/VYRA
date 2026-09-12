@@ -1,0 +1,44 @@
+{
+  "source": "resources/goku.glb",
+  "sourceSha256": "4ab389d02c43df731cc9cefa6692fad07c69a7fec48324693523284deb962bdd",
+  "output": "resources/goku-progression/work/goku-web-base.glb",
+  "outputSha256": "82f5909492d11cf5acb847494a0122ae306769096aee67963002aee0a07bde6c",
+  "algorithm": "meshoptimizer 0.22.0 simplifyWithAttributes; exact position/normal/UV weld; preserve extremal vertices",
+  "sourceVertices": 456681,
+  "sourceTriangles": 559200,
+  "weldedVertices": 418960,
+  "outputVertices": 167831,
+  "outputTriangles": 119542,
+  "removedZeroAreaTriangles": 458,
+  "triangleReductionPercent": 78.62,
+  "sourceBytes": 21781932,
+  "outputBytes": 7257960,
+  "targetTriangles": 120000,
+  "errorLimit": 0.0015,
+  "resultingRelativeError": 0.0004076512122992426,
+  "resultingAbsoluteError": 0.0004075268070220517,
+  "errorMeaning": "Approximate meshoptimizer combined geometry/attribute metric, not a measured Hausdorff distance.",
+  "attributeWeights": {
+    "uv": 0.1,
+    "normal": 0.015
+  },
+  "lockedHeadAtLocalZ": null,
+  "localBounds": {
+    "min": [
+      -0.12896728515625,
+      -0.189910888671875,
+      -0.499847412109375
+    ],
+    "max": [
+      0.1269073486328125,
+      0.1899566650390625,
+      0.499847412109375
+    ]
+  },
+  "originalImageSha256": [
+    "c90f3a219d63645ac969b3bc132cad87b1f8483877ea5ad82c749009fc8b8ae4"
+  ],
+  "originalMaterialPreserved": true,
+  "sourceAttributionPreserved": true,
+  "elapsedMilliseconds": 789
+}

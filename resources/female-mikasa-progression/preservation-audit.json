@@ -1,0 +1,92 @@
+[
+  {
+    "stage": "Starter",
+    "immutableAccessorCount": 11,
+    "embeddedImageSha256": [
+      "56d01df91c18643042bbf5ce838401f6ebc7c4375f4ae46493c3abf943090f7d",
+      "24d479ab49a50692f24bd1a6e58a43dbd6e99fbdd015858b6e3f0f82ecb5ad9a",
+      "29974de2673b84db4843a631ea470a903adbb83e9cf8f2d81c6234a602a13d25"
+    ],
+    "preservedNodesMaterialsTextures": true,
+    "fixedBodyVertexCount": 288,
+    "rigidHandVertexCount": 569,
+    "newDegenerateTriangles": 0,
+    "reversedTrianglesComparedToSource": 0,
+    "triangleCount": 5114,
+    "sourceDegenerateTriangles": 0,
+    "normalLengthMaximumError": 1.1920928955078125e-07,
+    "fileSha256": "9c444e125711ab3f31e21f5fc806e8c4ab1d395f735aedfe0651b322838eb2f5"
+  },
+  {
+    "stage": "Developing",
+    "immutableAccessorCount": 11,
+    "embeddedImageSha256": [
+      "56d01df91c18643042bbf5ce838401f6ebc7c4375f4ae46493c3abf943090f7d",
+      "24d479ab49a50692f24bd1a6e58a43dbd6e99fbdd015858b6e3f0f82ecb5ad9a",
+      "29974de2673b84db4843a631ea470a903adbb83e9cf8f2d81c6234a602a13d25"
+    ],
+    "preservedNodesMaterialsTextures": true,
+    "fixedBodyVertexCount": 288,
+    "rigidHandVertexCount": 569,
+    "newDegenerateTriangles": 0,
+    "reversedTrianglesComparedToSource": 0,
+    "triangleCount": 5114,
+    "sourceDegenerateTriangles": 0,
+    "normalLengthMaximumError": 1.1920928955078125e-07,
+    "fileSha256": "2fcf8d02c24724790fcdd7295469d9a48b1af7e6e7e19452694def7308df0b3f"
+  },
+  {
+    "stage": "Strong",
+    "immutableAccessorCount": 11,
+    "embeddedImageSha256": [
+      "56d01df91c18643042bbf5ce838401f6ebc7c4375f4ae46493c3abf943090f7d",
+      "24d479ab49a50692f24bd1a6e58a43dbd6e99fbdd015858b6e3f0f82ecb5ad9a",
+      "29974de2673b84db4843a631ea470a903adbb83e9cf8f2d81c6234a602a13d25"
+    ],
+    "preservedNodesMaterialsTextures": true,
+    "fixedBodyVertexCount": 288,
+    "rigidHandVertexCount": 569,
+    "newDegenerateTriangles": 0,
+    "reversedTrianglesComparedToSource": 0,
+    "triangleCount": 5114,
+    "sourceDegenerateTriangles": 0,
+    "normalLengthMaximumError": 1.1920928955078125e-07,
+    "fileSha256": "ca67ba34fa5a7771f39c29ea0a2f816788b575929049f15de29f81beb110d450"
+  },
+  {
+    "stage": "Elite",
+    "immutableAccessorCount": 11,
+    "embeddedImageSha256": [
+      "56d01df91c18643042bbf5ce838401f6ebc7c4375f4ae46493c3abf943090f7d",
+      "24d479ab49a50692f24bd1a6e58a43dbd6e99fbdd015858b6e3f0f82ecb5ad9a",
+      "29974de2673b84db4843a631ea470a903adbb83e9cf8f2d81c6234a602a13d25"
+    ],
+    "preservedNodesMaterialsTextures": true,
+    "fixedBodyVertexCount": 288,
+    "rigidHandVertexCount": 569,
+    "newDegenerateTriangles": 0,
+    "reversedTrianglesComparedToSource": 0,
+    "triangleCount": 5114,
+    "sourceDegenerateTriangles": 0,
+    "normalLengthMaximumError": 1.1920928955078125e-07,
+    "fileSha256": "ea3e37308289152626e5bb3bdac9225f7cff00d49c4f012de00317f6557ab12d"
+  },
+  {
+    "stage": "Legendary",
+    "immutableAccessorCount": 11,
+    "embeddedImageSha256": [
+      "56d01df91c18643042bbf5ce838401f6ebc7c4375f4ae46493c3abf943090f7d",
+      "24d479ab49a50692f24bd1a6e58a43dbd6e99fbdd015858b6e3f0f82ecb5ad9a",
+      "29974de2673b84db4843a631ea470a903adbb83e9cf8f2d81c6234a602a13d25"
+    ],
+    "preservedNodesMaterialsTextures": true,
+    "fixedBodyVertexCount": 288,
+    "rigidHandVertexCount": 569,
+    "newDegenerateTriangles": 0,
+    "reversedTrianglesComparedToSource": 0,
+    "triangleCount": 5114,
+    "sourceDegenerateTriangles": 0,
+    "normalLengthMaximumError": 1.1920928955078125e-07,
+    "fileSha256": "09fe504773e7a9d5ad598204f1d6add3f02d3c45778fecd436de72e0ceb3d14f"
+  }
+]

@@ -4,15 +4,18 @@ import { usePathname } from 'expo-router';
 import * as Speech from 'expo-speech';
 import {
   PROTOCOL_VERSION, type CaptureMessage, type ClientCommand, type CosmeticSlot,
-  type GuestSession, type MatchCreated, type MatchMode, type MatchmakingEvent,
+  type GuestSession, type MatchCreated, type MatchMode,
   type MatchSnapshot, type Profile, type ServerEvent,
+  type CharacterId, type FitnessSetupInput, type BodyCheckInInput,
+  validateFitnessSetup, validateBodyCheckIn, isCharacterId,
 } from '@vyra/core';
 import { ApiError, errorMessage, normalizeApiUrl, request } from '../lib/api';
 import { readSession, saveSession, type SavedSession } from '../lib/storage';
 import { rememberExerciseWindow, routeCapturedRep } from '../lib/rep-window';
 import { waitForTerminalReceipt } from '../lib/reward-receipt';
 import { ARENA_TEST_MODE } from '../lib/testMode';
-import type { ExerciseWindow } from '@vyra/core/match';
+import { createMatchmakingSearch, type MatchmakingSearch } from '../lib/matchmaking-client';
+import { HEARTBEAT_TIMEOUT, LOBBY_HEARTBEAT_TIMEOUT, type ExerciseWindow } from '@vyra/core/match';
 
 type Connection = 'disconnected' | 'connecting' | 'connected' | 'error';
 type CaptureRep = Extract<CaptureMessage, { type: 'capture.rep' }>;
@@ -21,6 +24,7 @@ type RewardStatus = 'idle' | 'pending' | 'received' | 'unavailable';
 const defaultUrl = process.env.EXPO_PUBLIC_API_URL?.trim().replace(/\/+$/, '') || (Platform.OS === 'web' ? 'http://localhost:8787' : '');
 const initialSession: SavedSession = { apiUrl: defaultUrl, token: null, name: '', muted: false, reducedMotion: false, identities: {} };
 const terminal = (snapshot: MatchSnapshot | null) => !snapshot || snapshot.phase === 'finished' || snapshot.phase === 'interrupted';
+const cancelledSearch = () => Object.assign(new Error('Opponent search cancelled.'), { name: 'AbortError' });
 
 interface AppContextValue {
   profile: Profile | null;
@@ -32,6 +36,9 @@ interface AppContextValue {
   refreshProfile: () => Promise<void>;
   setPreferences: (patch: Partial<Pick<SavedSession, 'muted' | 'reducedMotion'>>) => void;
   equip: (slot: CosmeticSlot, itemId: string) => Promise<void>;
+  setupFitness: (input: FitnessSetupInput) => Promise<void>;
+  recordCheckIn: (input: BodyCheckInInput) => Promise<void>;
+  selectCharacter: (characterId: CharacterId) => Promise<void>;
   snapshot: MatchSnapshot | null;
   match: MatchCreated | null;
   socketStatus: Connection;
@@ -64,6 +71,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const sessionRef = useRef(initialSession);
   const [profile, setProfile] = useState<Profile | null>(null);
   const profileRef = useRef<Profile | null>(null);
+  const profileRequests = useRef<Promise<unknown>>(Promise.resolve());
   profileRef.current = profile;
   const [booting, setBooting] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -85,12 +93,14 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const rewardAttempt = useRef(0);
   const serverOffsetRef = useRef(0);
   const socketRef = useRef<WebSocket | null>(null);
+  const socketSetup = useRef(0);
   const lastServerMessage = useRef(Date.now());
   const seqRef = useRef(0);
   const trackingRef = useRef({ phaseId: '', sentAt: 0, visible: false });
   const wasMatchRoute = useRef(false);
   const [calibration, setCalibrationState] = useState({ squat: 0, pushup: 0 });
-  const matchmakingSocket = useRef<WebSocket | null>(null);
+  const matchmakingSearch = useRef<MatchmakingSearch | null>(null);
+  const matchmakingGeneration = useRef(0);
   const [matchmakingStatus, setMatchmakingStatus] = useState<'idle' | 'searching'>('idle');
 
   const setRewardState = useCallback((status: RewardStatus, error: string | null = null) => {
@@ -113,13 +123,29 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     void saveSession(next).catch(() => setConnectionError('Your device could not save this session. Keep the app open to retain access, then check device storage.'));
   }, []);
 
+  // Keep profile reads/writes in order so a late refresh cannot undo a saved check-in
+  // or character choice in the UI. The server also serializes these with rewards.
+  const requestProfile = useCallback((path: string, body?: unknown): Promise<Profile> => {
+    const current = sessionRef.current;
+    const task = profileRequests.current.catch(() => undefined).then(async () => {
+      if (!current.token) throw new Error('Connect your player profile before saving your journey.');
+      if (sessionRef.current.token !== current.token || sessionRef.current.apiUrl !== current.apiUrl) throw new Error('Your player profile changed. Please try again.');
+      const updated = await request<Profile>(current.apiUrl, path, { token: current.token, body });
+      if (sessionRef.current.token !== current.token || sessionRef.current.apiUrl !== current.apiUrl) throw new Error('Your player profile changed. Please try again.');
+      profileRef.current = updated;
+      setProfile(updated);
+      return updated;
+    });
+    profileRequests.current = task.catch(() => undefined);
+    return task;
+  }, []);
+
   const refreshProfile = useCallback(async () => {
     const current = sessionRef.current;
     if (!current.token || !current.apiUrl) return;
     try {
-      const next = await request<Profile>(current.apiUrl, '/api/profile', { token: current.token });
+      await requestProfile('/api/profile');
       if (sessionRef.current.apiUrl !== current.apiUrl || sessionRef.current.token !== current.token) return;
-      setProfile(next);
       setConnectionError(null);
     } catch (error) {
       if (sessionRef.current.apiUrl !== current.apiUrl || sessionRef.current.token !== current.token) return;
@@ -132,7 +158,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       setConnectionError(errorMessage(error));
       throw error;
     }
-  }, [persist]);
+  }, [persist, requestProfile]);
 
   useEffect(() => {
     let alive = true;
@@ -198,12 +224,34 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, []);
 
   const equip = useCallback(async (slot: CosmeticSlot, itemId: string) => {
+    await requestProfile('/api/profile/equip', { slot, itemId });
+  }, [requestProfile]);
+
+  const setupFitness = useCallback(async (input: FitnessSetupInput) => {
+    validateFitnessSetup(input);
     const current = sessionRef.current;
-    if (!current.token) throw new Error('Connect your player profile before equipping a collectible.');
-    const updated = await request<Profile>(current.apiUrl, '/api/profile/equip', { token: current.token, body: { slot, itemId } });
-    if (sessionRef.current.apiUrl !== current.apiUrl || sessionRef.current.token !== current.token) return;
-    setProfile(updated);
-  }, []);
+    try { await requestProfile('/api/profile/fitness', input); }
+    catch (error) {
+      if (sessionRef.current.token !== current.token || sessionRef.current.apiUrl !== current.apiUrl) throw error;
+      if (error instanceof ApiError && error.status !== 409) throw error;
+      // The server may have committed setup before its response was lost. Recover
+      // the saved plan instead of leaving the player trapped in a one-time form.
+      const recovered = await requestProfile('/api/profile').catch(() => null);
+      const saved = recovered?.fitness;
+      if (saved && saved.goal === input.goal && saved.startingBuild === input.startingBuild &&
+          saved.startWeightKg === input.weightKg && saved.startHeightCm === input.heightCm &&
+          saved.targetWeightKg === input.targetWeightKg) return;
+      throw error;
+    }
+  }, [requestProfile]);
+  const recordCheckIn = useCallback(async (input: BodyCheckInInput) => {
+    validateBodyCheckIn(input);
+    await requestProfile('/api/profile/check-ins', input);
+  }, [requestProfile]);
+  const selectCharacter = useCallback(async (characterId: CharacterId) => {
+    if (!isCharacterId(characterId)) throw new Error('Choose one of the available characters.');
+    await requestProfile('/api/profile/character', { characterId });
+  }, [requestProfile]);
 
   const send = useCallback((command: ClientCommand): boolean => {
     if (socketRef.current?.readyState !== WebSocket.OPEN) return false;
@@ -224,19 +272,24 @@ export function AppProvider({ children }: React.PropsWithChildren) {
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
+      // Native camera permission dialogs briefly make the app inactive. No workout
+      // has started while the matched player is completing this camera check.
+      if (state === 'inactive' && pathname === '/calibrate' && snapshotRef.current?.phase === 'lobby') return;
       if (state !== 'active' && (socketStatus === 'connecting' || !terminal(snapshotRef.current))) stopMatch('App moved to the background');
     });
     return () => subscription.remove();
-  }, [stopMatch, socketStatus]);
+  }, [pathname, stopMatch, socketStatus]);
 
   useEffect(() => {
-    const isMatchRoute = pathname === '/lobby' || pathname === '/battle';
+    // Match setup includes camera preparation. Use the current phase so partial
+    // router state cannot close the room before its query params arrive.
+    const isMatchRoute = pathname === '/lobby' || pathname === '/battle' || (pathname === '/calibrate' && snapshot?.phase === 'lobby');
     if (isMatchRoute) wasMatchRoute.current = true;
     else if (wasMatchRoute.current || (socketStatus === 'connecting' && pathname !== '/arena')) {
       wasMatchRoute.current = false;
       if (socketStatus === 'connecting' || !terminal(snapshotRef.current)) stopMatch('Player left the arena');
     }
-  }, [pathname, stopMatch, socketStatus]);
+  }, [pathname, snapshot?.phase, stopMatch, socketStatus]);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
@@ -254,7 +307,9 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     };
   }, [stopMatch]);
 
-  const openSocket = useCallback(async (created: MatchCreated) => {
+  const openSocket = useCallback(async (created: MatchCreated, canConnect: () => boolean = () => true) => {
+    if (!canConnect()) throw cancelledSearch();
+    const setup = ++socketSetup.current;
     const current = sessionRef.current;
     cancelRewardWait();
     setRewardState('idle');
@@ -274,6 +329,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
       const result = await request<{ ticket: string }>(current.apiUrl, '/api/matches/' + encodeURIComponent(created.matchId) + '/ticket', {
         token: current.token, method: 'POST', body: {},
       });
+      if (setup !== socketSetup.current || !canConnect()) throw cancelledSearch();
       if (stoppedRef.current || AppState.currentState === 'background' || AppState.currentState === 'inactive' ||
           (Platform.OS === 'web' && typeof document !== 'undefined' && document.hidden)) {
         throw new Error('Workout setup stopped because the app left the arena. Return to the app and start again.');
@@ -366,8 +422,10 @@ export function AppProvider({ children }: React.PropsWithChildren) {
         }
       };
     } catch (error) {
-      setSocketStatus('error');
-      setMatchError(errorMessage(error));
+      if (setup === socketSetup.current) {
+        setSocketStatus(canConnect() ? 'error' : 'disconnected');
+        if (canConnect()) setMatchError(errorMessage(error));
+      }
       throw error;
     }
   }, [announce, refreshProfile, cancelRewardWait, setRewardState]);
@@ -375,7 +433,8 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   useEffect(() => {
     if (socketStatus !== 'connected' && socketStatus !== 'connecting') return;
     const timer = setInterval(() => {
-      if (Date.now() - lastServerMessage.current > 12000) {
+      const timeout = snapshotRef.current?.phase === 'lobby' ? LOBBY_HEARTBEAT_TIMEOUT : HEARTBEAT_TIMEOUT;
+      if (Date.now() - lastServerMessage.current > timeout) {
         stoppedRef.current = true;
         setLocalStopped(true);
         setSocketStatus('error');
@@ -389,8 +448,10 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, [send, socketStatus]);
 
   useEffect(() => () => {
+    socketSetup.current += 1;
+    matchmakingGeneration.current += 1;
     socketRef.current?.close();
-    matchmakingSocket.current?.close();
+    matchmakingSearch.current?.cancel();
     if (rewardWaitTimer.current) clearTimeout(rewardWaitTimer.current);
     rewardRecovery.current?.abort();
     rewardAttempt.current += 1;
@@ -460,57 +521,42 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, [openSocket]);
 
   const cancelMatchmaking = useCallback(() => {
-    const socket = matchmakingSocket.current;
-    matchmakingSocket.current = null;
+    matchmakingGeneration.current += 1;
+    const search = matchmakingSearch.current;
+    matchmakingSearch.current = null;
     setMatchmakingStatus('idle');
-    if (socket?.readyState === WebSocket.OPEN) {
-      try { socket.send(JSON.stringify({ type: 'cancel', protocolVersion: PROTOCOL_VERSION })); } catch { /* closing anyway */ }
-    }
-    socket?.close();
+    search?.cancel();
   }, []);
 
   // "Battle with Randoms": pairs with another waiting player, then hands off into the exact same
   // openSocket()/MatchRoom path room-code matches already use — no separate battle logic here.
-  const enterMatchmaking = useCallback((): Promise<MatchCreated> => {
+  const enterMatchmaking = useCallback(async (): Promise<MatchCreated> => {
     const current = sessionRef.current;
-    if (!current.token) return Promise.reject(new Error('Connect your player profile before entering the arena.'));
-    setMatchmakingStatus('searching');
-    return new Promise<MatchCreated>((resolve, reject) => {
-      void (async () => {
-        try {
-          const { ticket } = await request<{ ticket: string }>(current.apiUrl, '/api/matchmaking/ticket', { token: current.token!, method: 'POST', body: {} });
-          const url = current.apiUrl.replace(/^http/, 'ws') + '/api/matchmaking/ws?ticket=' + encodeURIComponent(ticket);
-          const socket = new WebSocket(url);
-          matchmakingSocket.current = socket;
-          socket.onmessage = (message) => {
-            if (matchmakingSocket.current !== socket) return;
-            let event: MatchmakingEvent;
-            try { event = JSON.parse(String(message.data)) as MatchmakingEvent; } catch { return; }
-            if (event.type === 'matched') {
-              matchmakingSocket.current = null;
-              setMatchmakingStatus('idle');
-              socket.close(1000, 'Matched');
-              const created: MatchCreated = { matchId: event.matchId, roomCode: event.roomCode };
-              openSocket(created).then(() => resolve(created)).catch(reject);
-            } else if (event.type === 'error') {
-              matchmakingSocket.current = null;
-              setMatchmakingStatus('idle');
-              reject(new Error(event.message));
-            }
-          };
-          socket.onerror = () => {
-            if (matchmakingSocket.current !== socket) return;
-            matchmakingSocket.current = null;
-            setMatchmakingStatus('idle');
-            reject(new Error('The matchmaking connection failed. Try again.'));
-          };
-          socket.onclose = () => { if (matchmakingSocket.current === socket) { matchmakingSocket.current = null; setMatchmakingStatus('idle'); } };
-        } catch (error) {
-          setMatchmakingStatus('idle');
-          reject(error instanceof Error ? error : new Error('Could not start matchmaking.'));
-        }
-      })();
+    if (!current.token) throw new Error('Connect your player profile before entering the arena.');
+    if (matchmakingSearch.current) throw new Error('An opponent search is already running.');
+    const generation = ++matchmakingGeneration.current;
+    const search = createMatchmakingSearch({
+      requestTicket: async () => {
+        const { ticket } = await request<{ ticket: string }>(current.apiUrl, '/api/matchmaking/ticket', { token: current.token!, method: 'POST', body: {} });
+        return ticket;
+      },
+      createSocket: ticket => new WebSocket(current.apiUrl.replace(/^http/, 'ws') + '/api/matchmaking/ws?ticket=' + encodeURIComponent(ticket)),
     });
+    matchmakingSearch.current = search;
+    setMatchmakingStatus('searching');
+    try {
+      const created = await search.result;
+      if (matchmakingSearch.current !== search || matchmakingGeneration.current !== generation) throw cancelledSearch();
+      matchmakingSearch.current = null;
+      setMatchmakingStatus('idle');
+      await openSocket(created, () => matchmakingGeneration.current === generation);
+      return created;
+    } finally {
+      if (matchmakingSearch.current === search) {
+        matchmakingSearch.current = null;
+        setMatchmakingStatus('idle');
+      }
+    }
   }, [openSocket]);
 
   const ready = useCallback(() => {
@@ -554,6 +600,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, [send]);
 
   const resetMatch = useCallback(() => {
+    socketSetup.current += 1;
     cancelRewardWait();
     setRewardState('idle');
     if (!terminal(snapshotRef.current)) stopMatch();
@@ -575,6 +622,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
 
   return <AppContext.Provider value={{
     profile, session, booting, busy, connectionError, connect, refreshProfile, setPreferences, equip,
+    setupFitness, recordCheckIn, selectCharacter,
     snapshot, match, socketStatus, matchError, localStopped, serverOffset,
     createMatch, joinMatch, matchmakingStatus, enterMatchmaking, cancelMatchmaking, ready, sendRep, sendTracking, stopMatch, resetMatch,
     rewardStatus, rewardError, retryRewardReceipt,

@@ -74,4 +74,4 @@ export function NativePoseCamera({ active, onFrame, onError, onTrackingLoss }: N
     onOutputOrientationChanged={pose.cameraOrientationChangedHandler}
     onError={error => onError(error.message)} />;
 }
-const styles = StyleSheet.create({ permission: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 }, text: { color: '#d8e7f8' } });
+const styles = StyleSheet.create({ permission: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 }, text: { color: '#F2F5F8' } });

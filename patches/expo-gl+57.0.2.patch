@@ -1,0 +1,49 @@
+diff --git a/node_modules/expo-gl/build/GLUtils.js b/node_modules/expo-gl/build/GLUtils.js
+index 5f9470b..2434365 100644
+--- a/node_modules/expo-gl/build/GLUtils.js
++++ b/node_modules/expo-gl/build/GLUtils.js
+@@ -8,6 +8,11 @@ const MAX_STRING_LENGTH = 20;
+  * Sets up `__expoSetLogging` method providing some logging options useful when debugging GL calls.
+  */
+ export function configureLogging(gl) {
++    // The context may already be gone by the time we get here (see `getGl` in GLView),
++    // in which case there is nothing to instrument.
++    if (!gl) {
++        return;
++    }
+     // Enable/disable logging of all GL function calls
+     let loggingOption = GLLoggingOption.DISABLED;
+     gl.__expoSetLogging = (option) => {
+diff --git a/node_modules/expo-gl/build/GLView.js b/node_modules/expo-gl/build/GLView.js
+index 3bd33ef..f9a3dad 100644
+--- a/node_modules/expo-gl/build/GLView.js
++++ b/node_modules/expo-gl/build/GLView.js
+@@ -33,7 +33,11 @@ export class GLView extends React.Component {
+      */
+     static async createContextAsync() {
+         const { exglCtxId } = await GLNativeModule.createContextAsync();
+-        return getGl(exglCtxId);
++        const gl = getGl(exglCtxId);
++        if (!gl) {
++            throw new CodedError('ERR_GL_NOT_AVAILABLE', `GL context ${exglCtxId} was not registered. The context was likely destroyed before it finished being prepared.`);
++        }
++        return gl;
+     }
+     /**
+      * Destroys given context. This method is intended to use to destroy headless context created with `createContextAsync`.
+@@ -81,6 +85,15 @@ export class GLView extends React.Component {
+     };
+     _onSurfaceCreate = ({ nativeEvent: { exglCtxId } }) => {
+         const gl = getGl(exglCtxId);
++        // GLContext.initialize() emits this event unconditionally, including when the
++        // surface was destroyed before the context finished being prepared on the JS
++        // thread (a quick mount/unmount of the view). The id is then missing from
++        // `global.__EXGLContexts` and there is no context to hand out. Drop the stale
++        // event rather than crashing; the platform re-fires surface creation with a
++        // fresh context once the view is attached again.
++        if (!gl) {
++            return;
++        }
+         this.exglCtxId = exglCtxId;
+         if (this.props.onContextCreate) {
+             this.props.onContextCreate(gl);

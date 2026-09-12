@@ -2,7 +2,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } fr
 import { AccessibilityInfo, PanResponder, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Canvas } from '@react-three/fiber/native';
 import { useGLTF } from '@react-three/drei/native';
-import { fitSceneToStage, HeroScene, HeroRenderBoundary, ModelLoading, type HeroFraming } from './HeroView.shared';
+import { fitSceneToStage, HeroScene, HeroRenderBoundary, ModelLoading, type HeroFlare, type HeroFraming } from './HeroView.shared';
 
 export interface CharacterShowcaseProps {
   glb: any; label: string; active?: boolean; style?: StyleProp<ViewStyle>;
@@ -14,21 +14,23 @@ export interface CharacterShowcaseProps {
   targetHeight?: number;
   /** Lit plinth + contact rings under the model. */
   pedestal?: boolean;
+  /** Opt-in ember flare behind the character; omitted means no flare. */
+  flare?: HeroFlare;
   /** Opt-in camera framing; omitted means the original width-pinned showcase framing. */
   framing?: HeroFraming;
 }
 
-function Model({ glb, active, reducedMotion, rotation, targetHeight, pedestal, framing, onReady }: {
-  glb: any; active: boolean; reducedMotion: boolean; rotation: number; targetHeight: number; pedestal: boolean; framing?: HeroFraming; onReady: () => void;
+function Model({ glb, active, reducedMotion, rotation, targetHeight, pedestal, flare, framing, onReady }: {
+  glb: any; active: boolean; reducedMotion: boolean; rotation: number; targetHeight: number; pedestal: boolean; flare?: HeroFlare; framing?: HeroFraming; onReady: () => void;
 }) {
   const result = useGLTF(glb);
   const model = Array.isArray(result) ? result[0]! : result;
-  const fitted = useMemo(() => fitSceneToStage(model.scene.clone(true), targetHeight), [model.scene, targetHeight]);
+  const fitted = useMemo(() => fitSceneToStage(model.scene, targetHeight), [model.scene, targetHeight]);
   // useGLTF suspends, so reaching this effect means the model is decoded and on screen.
   useEffect(onReady, [onReady, fitted]);
-  return <HeroScene source={fitted} active={active} reducedMotion={reducedMotion} rotation={rotation} pedestal={pedestal} framing={framing} />;
+  return <HeroScene source={fitted} active={active} reducedMotion={reducedMotion} rotation={rotation} pedestal={pedestal} flare={flare} framing={framing} />;
 }
-export default function CharacterShowcase({ glb, label, active = true, style, yaw = -0.18, targetHeight = 1.8, pedestal = true, framing }: CharacterShowcaseProps) {
+export default function CharacterShowcase({ glb, label, active = true, style, yaw = -0.18, targetHeight = 1.8, pedestal = true, flare, framing }: CharacterShowcaseProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [rotation, setRotation] = useState(yaw);
   const [loaded, setLoaded] = useState(false);
@@ -51,7 +53,7 @@ export default function CharacterShowcase({ glb, label, active = true, style, ya
   }), []);
   return <View accessible accessibilityLabel={`${label}. Drag to rotate.`} style={[{ height: 340, width: '100%' }, style]} {...pan.panHandlers}>
     <HeroRenderBoundary resetKey={glb}><Canvas frameloop={active && !reducedMotion ? 'always' : 'demand'} camera={{ position: [0, 1.65, 6.8], fov: 32 }} onCreated={({ camera }) => camera.lookAt(0, 1.6, 0)}>
-      <Suspense fallback={null}><Model glb={glb} active={active} reducedMotion={reducedMotion} rotation={rotation} targetHeight={targetHeight} pedestal={pedestal} framing={framing} onReady={onReady} /></Suspense>
+      <Suspense fallback={null}><Model glb={glb} active={active} reducedMotion={reducedMotion} rotation={rotation} targetHeight={targetHeight} pedestal={pedestal} flare={flare} framing={framing} onReady={onReady} /></Suspense>
     </Canvas></HeroRenderBoundary>
     {!loaded && <ModelLoading label={label} />}
   </View>;

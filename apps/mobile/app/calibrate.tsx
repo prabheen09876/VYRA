@@ -5,16 +5,20 @@ import type { CaptureMessage, Exercise } from '@vyra/core';
 import CaptureSurface from '../src/components/CaptureSurface';
 import { Button, Copy, Heading, Notice, Pill, Screen, layout } from '../src/components/ui';
 import { useApp } from '../src/state/AppProvider';
-import { colors, fonts, radii } from '../src/theme';
+import { colors, displayWeight, fonts, radii } from '../src/theme';
 
 export default function CalibrationScreen() {
   const params = useLocalSearchParams<{ next?: string; mode?: string; room?: string }>();
-  const { session, calibration, setCalibration, announce, setPreferences } = useApp();
+  const { session, calibration, setCalibration, announce, setPreferences, snapshot, match, localStopped } = useApp();
+  const returningToLobby = params.next === 'lobby';
   const [exercise, setExercise] = useState<Exercise>('squat');
   const [attempt, setAttempt] = useState(0);
   const counts = useRef({ squat: 0, pushup: 0 });
   const { width } = useWindowDimensions();
   useEffect(() => { setCalibration('squat', 0); setCalibration('pushup', 0); }, [setCalibration]);
+  useEffect(() => {
+    if (returningToLobby && (snapshot?.phase === 'finished' || snapshot?.phase === 'interrupted' || localStopped)) router.replace('/results');
+  }, [returningToLobby, snapshot?.phase, localStopped]);
   const onRep = (rep: Extract<CaptureMessage, { type: 'capture.rep' }>) => {
     if (rep.exercise !== exercise || counts.current[exercise] >= 2) return;
     counts.current[exercise] += 1;
@@ -23,7 +27,8 @@ export default function CalibrationScreen() {
   };
   const done = calibration.squat >= 2 && calibration.pushup >= 2;
   const count = calibration[exercise];
-  const goArena = () => router.replace({ pathname: '/arena', params: { mode: params.mode || 'solo', room: params.room || '' } });
+  const goBack = () => returningToLobby ? router.back() : router.replace({ pathname: '/arena', params: { mode: params.mode || 'solo', room: params.room || '' } });
+  if (returningToLobby && !match) return <Screen noNav><Notice title="No room is open" action={() => router.replace('/arena')} actionLabel="Return to the arena">Find an opponent or join a room before preparing for a match.</Notice></Screen>;
   return <Screen noNav back={() => router.back()}>
     <View style={[layout.split, { marginBottom: 22 }]}><Pill>Camera check</Pill><Button variant="quiet" onPress={() => setPreferences({ muted: !session.muted })}>{session.muted ? 'Sound off' : 'Sound on'}</Button></View>
     <View style={layout.section}><Heading size={38}>{done ? 'You’re ready to move.' : exercise === 'squat' ? 'Give yourself some space.' : 'Time to find your floor angle.'}</Heading><Copy>{done ? 'Both movements are calibrated. These practice reps do not earn XP.' : exercise === 'squat' ? 'Place your phone securely and step back until your head, hips, and feet fit in the camera.' : 'Use a side view with your shoulders, hips, and ankles visible. Keep your phone steady.'}</Copy></View>
@@ -39,7 +44,7 @@ export default function CalibrationScreen() {
           <Check complete={calibration.squat >= 2} title="Squats" count={calibration.squat} />
           <Check complete={calibration.pushup >= 2} title="Push-ups" count={calibration.pushup} />
         </View>
-        {done ? <Button onPress={goArena}>Choose my workout</Button> : exercise === 'squat' && count >= 2 ? <Button onPress={() => setExercise('pushup')}>Set up push-ups</Button> : <View style={styles.waiting}><Text style={styles.waitingText}>Your camera will count the reps.</Text></View>}
+        {done ? <Button onPress={goBack}>{returningToLobby ? 'Return to your room' : 'Choose my workout'}</Button> : exercise === 'squat' && count >= 2 ? <Button onPress={() => setExercise('pushup')}>Set up push-ups</Button> : <View style={styles.waiting}><Text style={styles.waitingText}>Your camera will count the reps.</Text></View>}
         <Copy>No rep showing? Step into the light, check that your whole body is visible, and move steadily.</Copy>
         <Pressable accessibilityRole="button" style={styles.restart} onPress={() => { counts.current = { squat: 0, pushup: 0 }; setCalibration('squat', 0); setCalibration('pushup', 0); setExercise('squat'); setAttempt(value => value + 1); }}><Text style={styles.restartText}>Restart camera check</Text></Pressable>
       </View>
@@ -47,17 +52,25 @@ export default function CalibrationScreen() {
     {!session.apiUrl && <Notice title="Add your server address" action={() => router.push('/profile')} actionLabel="Open setup">Your camera page loads from the VYRA server you configure in Profile.</Notice>}
   </Screen>;
 }
+// The completed box mirrors the primary button (light fill, `ink` mark) so the screen's two
+// "done / go" affordances read as one family: `text` fill with an `ink` tick is 18.1:1, where the
+// same tick on a `brand` or `accent` fill would be 5.2:1 / 5.6:1 — passing, but a visibly weaker
+// pairing for a 14px glyph, and it would spend the accent hue on a checklist row.
+// Unchecked, the border is the box's ONLY boundary, so it runs on `lineControl` (3.24:1 over the
+// page, clearing 1.4.11) instead of the decorative `lineStrong`, which is only 1.77:1.
 function Check({ complete, title, count }: { complete: boolean; title: string; count: number }) {
-  return <View style={layout.split}><View style={layout.row}><View style={[styles.check, complete && { backgroundColor: colors.teal }]}><Text style={{ color: colors.ink, fontWeight: '800' }}>{complete ? '✓' : ''}</Text></View><Text style={styles.checkTitle}>{title}</Text></View><Text style={styles.checkCount}>{count} / 2</Text></View>;
+  return <View style={layout.split}><View style={layout.row}><View style={[styles.check, complete && { backgroundColor: colors.text, borderColor: colors.text }]}><Text style={{ color: colors.ink, fontWeight: '800' }}>{complete ? '✓' : ''}</Text></View><Text style={styles.checkTitle}>{title}</Text></View><Text style={styles.checkCount}>{count} / 2</Text></View>;
 }
 const styles = StyleSheet.create({
   columns: { gap: 28, marginBottom: 28 }, instructions: { gap: 19, paddingVertical: 8 },
-  stepLabel: { fontFamily: fonts.body, color: colors.teal, fontWeight: '700', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.6 },
-  count: { fontFamily: fonts.display, color: colors.teal, fontSize: 43, fontWeight: '900' }, countMax: { fontSize: 24, color: colors.muted },
+  // Eyebrow sits on `brand` to match the "Camera check" Pill above it (5.2:1 on the page); the rep
+  // counter next to it is progress you just earned, so it takes `accent` (5.6:1).
+  stepLabel: { fontFamily: fonts.body, color: colors.brand, fontWeight: '700', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.6 },
+  count: { fontFamily: fonts.display, color: colors.accent, fontSize: 43, fontWeight: displayWeight.heavy }, countMax: { fontSize: 24, color: colors.muted },
   instruction: { fontFamily: fonts.body, color: colors.muted, fontSize: 16, lineHeight: 26 },
   checklist: { gap: 18, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.line, paddingVertical: 22 },
-  check: { width: 25, height: 25, borderRadius: 9, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
+  check: { width: 25, height: 25, borderRadius: 9, borderWidth: 1, borderColor: colors.lineControl, alignItems: 'center', justifyContent: 'center' },
   checkTitle: { color: colors.text, fontFamily: fonts.body, fontSize: 16, fontWeight: '600' }, checkCount: { color: colors.muted, fontFamily: fonts.body, fontSize: 14 },
   waiting: { borderRadius: radii.md, padding: 16, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.line }, waitingText: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, textAlign: 'center' },
-  restart: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }, restartText: { color: colors.teal, fontFamily: fonts.body, fontSize: 14, fontWeight: '600' },
+  restart: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }, restartText: { color: colors.brand, fontFamily: fonts.body, fontSize: 14, fontWeight: '600' },
 });

@@ -3,8 +3,22 @@ import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, V
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, usePathname } from 'expo-router';
-import { colors, fonts, glow, radii, type } from '../theme';
+import { alpha, colors, displayWeight, fonts, glow, radii, type } from '../theme';
 import { useApp } from '../state/AppProvider';
+
+/**
+ * Solid right-pointing triangle, built from borders rather than a glyph. U+25B6/U+25B8 are absent
+ * from Android's default Roboto and fall through to Noto Sans Symbols at an inconsistent optical
+ * size (or to tofu), and react-native-svg is not a dependency — so the border trick is the only
+ * way to get the same shape on native and web. Rotate it with `direction` for the other four ways.
+ */
+export function Triangle({ size = 6, color = colors.text, style }: { size?: number; color?: string; style?: StyleProp<ViewStyle> }) {
+  return <View style={[{
+    width: 0, height: 0, borderStyle: 'solid',
+    borderTopWidth: size, borderBottomWidth: size, borderLeftWidth: size * 1.3, borderRightWidth: 0,
+    borderTopColor: 'transparent', borderBottomColor: 'transparent', borderRightColor: 'transparent', borderLeftColor: color,
+  }, style]} />;
+}
 
 // Chrome metrics a screen needs in order to size a block against the fold. Exported (and used
 // below) so the numbers can never drift out of sync with the styles they describe. A screen pins
@@ -34,7 +48,7 @@ export function Button({ children, onPress, variant = 'primary', disabled, loadi
     style={({ pressed }) => [pressed && { opacity: 0.88 }, style]}
   >
     <Animated.View style={[styles.button, styles[variant], (disabled || loading) && styles.disabled, { transform: [{ scale }] }]}>
-      {loading ? <ActivityIndicator color={variant === 'primary' ? colors.ink : colors.teal} /> : <>
+      {loading ? <ActivityIndicator color={variant === 'primary' ? colors.ink : colors.brand} /> : <>
         <Text style={[styles.buttonText, { color: labelColor }]}>{children}</Text>
         {icon && <View style={[styles.buttonIcon, { backgroundColor: variant === 'primary' ? colors.ink : colors.glassStrong }]}>{icon}</View>}
       </>}
@@ -67,7 +81,10 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
   ] as const;
   const navMarks = { '/': '◈', '/collection': '◇', '/profile': '◎' } as const;
   return <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-    {backdrop ?? <LinearGradient pointerEvents="none" colors={['rgba(110,168,255,0.07)', 'transparent']} style={styles.atmosphere} />}
+    {/* Default top-of-page wash for screens that don't mount a full SpaceBackdrop. Cool blue at a
+        very low alpha — the `hazeSoft` hue, thinned further because this sits directly under the
+        header rule and anything stronger reads as a tint on the chrome rather than as depth. */}
+    {backdrop ?? <LinearGradient pointerEvents="none" colors={['rgba(61,123,255,0.06)', 'transparent']} style={styles.atmosphere} />}
     <View style={styles.header}>
       <View style={styles.headerInner}>
         <Pressable accessibilityRole="button" accessibilityLabel={back ? 'Go back' : 'VYRA home'} onPress={back || (() => { if (pathname !== '/') router.push('/'); })} style={styles.brandHit}>
@@ -80,9 +97,13 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
             <View style={[styles.navIndicator, pathname === item.path && styles.navIndicatorActive]} />
           </Pressable>
         )}</View>}
-        <Pressable accessibilityRole="button" accessibilityLabel="Open player profile" onPress={() => { if (pathname !== '/profile') router.push('/profile'); }} style={styles.avatar}>
-          <Text style={styles.avatarText}>{profile?.name?.slice(0, 1).toUpperCase() || 'V'}</Text>
-        </Pressable>
+        {/* Mirrors brandHit's minWidth so the centred nav is centred on the PAGE, not on whatever
+            width the wordmark happens to occupy — space-between alone would bias it left. */}
+        <View style={styles.headerTail}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Open player profile" onPress={() => { if (pathname !== '/profile') router.push('/profile'); }} style={styles.avatar}>
+            <Text style={styles.avatarText}>{profile?.name?.slice(0, 1).toUpperCase() || 'V'}</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
     <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, !wide && !noNav && { paddingBottom: 112 }, style]} keyboardShouldPersistTaps="handled">
@@ -91,7 +112,7 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
     {!wide && !noNav && <SafeAreaView edges={['bottom']} style={styles.bottomNav}>
       <View style={styles.bottomRow}>{nav.map(item =>
         <Pressable key={item.path} accessibilityRole="button" accessibilityState={{ selected: pathname === item.path }} onPress={() => { if (pathname !== item.path) router.push(item.path); }} style={styles.bottomItem}>
-          <Text style={[styles.navMark, { color: pathname === item.path ? colors.teal : colors.faint }]}>{navMarks[item.path]}</Text>
+          <Text style={[styles.navMark, { color: pathname === item.path ? colors.brand : colors.faint }]}>{navMarks[item.path]}</Text>
           <Text style={[styles.navText, { fontSize: 11, color: pathname === item.path ? colors.text : colors.faint }]}>{item.title}</Text>
         </Pressable>
       )}</View>
@@ -111,22 +132,22 @@ export function Heading({ children, size = 34, style, textStyle }: React.PropsWi
 export function Copy({ children, muted = true, style }: React.PropsWithChildren<{ muted?: boolean; style?: StyleProp<ViewStyle> }>) {
   return <View style={style}><Text style={[styles.copy, { color: muted ? colors.muted : colors.text }]}>{children}</Text></View>;
 }
-export function Eyebrow({ children, color = colors.teal }: React.PropsWithChildren<{ color?: string }>) {
+export function Eyebrow({ children, color = colors.accent }: React.PropsWithChildren<{ color?: string }>) {
   return <Text style={[styles.eyebrow, { color }]}>{children}</Text>;
 }
-export function Pill({ children, color = colors.teal }: React.PropsWithChildren<{ color?: string }>) {
-  return <View style={[styles.pill, { borderColor: color + '55' }]}><Text style={[styles.pillText, { color }]}>{children}</Text></View>;
+export function Pill({ children, color = colors.brand }: React.PropsWithChildren<{ color?: string }>) {
+  return <View style={[styles.pill, { borderColor: alpha(color, 0.36) }]}><Text style={[styles.pillText, { color }]}>{children}</Text></View>;
 }
 export function Notice({ title, children, action, actionLabel = 'Try again', tone = 'warning' }: React.PropsWithChildren<{
   title: string; action?: () => void | Promise<void>; actionLabel?: string; tone?: 'warning' | 'info';
 }>) {
-  return <View style={[styles.notice, { borderLeftColor: tone === 'info' ? colors.teal : colors.coral }]}>
+  return <View style={[styles.notice, { borderLeftColor: tone === 'info' ? colors.spark : colors.danger }]}>
     <Text style={styles.noticeTitle}>{title}</Text>
     {children && <Text style={styles.noticeCopy}>{children}</Text>}
     {action && <Button variant="quiet" onPress={action} style={{ alignSelf: 'flex-start', paddingHorizontal: 0 }}>{actionLabel}</Button>}
   </View>;
 }
-export function Meter({ value, max, color = colors.teal, label }: { value: number; max: number; color?: string; label?: string }) {
+export function Meter({ value, max, color = colors.accent, label }: { value: number; max: number; color?: string; label?: string }) {
   const progress = Math.min(1, Math.max(0, value / Math.max(1, max)));
   return <View accessibilityRole="progressbar" accessibilityLabel={label} accessibilityValue={{ min: 0, max, now: value }} style={styles.meter}>
     <View style={[styles.meterFill, { width: ((progress * 100) + '%') as ViewStyle['width'], backgroundColor: color }]} />
@@ -136,7 +157,7 @@ export function Stat({ value, label, color = colors.text }: { value: string | nu
   return <View style={styles.stat}><Text style={[styles.statValue, { color }]}>{value}</Text><Text style={styles.statLabel}>{label}</Text></View>;
 }
 export function Loading({ text = 'Loading your player…' }: { text?: string }) {
-  return <View style={styles.loading}><ActivityIndicator color={colors.teal} /><Copy>{text}</Copy></View>;
+  return <View style={styles.loading}><ActivityIndicator color={colors.brand} /><Copy>{text}</Copy></View>;
 }
 export const layout = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -152,20 +173,21 @@ export const layout = StyleSheet.create({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   atmosphere: { position: 'absolute', top: 0, left: 0, right: 0, height: 420 },
-  header: { paddingHorizontal: 24, borderBottomWidth: HEADER_BORDER, borderBottomColor: 'rgba(150,190,255,0.08)' },
+  header: { paddingHorizontal: 24, borderBottomWidth: HEADER_BORDER, borderBottomColor: colors.line },
   headerInner: { width: '100%', maxWidth: 1320, alignSelf: 'center', minHeight: HEADER_HEIGHT, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brandHit: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 11, minWidth: 100 },
+  headerTail: { minWidth: 100, alignItems: 'flex-end' },
   brandIcon: { width: 24, height: 28, flexDirection: 'row' },
-  brandSlash: { width: 9, height: 25, backgroundColor: colors.teal, transform: [{ rotate: '-24deg' }], borderRadius: 2 },
+  brandSlash: { width: 9, height: 25, backgroundColor: colors.brand, transform: [{ rotate: '-24deg' }], borderRadius: 2 },
   brandSlashSecond: { transform: [{ rotate: '24deg' }], backgroundColor: colors.text, marginLeft: 5 },
-  wordmark: { fontFamily: fonts.display, fontSize: 22, fontWeight: '800', letterSpacing: 1.5, color: colors.text },
-  back: { color: colors.teal, fontSize: 38, lineHeight: 42 },
-  avatar: { width: 44, height: 44, borderRadius: radii.md, backgroundColor: colors.glass, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.lineStrong },
+  wordmark: { fontFamily: fonts.display, fontSize: 22, fontWeight: displayWeight.heavy, letterSpacing: 1.5, color: colors.text },
+  back: { color: colors.brand, fontSize: 38, lineHeight: 42 },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.glass, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.lineStrong },
   avatarText: { fontFamily: fonts.body, fontWeight: '700', fontSize: 16, color: colors.text },
   desktopNav: { flexDirection: 'row', gap: 34 },
   desktopNavItem: { minHeight: 44, justifyContent: 'center', alignItems: 'stretch', gap: 9 },
   navIndicator: { height: 2, borderRadius: 1, backgroundColor: 'transparent' },
-  navIndicatorActive: { backgroundColor: colors.teal, ...glow(colors.teal, 10, 0.9) },
+  navIndicatorActive: { backgroundColor: colors.brand, ...glow(colors.brand, 10, 0.9) },
   navText: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, fontWeight: '600', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1.9 },
   navTextActive: { color: colors.text },
   scroll: { flex: 1 },
@@ -175,14 +197,37 @@ const styles = StyleSheet.create({
   bottomItem: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 4, minHeight: 64 },
   navMark: { fontSize: 23, lineHeight: 27 },
   button: { minHeight: 56, paddingHorizontal: 30, paddingVertical: 16, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'transparent', flexDirection: 'row', gap: 12 },
-  primary: { backgroundColor: '#FFFFFF', ...glow('rgba(185,215,255,0.9)', 26, 0.3) },
-  secondary: { backgroundColor: 'rgba(10,18,36,0.55)', borderColor: colors.lineStrong },
+  // White fill + `ink` label is 20.42:1 — the highest contrast any pairing in this palette can
+  // reach — and this is the app's one high-emphasis action, so it gets it. Under Halo the white is
+  // also doing palette work: it is the only fully-saturated-brightness surface on the page, so the
+  // single primary action is the single loudest thing, without spending a hue on it.
+  // Contrast is not what rules out a tinted fill — ink #05070A (L 0.00206) on brand #2DD4BF
+  // (L 0.51380) is 10.57:1 and on accent #5EEAD4 (L 0.65970) is 13.42:1, both well past the 4.5:1
+  // body floor at this 13px label. Keep white for system consistency (it is the primary treatment
+  // everywhere — see CaptureFrame `button` and capture/src/styles.css `button.primary`); if a
+  // redesign wants a mint primary, re-tint every primary together so it stays one decision.
+  //
+  // The glow is neutral light, not a tint: a coloured halo under a white pill is exactly the kind
+  // of un-earned hue this palette rations.
+  primary: { backgroundColor: '#FFFFFF', ...glow('rgba(226,235,245,0.9)', 26, 0.30) },
+  // Ghost pill: a barely-there neutral fill (`surfaceRaised` at 55%) whose only real edge is the
+  // border. That makes the border load-bearing under WCAG 1.4.11 — the fill flattens to rgb(15,19,24)
+  // against a rgb(5,7,10) ground, which is 1.08:1 and invisible, so nothing else marks the control.
+  // Hence `lineControl` and not `lineStrong`: over this fill it resolves to rgb(107,116,130), which
+  // is 4.27:1 on the ground. `lineStrong` (alpha 0.24) resolves to rgb(57,64,74) = 1.99:1 and does
+  // not clear the 3:1 a component boundary needs — it did not under the old palette either, so this
+  // is a latent failure being fixed, not a regression introduced by the repalette.
+  secondary: { backgroundColor: 'rgba(23,28,36,0.55)', borderColor: colors.lineControl },
   quiet: { backgroundColor: 'transparent' },
-  danger: { backgroundColor: 'rgba(255,140,120,0.08)', borderColor: 'rgba(255,140,120,0.35)' },
+  // Same reasoning, same fix, one hue over: the destructive pill's boundary is its red ring, and at
+  // the old 0.38 alpha that ring resolved to rgb(114,43,47) = 2.02:1. 0.62 lifts it to rgb(169,61,66)
+  // = 3.24:1. This is the one place the palette spends a fully saturated warm hue on chrome, and it
+  // is earned — there is exactly one destructive action in the app and it should look like one.
+  danger: { backgroundColor: 'rgba(255,90,95,0.09)', borderColor: 'rgba(255,90,95,0.62)' },
   disabled: { opacity: 0.4 },
   buttonText: { fontFamily: fonts.body, fontSize: 13, fontWeight: '700', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1.4 },
   buttonIcon: { width: 24, height: 24, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  heading: { fontFamily: fonts.display, fontWeight: '900', color: colors.text },
+  heading: { fontFamily: fonts.display, fontWeight: displayWeight.heavy, color: colors.text },
   copy: { fontFamily: fonts.body, fontSize: 16, lineHeight: 26, maxWidth: 650 },
   eyebrow: { fontFamily: fonts.body, fontSize: type.eyebrow, fontWeight: '700', lineHeight: 18, textTransform: 'uppercase', letterSpacing: 2.2 },
   pill: { paddingVertical: 6, paddingHorizontal: 13, borderRadius: radii.pill, borderWidth: 1, alignSelf: 'flex-start', backgroundColor: colors.glass },
@@ -193,7 +238,7 @@ const styles = StyleSheet.create({
   meter: { height: 6, borderRadius: 3, backgroundColor: colors.glassStrong, overflow: 'hidden' },
   meterFill: { height: '100%', borderRadius: 3 },
   stat: { gap: 4 },
-  statValue: { fontFamily: fonts.display, fontSize: 30, fontWeight: '900', letterSpacing: -1 },
+  statValue: { fontFamily: fonts.display, fontSize: 30, fontWeight: displayWeight.heavy, letterSpacing: -1 },
   statLabel: { fontFamily: fonts.body, fontSize: 11, color: colors.muted, lineHeight: 18, textTransform: 'uppercase', letterSpacing: 1.2 },
   loading: { minHeight: 180, alignItems: 'center', justifyContent: 'center', gap: 16 },
 });

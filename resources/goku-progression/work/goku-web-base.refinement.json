@@ -1,0 +1,88 @@
+{
+  "algorithm": "Conforming edge-midpoint subdivision, welded geometric edge decisions; interpolated UV and normalized split normals.",
+  "unrefinedBaseSha256": "82f5909492d11cf5acb847494a0122ae306769096aee67963002aee0a07bde6c",
+  "broadBandLocalZ": [
+    0.036,
+    0.275
+  ],
+  "broadRegion": "Collar z .225-.275; arm-side |canonicalU|>.08 at z .036-.205; all audit patches include one geometric vertex ring.",
+  "broadBandMaximumEdgeLength": 0.004,
+  "auditedPatchMaximumEdgeLength": 0.001,
+  "rearCollarSpatialPatches": {
+    "centers": [
+      [
+        -0.0655,
+        0.0957,
+        0.241
+      ],
+      [
+        -0.07366,
+        -0.03021,
+        0.24007
+      ]
+    ],
+    "radius": 0.006,
+    "maximumEdgeLength": 0.0005,
+    "sourceFaces": 85
+  },
+  "auditedSourceFaces": 49,
+  "sourceFacesIncludingOneRing": 323,
+  "sourceVertices": 167831,
+  "sourceTriangles": 119542,
+  "outputVertices": 227347,
+  "outputTriangles": 236241,
+  "addedVertices": 59516,
+  "addedTriangles": 116699,
+  "originalVerticesAndAttributesPreserved": true,
+  "sourceBoundsPreserved": true,
+  "imageSha256": [
+    "c90f3a219d63645ac969b3bc132cad87b1f8483877ea5ad82c749009fc8b8ae4"
+  ],
+  "passes": [
+    {
+      "pass": 1,
+      "selectedGeometricEdges": 13976,
+      "triangles": 147495,
+      "vertices": 182330
+    },
+    {
+      "pass": 2,
+      "selectedGeometricEdges": 18963,
+      "triangles": 185421,
+      "vertices": 201692
+    },
+    {
+      "pass": 3,
+      "selectedGeometricEdges": 9526,
+      "triangles": 204473,
+      "vertices": 211426
+    },
+    {
+      "pass": 4,
+      "selectedGeometricEdges": 10166,
+      "triangles": 224805,
+      "vertices": 221629
+    },
+    {
+      "pass": 5,
+      "selectedGeometricEdges": 5713,
+      "triangles": 236231,
+      "vertices": 227342
+    },
+    {
+      "pass": 6,
+      "selectedGeometricEdges": 4,
+      "triangles": 236239,
+      "vertices": 227346
+    },
+    {
+      "pass": 7,
+      "selectedGeometricEdges": 1,
+      "triangles": 236241,
+      "vertices": 227347
+    }
+  ],
+  "outputSha256": "0dd4f50eaf42c1db0aeb51855a63f58989c386335cdda8fa74876d14a92980fa",
+  "outputBytes": 10564412,
+  "backup": "resources/goku-progression/work/goku-web-base-unrefined.glb"
+}

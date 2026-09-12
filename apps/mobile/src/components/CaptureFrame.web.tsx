@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import type { CaptureControl, CaptureMessage } from '@vyra/core';
+import { colors } from '../theme';
 
 interface CaptureFrameProps {
   url: string;
@@ -30,12 +31,15 @@ export default function CaptureFrame({ url, control, resetKey, onMessage }: Capt
     window.addEventListener('message', receive);
     return () => window.removeEventListener('message', receive);
   }, [origin]);
+  // `background` here is the same camera backing the native frame paints on its container and
+  // WebView, read from the shared theme rather than duplicated as a literal so the two platforms
+  // cannot drift apart — an iframe with no backing flashes white before the capture page loads.
   return <iframe
     ref={frame}
     title="VYRA on-device movement camera"
     src={url}
     allow="camera; autoplay"
     onLoad={configure}
-    style={{ width: '100%', height: '100%', minHeight: 320, flex: 1, border: 0, background: '#080F19', display: 'block' }}
+    style={{ width: '100%', height: '100%', minHeight: 320, flex: 1, border: 0, background: colors.surface, display: 'block' }}
   />;
 }

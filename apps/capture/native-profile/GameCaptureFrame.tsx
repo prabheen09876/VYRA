@@ -115,4 +115,7 @@ export default function CaptureFrame({ url, control, resetKey, onMessage }: Capt
     {!cameraActive && <View style={styles.resume}><Button title="Resume camera" onPress={() => { clear(); frameTimes.current = []; lastTracking.current = -Infinity; readyVersion.current = ''; active.current = true; setCameraActive(true); }} /></View>}
   </View>;
 }
-const styles = StyleSheet.create({ camera: { flex: 1, minHeight: 280, overflow: 'hidden', backgroundColor: '#101e32' }, status: { position: 'absolute', left: 12, right: 12, bottom: 12, gap: 6, padding: 10, borderRadius: 10, backgroundColor: '#101e32dd' }, mode: { color: '#88d9cb', fontSize: 11 }, cue: { color: '#eef7ff', fontSize: 13 }, resume: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: '#101e32dd' } });
+// Nocturne literals — see the note in App.tsx on why this harness cannot import the theme.
+// The status panel sits over live video, so it is `f2` (95%) rather than the old `dd`: even with a
+// blown-out white frame behind it the 11px `mode` label holds 5.12:1, past the 4.5:1 body floor.
+const styles = StyleSheet.create({ camera: { flex: 1, minHeight: 280, overflow: 'hidden', backgroundColor: '#05070A' }, status: { position: 'absolute', left: 12, right: 12, bottom: 12, gap: 6, padding: 10, borderRadius: 10, backgroundColor: '#05070Af2' }, mode: { color: '#5EEAD4', fontSize: 11 }, cue: { color: '#F2F5F8', fontSize: 13 }, resume: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: '#05070Af2' } });

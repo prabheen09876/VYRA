@@ -4,6 +4,8 @@ import type { Exercise, GameMasterDecision, MatchMode, MatchSnapshot, Phase, Pla
 export const REP_CONFIDENCE = 0.65;
 export const REP_LATE_WINDOW = 2000;
 export const HEARTBEAT_TIMEOUT = 12000;
+// Camera setup can briefly delay heartbeats before the workout starts.
+export const LOBBY_HEARTBEAT_TIMEOUT = 60000;
 export interface ExerciseWindow { id: string; exercise: Exercise; startedAt: number; endsAt: number }
 export interface TrackingQuality {
   startedAt: number; endsAt: number; firstAt: number | null; lastAt: number | null;
@@ -192,7 +194,7 @@ export function missingHeartbeat(state: MatchState, now: number): boolean {
 export function lobbyAbandoned(state: MatchState, now: number): boolean {
   const s = state.snapshot;
   return s.phase === 'lobby' && s.mode === 'pvp' && s.players.length === 2 &&
-    s.players.some(p => !p.isBot && now - (state.heartbeats[p.id] ?? 0) > HEARTBEAT_TIMEOUT);
+    s.players.some(p => !p.isBot && now - (state.heartbeats[p.id] ?? 0) > LOBBY_HEARTBEAT_TIMEOUT);
 }
 export function fallbackDecision(_state?: MatchState): GameMasterDecision {
   return { template: 'balanced', source: 'fallback', reason: 'A balanced pair keeps the pace steady while the Game Master is unavailable.' };

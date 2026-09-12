@@ -21,6 +21,9 @@
   // REQUIRED BEFORE A REAL DEPLOY: these are local dev origins only. Replace CORS_ORIGINS with
   // the exact deployed web/preview origin(s) that should be allowed to call this API — no
   // wildcards. Flip AI_ENABLED to "true" only after confirming Workers AI quota is available.
-  "vars": { "AI_ENABLED": "false", "CORS_ORIGINS": "http://localhost:8081,http://localhost:19006,http://localhost:5173" },
+  // 8081 is `expo start --web`'s default; 8082 is the port .claude/launch.json pins the web preview
+  // to; 5173 is the capture app's Vite dev server; 19006 is the legacy Expo web port. Keep this list
+  // in step with wrangler.local.jsonc, which is what `npm run dev:worker` actually loads.
+  "vars": { "AI_ENABLED": "false", "CORS_ORIGINS": "http://localhost:8081,http://localhost:8082,http://localhost:19006,http://localhost:5173" },
   "observability": { "enabled": true, "head_sampling_rate": 1 }
 }

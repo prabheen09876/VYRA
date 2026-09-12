@@ -1,0 +1,68 @@
+{
+  "createdAt": "2026-09-12T13:59:30.978748+00:00",
+  "method": "Blender BVHTree broad phase then segment-triangle exact narrow phase; pairs sharing any exact-welded source vertex excluded.",
+  "limitations": "Does not detect coplanar overlaps, contacts confined to segment endpoints, intersections between adjacent triangles, or prove an embedded source surface is watertight.",
+  "status": "passed",
+  "results": [
+    {
+      "stage": "Base",
+      "sha256": "2b2430f8acb45be277c367fe4564bc10a70a95711a812dd20acbaa34f218d082",
+      "nonadjacentBvhCandidates": 0,
+      "nonadjacentNoncoplanarIntersectionPairs": 0,
+      "newPairsVersusBase": 0,
+      "intersectionPairs": [],
+      "examples": [],
+      "elapsedSeconds": 0.05
+    },
+    {
+      "stage": "Starter",
+      "sha256": "a28f394d68af8b847266be0d61a587b4837aed8cb9f448d9ec4bbb7e280e0501",
+      "nonadjacentBvhCandidates": 0,
+      "nonadjacentNoncoplanarIntersectionPairs": 0,
+      "newPairsVersusBase": 0,
+      "intersectionPairs": [],
+      "examples": [],
+      "elapsedSeconds": 0.09
+    },
+    {
+      "stage": "Developing",
+      "sha256": "bcf7f632f2aab1eec98eb9686f23b647290738ff73bb54cb47d56789d890f182",
+      "nonadjacentBvhCandidates": 0,
+      "nonadjacentNoncoplanarIntersectionPairs": 0,
+      "newPairsVersusBase": 0,
+      "intersectionPairs": [],
+      "examples": [],
+      "elapsedSeconds": 0.13
+    },
+    {
+      "stage": "Strong",
+      "sha256": "7eaab9a8ffb7af099cef0b3b1295f9784d3aed1710f0985878d59ff905316f75",
+      "nonadjacentBvhCandidates": 0,
+      "nonadjacentNoncoplanarIntersectionPairs": 0,
+      "newPairsVersusBase": 0,
+      "intersectionPairs": [],
+      "examples": [],
+      "elapsedSeconds": 0.16
+    },
+    {
+      "stage": "Elite",
+      "sha256": "0751815c3fef868b46e3b59d6c13a367ccc6944b990d520e646d8b1217dd8955",
+      "nonadjacentBvhCandidates": 0,
+      "nonadjacentNoncoplanarIntersectionPairs": 0,
+      "newPairsVersusBase": 0,
+      "intersectionPairs": [],
+      "examples": [],
+      "elapsedSeconds": 0.2
+    },
+    {
+      "stage": "Legendary",
+      "sha256": "9d89bbe4111c8ab9873a9a9ac2e0eac1a0e9a35152aa586e56c9af629e59cb3f",
+      "nonadjacentBvhCandidates": 0,
+      "nonadjacentNoncoplanarIntersectionPairs": 0,
+      "newPairsVersusBase": 0,
+      "intersectionPairs": [],
+      "examples": [],
+      "elapsedSeconds": 0.24
+    }
+  ]
+}

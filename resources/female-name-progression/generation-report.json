@@ -1,0 +1,122 @@
+[
+  {
+    "stage": "Starter",
+    "file": "Female_Name_Starter.glb",
+    "bytes": 3788072,
+    "sha256": "b382352a63eebaacbdaef7b1c437f2297aeb877a93e363dc774c95ff9fb26aea",
+    "bodyVertices": 21585,
+    "changedBodyVertices": 12311,
+    "headBodyVertices": 4333,
+    "jacobianMin": 0.49000001517744524,
+    "nonPositiveJacobian": 0,
+    "bodyBounds": {
+      "min": [
+        -0.7329862713813782,
+        0.0,
+        -0.06870131194591522
+      ],
+      "max": [
+        0.3103204071521759,
+        1.6400001049041748,
+        0.1992410272359848
+      ]
+    },
+    "maxBodyDisplacement": 0.01920139827511457
+  },
+  {
+    "stage": "Developing",
+    "file": "Female_Name_Developing.glb",
+    "bytes": 3788076,
+    "sha256": "ff03180a248158306e99e42d6e52f77e88340422f24f34ca5923b5926f15960e",
+    "bodyVertices": 21585,
+    "changedBodyVertices": 12221,
+    "headBodyVertices": 4333,
+    "jacobianMin": 0.9216000027810519,
+    "nonPositiveJacobian": 0,
+    "bodyBounds": {
+      "min": [
+        -0.7329862713813782,
+        0.0,
+        -0.07999268174171448
+      ],
+      "max": [
+        0.3103204071521759,
+        1.6400001049041748,
+        0.1992410272359848
+      ]
+    },
+    "maxBodyDisplacement": 0.0022935693757182647
+  },
+  {
+    "stage": "Strong",
+    "file": "Female_Name_Strong.glb",
+    "bytes": 3788072,
+    "sha256": "d08828c63148996923173836ca9700510447b9ef51094d7689be0c85e11af227",
+    "bodyVertices": 21585,
+    "changedBodyVertices": 12302,
+    "headBodyVertices": 4333,
+    "jacobianMin": 0.9550933652719892,
+    "nonPositiveJacobian": 0,
+    "bodyBounds": {
+      "min": [
+        -0.7329862713813782,
+        0.0,
+        -0.09127577394247055
+      ],
+      "max": [
+        0.3103204071521759,
+        1.6400001049041748,
+        0.1992410272359848
+      ]
+    },
+    "maxBodyDisplacement": 0.013940341529506538
+  },
+  {
+    "stage": "Elite",
+    "file": "Female_Name_Elite.glb",
+    "bytes": 3788072,
+    "sha256": "0e2c2f5bb5313d1cfbbc1b9cf772b0e5dde9dccec3ae098599854bb33b89cbad",
+    "bodyVertices": 21585,
+    "changedBodyVertices": 12332,
+    "headBodyVertices": 4333,
+    "jacobianMin": 0.8885418558548264,
+    "nonPositiveJacobian": 0,
+    "bodyBounds": {
+      "min": [
+        -0.7329862713813782,
+        0.0,
+        -0.10403450578451157
+      ],
+      "max": [
+        0.3103204071521759,
+        1.6400001049041748,
+        0.1992410272359848
+      ]
+    },
+    "maxBodyDisplacement": 0.036993200611030445
+  },
+  {
+    "stage": "Legendary",
+    "file": "Female_Name_Legendary.glb",
+    "bytes": 3788072,
+    "sha256": "641ccadb44b51474769e38c9994707c28162f998db2e07ee3c99b2532a440d07",
+    "bodyVertices": 21585,
+    "changedBodyVertices": 12343,
+    "headBodyVertices": 4333,
+    "jacobianMin": 0.8093154308839523,
+    "nonPositiveJacobian": 0,
+    "bodyBounds": {
+      "min": [
+        -0.7329862713813782,
+        0.0,
+        -0.11974450945854187
+      ],
+      "max": [
+        0.3103204071521759,
+        1.6400001049041748,
+        0.1992410272359848
+      ]
+    },
+    "maxBodyDisplacement": 0.06259533347429379
+  }
+]

@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'r
 import { useCameraPermissions } from 'expo-camera';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import type { CaptureControl, CaptureMessage } from '@vyra/core';
-import { colors, fonts } from '../theme';
+import { colors, displayWeight, fonts } from '../theme';
 
 export interface CaptureFrameProps {
   url: string;
@@ -33,7 +33,7 @@ export default function CaptureFrame({ url, control, resetKey, onMessage }: Capt
     } catch { /* Ignore messages outside the capture protocol. */ }
   };
 
-  if (!permission) return <View style={styles.message}><ActivityIndicator color={colors.teal} /></View>;
+  if (!permission) return <View style={styles.message}><ActivityIndicator color={colors.brand} /></View>;
   if (!permission.granted) return <View style={styles.message}>
     <Text style={styles.title}>Let VYRA see your movement</Text>
     <Text style={styles.copy}>Camera access lets your device count reps. Video stays on your device.</Text>
@@ -66,17 +66,25 @@ export default function CaptureFrame({ url, control, resetKey, onMessage }: Capt
       mediaCapturePermissionGrantType="grantIfSameHostElsePrompt"
       setSupportMultipleWindows={false}
     />
-    {!loaded && <View style={styles.loading}><ActivityIndicator color={colors.teal} /><Text style={styles.copy}>Opening your camera…</Text></View>}
+    {!loaded && <View style={styles.loading}><ActivityIndicator color={colors.brand} /><Text style={styles.copy}>Opening your camera…</Text></View>}
   </View>;
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, minHeight: 320, backgroundColor: '#080F19' },
-  webview: { flex: 1, backgroundColor: '#080F19' },
-  loading: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', gap: 14, backgroundColor: '#080F19' },
+  // Opaque backing behind the camera page so a slow first frame shows the app's own surface
+  // rather than white. Must stay in step with CaptureFrame.web.tsx, which paints the same
+  // value on the <iframe>.
+  container: { flex: 1, minHeight: 320, backgroundColor: colors.surface },
+  webview: { flex: 1, backgroundColor: colors.surface },
+  loading: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', gap: 14, backgroundColor: colors.surface },
   message: { flex: 1, minHeight: 320, alignItems: 'center', justifyContent: 'center', padding: 28, gap: 16 },
-  title: { fontFamily: fonts.display, fontSize: 24, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  title: { fontFamily: fonts.display, fontSize: 24, fontWeight: displayWeight.heavy, color: colors.text, textAlign: 'center' },
   copy: { fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: colors.muted, textAlign: 'center', maxWidth: 380 },
-  button: { minHeight: 48, backgroundColor: colors.teal, borderRadius: 14, paddingHorizontal: 22, justifyContent: 'center' },
+  // The app's primary-button treatment, identical to ui.tsx `primary`: white fill with an `ink`
+  // label (20.5:1 — the highest-contrast option available, and this control carries the only CTA
+  // in a permission/error dead end). A `brand` or `accent` fill under the same label would also
+  // clear 4.5:1 (5.19:1 and 5.56:1 respectively), so this is a system-consistency choice, not a
+  // contrast rescue — re-tint it only together with ui.tsx, never on its own.
+  button: { minHeight: 48, backgroundColor: '#FFFFFF', borderRadius: 14, paddingHorizontal: 22, justifyContent: 'center' },
   buttonText: { fontFamily: fonts.body, color: colors.ink, fontWeight: '700', fontSize: 16 },
 });

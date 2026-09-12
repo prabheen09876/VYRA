@@ -1,0 +1,68 @@
+{
+  "createdAt": "2026-09-12T12:45:25.685147+00:00",
+  "threshold": -0.01,
+  "meaning": "Triangle geometric normal against averaged vertex shading normal, compared with the common base. Opposite source normals alone do not prove an inverted surface.",
+  "base": {
+    "sha256": "0dd4f50eaf42c1db0aeb51855a63f58989c386335cdda8fa74876d14a92980fa",
+    "shadingDisagreementTriangles": 1018,
+    "fractionOfSurfaceArea": 0.0001720823440422228,
+    "minimumNormalCosine": -0.9981036319993759
+  },
+  "stages": [
+    {
+      "stage": "Starter",
+      "sha256": "52b3ea1f6f77d5e6a2d8f087a23e548fea62bde377a2f82e96cfedf4ed679cce",
+      "newShadingDisagreementTriangles": 613,
+      "allShadingDisagreementTriangles": 1424,
+      "fractionOfSurfaceAreaNew": 5.621090416701978e-05,
+      "minimumNormalCosine": -0.9981036319993759,
+      "zeroAreaTriangles": 0,
+      "maxCoincidentVertexSeparation": 0.0,
+      "sourceFaceNormalRotationBeyond90Degrees": 67
+    },
+    {
+      "stage": "Developing",
+      "sha256": "fa5834584c9cb7f40ae68dd00597ba4336e9441f6c8f6d39b663b8c5b9b756c3",
+      "newShadingDisagreementTriangles": 48,
+      "allShadingDisagreementTriangles": 748,
+      "fractionOfSurfaceAreaNew": 1.4321370525931257e-05,
+      "minimumNormalCosine": -0.9981036319993759,
+      "zeroAreaTriangles": 0,
+      "maxCoincidentVertexSeparation": 0.0,
+      "sourceFaceNormalRotationBeyond90Degrees": 12
+    },
+    {
+      "stage": "Strong",
+      "sha256": "c2f32391f72f4c38e7f4e5715323f13d177b0b21f8ffd8dce1104e9bb371f7a4",
+      "newShadingDisagreementTriangles": 40,
+      "allShadingDisagreementTriangles": 1058,
+      "fractionOfSurfaceAreaNew": 2.0165866406358112e-07,
+      "minimumNormalCosine": -0.9981036319993759,
+      "zeroAreaTriangles": 0,
+      "maxCoincidentVertexSeparation": 0.0,
+      "sourceFaceNormalRotationBeyond90Degrees": 3
+    },
+    {
+      "stage": "Elite",
+      "sha256": "d85f921d9979c02eb45d7011f009949d33302da001cd57b9b373b1ca81a6c4d6",
+      "newShadingDisagreementTriangles": 223,
+      "allShadingDisagreementTriangles": 1237,
+      "fractionOfSurfaceAreaNew": 2.321226142551933e-05,
+      "minimumNormalCosine": -0.9981036319993759,
+      "zeroAreaTriangles": 0,
+      "maxCoincidentVertexSeparation": 0.0,
+      "sourceFaceNormalRotationBeyond90Degrees": 27
+    },
+    {
+      "stage": "Legendary",
+      "sha256": "3b214a7e09be61a30aa87d1a29a6228adc868b3d39247bf00ec9a6cb5d2446a6",
+      "newShadingDisagreementTriangles": 499,
+      "allShadingDisagreementTriangles": 1507,
+      "fractionOfSurfaceAreaNew": 0.00012883170949860138,
+      "minimumNormalCosine": -0.9989337523137617,
+      "zeroAreaTriangles": 0,
+      "maxCoincidentVertexSeparation": 0.0,
+      "sourceFaceNormalRotationBeyond90Degrees": 184
+    }
+  ]
+}

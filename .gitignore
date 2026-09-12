@@ -21,6 +21,18 @@ tmp/
 coverage/
 apps/worker/public/capture/
 apps/worker/public/models/*.task
-apps/capture/public/
+# Drop-in build artifacts (the MediaPipe .task model, the MediaPipe wasm bundle) land under
+# apps/capture/public and must stay out of the repo; apps/capture/.gitignore names both explicitly.
+# The trailing `*` matters: excluding the directory itself would make the negation below impossible,
+# because git never descends into an excluded directory to re-include anything inside it.
+# public/fonts IS source — the self-hosted Oswald/Inter woff2 the capture page @font-faces. Without
+# this negation a fresh clone builds /capture/ with no fonts and silently falls back to system faces.
+apps/capture/public/*
+!apps/capture/public/fonts/
 apps/capture/.native-spike/
 apps/capture/.native-game/
+# Local-only scratch copy of the original Python prototype and its venv. Cannot be committed even
+# if we wanted to: GitHub rejects any blob over 100MB, and this carries a 386MB libtorch_cpu.dylib,
+# a 160MB polars runtime and a 462MB zip of itself.
+Prototype/
+Prototype.zip

@@ -6,6 +6,7 @@
     "scheme": "vyra",
     "orientation": "default",
     "userInterfaceStyle": "dark",
+    "backgroundColor": "#05070A",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.vyra.fitness",
@@ -20,7 +21,8 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "name": "VYRA"
+      "name": "VYRA",
+      "themeColor": "#05070A"
     },
     "plugins": [
       "expo-router",

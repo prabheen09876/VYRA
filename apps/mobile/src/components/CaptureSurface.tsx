@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { CaptureControl, CaptureMessage, Exercise } from '@vyra/core';
 import CaptureFrame from './CaptureFrame';
 import { useApp } from '../state/AppProvider';
-import { colors, fonts } from '../theme';
+import { colors, displayWeight, fonts } from '../theme';
 import { useScreenFocus } from '../lib/useScreenFocus';
 
 interface Props {
@@ -66,7 +66,15 @@ export default function CaptureSurface({ exercise, enabled, suspended = false, r
       <CaptureFrame key={attempt} url={session.apiUrl + '/capture/'} control={control} resetKey={resetKey} onMessage={receive} />
     </View>
     <View style={styles.status}>
-      <View style={[styles.dot, { backgroundColor: tracking?.visible ? colors.teal : colors.coral }]} />
+      {/* Electric blue while the pose is locked on, danger red the moment you drop out of frame —
+          the same `spark`/`danger` info-vs-error pairing ui.tsx's `Notice` uses, so this reads as
+          one system. Both states are also carried by the adjacent status line, so the dot is never
+          the only signal.
+          The skeleton drawn over the live video belongs to a SEPARATE app that cannot import this
+          theme, so it carries the same two values as literals: apps/capture/src/main.ts strokes
+          '#3D7BFF' / '#FF5A5F' and styles.css sets the badge dot from --track / --alert. All three
+          read one tracking state — re-tint them together or the same state shows two colours. */}
+      <View style={[styles.dot, { backgroundColor: tracking?.visible ? colors.spark : colors.danger }]} />
       <Text style={styles.statusText}>
         {error ? 'Camera needs attention' : !ready ? 'Loading movement detection…' : tracking?.cue || 'Stand back so your whole body is visible.'}
       </Text>
@@ -84,7 +92,10 @@ export default function CaptureSurface({ exercise, enabled, suspended = false, r
 }
 
 const styles = StyleSheet.create({
-  frame: { borderRadius: 24, backgroundColor: '#080F19', overflow: 'hidden', borderColor: colors.line, borderWidth: 1 },
+  // Same `surface` the camera frame paints behind the WebView/iframe, so the video area and the
+  // status strip below it read as one card with no seam. Read from the theme rather than repeated
+  // as a literal here, so the two cannot drift apart again.
+  frame: { borderRadius: 24, backgroundColor: colors.surface, overflow: 'hidden', borderColor: colors.line, borderWidth: 1 },
   camera: { height: 390, minHeight: 320 },
   status: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingTop: 16 },
   dot: { width: 8, height: 8, borderRadius: 4 },
@@ -94,8 +105,10 @@ const styles = StyleSheet.create({
   error: { padding: 18, paddingTop: 0, gap: 12 },
   errorText: { color: colors.danger, fontFamily: fonts.body, fontSize: 15, lineHeight: 23 },
   retry: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
-  retryText: { fontFamily: fonts.body, color: colors.teal, fontWeight: '700', fontSize: 15 },
+  // Bare text action, so the label itself has to carry the affordance: brand mint on `surface`
+  // is 9.92:1, far past body text, and stays clearly apart from the red error copy above it.
+  retryText: { fontFamily: fonts.body, color: colors.brand, fontWeight: '700', fontSize: 15 },
   unavailable: { minHeight: 320, padding: 28, alignItems: 'center', justifyContent: 'center', gap: 14, borderRadius: 24, backgroundColor: colors.surface },
-  title: { fontFamily: fonts.display, color: colors.text, fontSize: 24, fontWeight: '700' },
+  title: { fontFamily: fonts.display, color: colors.text, fontSize: 24, fontWeight: displayWeight.heavy },
   copy: { fontFamily: fonts.body, fontSize: 14, lineHeight: 22, color: colors.muted },
 });

@@ -1,0 +1,126 @@
+{
+  "character": "Base_Female",
+  "sourceSha256": "91edb63138949774857ec9acbf63968ffb551715f8790fe41d11096f556bb6b1",
+  "stages": [
+    {
+      "stage": "Starter",
+      "file": "Base_Female_Starter.glb",
+      "bytes": 614864,
+      "sourceSha256": "91edb63138949774857ec9acbf63968ffb551715f8790fe41d11096f556bb6b1",
+      "geometry": [
+        {
+          "vertices": 10532,
+          "fixedVertices": 2137,
+          "jacobianMin": 0.3305491073365581,
+          "nonPositiveJacobians": 0,
+          "canonicalBoundsMin": [
+            -0.23914384247811238,
+            0.0,
+            -0.08728467851039161
+          ],
+          "canonicalBoundsMax": [
+            0.23914384247811238,
+            1.0,
+            0.0778419458295187
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Developing",
+      "file": "Base_Female_Developing.glb",
+      "bytes": 614864,
+      "sourceSha256": "91edb63138949774857ec9acbf63968ffb551715f8790fe41d11096f556bb6b1",
+      "geometry": [
+        {
+          "vertices": 10532,
+          "fixedVertices": 2137,
+          "jacobianMin": 0.7579600548713006,
+          "nonPositiveJacobians": 0,
+          "canonicalBoundsMin": [
+            -0.2552438424781124,
+            0.0,
+            -0.08728467851039161
+          ],
+          "canonicalBoundsMax": [
+            0.2552438424781124,
+            1.0,
+            0.08479457652384703
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Strong",
+      "file": "Base_Female_Strong.glb",
+      "bytes": 614860,
+      "sourceSha256": "91edb63138949774857ec9acbf63968ffb551715f8790fe41d11096f556bb6b1",
+      "geometry": [
+        {
+          "vertices": 10532,
+          "fixedVertices": 2137,
+          "jacobianMin": 0.9861627110802267,
+          "nonPositiveJacobians": 0,
+          "canonicalBoundsMin": [
+            -0.27904384247811237,
+            0.0,
+            -0.08728467851039161
+          ],
+          "canonicalBoundsMax": [
+            0.27904384247811237,
+            1.0,
+            0.09073507903058954
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Elite",
+      "file": "Base_Female_Elite.glb",
+      "bytes": 614860,
+      "sourceSha256": "91edb63138949774857ec9acbf63968ffb551715f8790fe41d11096f556bb6b1",
+      "geometry": [
+        {
+          "vertices": 10532,
+          "fixedVertices": 2137,
+          "jacobianMin": 0.9646906536012793,
+          "nonPositiveJacobians": 0,
+          "canonicalBoundsMin": [
+            -0.30704384247811234,
+            0.0,
+            -0.08728467851039161
+          ],
+          "canonicalBoundsMax": [
+            0.30704384247811234,
+            1.0,
+            0.09966959072490736
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Legendary",
+      "file": "Base_Female_Legendary.glb",
+      "bytes": 614864,
+      "sourceSha256": "91edb63138949774857ec9acbf63968ffb551715f8790fe41d11096f556bb6b1",
+      "geometry": [
+        {
+          "vertices": 10532,
+          "fixedVertices": 2137,
+          "jacobianMin": 0.9313005992310986,
+          "nonPositiveJacobians": 0,
+          "canonicalBoundsMin": [
+            -0.3399438424781124,
+            0.0,
+            -0.09216272305655042
+          ],
+          "canonicalBoundsMax": [
+            0.3399438424781124,
+            1.0,
+            0.12217846639399484
+          ]
+        }
+      ]
+    }
+  ]
+}

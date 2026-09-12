@@ -1,7 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { ClientCommand, MatchMode, MatchSnapshot, ServerEvent } from '@vyra/core';
 import {
-  advanceMatch, createMatch, HEARTBEAT_TIMEOUT, interruptMatch, isActive, joinMatch,
+  advanceMatch, createMatch, HEARTBEAT_TIMEOUT, LOBBY_HEARTBEAT_TIMEOUT, interruptMatch, isActive, joinMatch,
   lobbyAbandoned, missingHeartbeat, readyPlayer, recordRep, recordTracking, type MatchState
 } from '@vyra/core/match';
 import { chooseNextRound } from './game-master';
@@ -54,7 +54,7 @@ export class MatchRoom extends DurableObject<Env> {
     } else if (s.phase === 'lobby' && s.mode === 'pvp' && s.players.length === 2) {
       // Both seats are filled (room-code join or matchmaking pairing); make sure an absent
       // second player eventually times the room out instead of waiting in lobby forever.
-      const heartbeatDeadline = Math.min(...s.players.filter(p => !p.isBot).map(p => (state.heartbeats[p.id] ?? 0) + HEARTBEAT_TIMEOUT + 1));
+      const heartbeatDeadline = Math.min(...s.players.filter(p => !p.isBot).map(p => (state.heartbeats[p.id] ?? 0) + LOBBY_HEARTBEAT_TIMEOUT + 1));
       await this.ctx.storage.setAlarm(Math.max(Date.now() + 1, heartbeatDeadline));
     } else if (s.phase === 'finished' && s.players.some(p => !p.isBot && !s.rewards?.[p.id])) {
       await this.ctx.storage.setAlarm(Date.now() + 3000);

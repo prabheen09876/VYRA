@@ -1,0 +1,1855 @@
+{
+  "createdAt": "2026-09-12T13:59:37.753Z",
+  "requestedCharacters": [
+    "Female_Name"
+  ],
+  "allowMissing": false,
+  "expectedVariants": 5,
+  "characters": [
+    {
+      "character": "Female_Name",
+      "directory": "C:\\Users\\ABHISHEK\\Desktop\\coding\\VYRA\\resources\\female-name-progression",
+      "stages": [
+        {
+          "stage": "Starter",
+          "file": "C:\\Users\\ABHISHEK\\Desktop\\coding\\VYRA\\resources\\female-name-progression\\Female_Name_Starter.glb",
+          "bytes": 3788072,
+          "sha256": "b382352a63eebaacbdaef7b1c437f2297aeb877a93e363dc774c95ff9fb26aea",
+          "khronos": {
+            "status": "passed",
+            "version": "2.0.0-dev.3.10",
+            "errors": 0,
+            "warnings": 42781,
+            "infos": 7,
+            "scanIssueLimit": "unlimited",
+            "issueGroups": {
+              "UNUSED_OBJECT": {
+                "severity": 2,
+                "count": 6,
+                "examples": [
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+                  },
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+                  },
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+                  }
+                ]
+              },
+              "NODE_EMPTY": {
+                "severity": 2,
+                "count": 1,
+                "examples": [
+                  {
+                    "code": "NODE_EMPTY",
+                    "message": "Empty node encountered.",
+                    "severity": 2,
+                    "pointer": "/nodes/6"
+                  }
+                ]
+              },
+              "NODE_SKINNED_MESH_NON_ROOT": {
+                "severity": 1,
+                "count": 5,
+                "examples": [
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/7"
+                  },
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/8"
+                  },
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/9"
+                  }
+                ]
+              },
+              "ACCESSOR_JOINTS_USED_ZERO_WEIGHT": {
+                "severity": 1,
+                "count": 42776,
+                "examples": [
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                    "severity": 1,
+                    "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+                  },
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                    "severity": 1,
+                    "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+                  },
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                    "severity": 1,
+                    "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+                  }
+                ]
+              }
+            },
+            "messages": [
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+              },
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+              },
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+              },
+              {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/6"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/7"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/8"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/9"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                "severity": 1,
+                "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                "severity": 1,
+                "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                "severity": 1,
+                "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+              }
+            ]
+          },
+          "vertices": 33007,
+          "triangles": 43748,
+          "primitives": 5,
+          "degenerateTriangles": 0,
+          "tangentVertices": 0,
+          "minNormalLength": 0.9999999220869129,
+          "maxNormalLength": 1.000000114858859,
+          "localBounds": {
+            "min": [
+              -0.7329862713813782,
+              0,
+              -0.1992410272359848
+            ],
+            "max": [
+              0.7329862713813782,
+              1.6400001049041748,
+              0.1992410272359848
+            ]
+          },
+          "positionsSha256": "86bad50a3a0310af0faeb8ed990f7344506ff4ccf8345c6f6f838c9e41452a41",
+          "preservation": {
+            "sourceChecksumVerified": true,
+            "originalImageBytesPreserved": true,
+            "originalRigAndAnimationsPreserved": true,
+            "originalTransformHierarchyPreserved": true,
+            "materialPolicy": "Exact original material JSON"
+          },
+          "geometryComparison": {
+            "changedVertices": 12329,
+            "newDegenerateTriangles": 0,
+            "headCheck": {
+              "axis": 1,
+              "cutoff": 1.42,
+              "preservedMeshes": [
+                0,
+                2,
+                3,
+                4
+              ],
+              "headVertices": 13720,
+              "protectedMeshVertices": 11422,
+              "maximumPositionDifference": 0,
+              "maximumNormalDifference": 0
+            },
+            "globalDiagonalFit": [
+              {
+                "scale": 0.9963644063471012,
+                "translation": -0.00043550853734947327
+              },
+              {
+                "scale": 1.0001014005397262,
+                "translation": -0.000022230683971742263
+              },
+              {
+                "scale": 0.9820469505743239,
+                "translation": 0.0008951153712919138
+              }
+            ],
+            "nonGlobalDeformationResidualRms": 0.0030699599464231006
+          },
+          "threeLoader": {
+            "status": "passed",
+            "meshes": 5,
+            "skinnedMeshes": 5,
+            "vertices": 33007,
+            "triangles": 43748,
+            "textureBindings": 11,
+            "animationClips": 14,
+            "animationNames": [
+              "Running",
+              "Walking",
+              "01a08a5f-260e-7737-a830-a2b07f0012d2",
+              "Arise",
+              "Attack",
+              "Boom_Dance",
+              "Casual_Walk",
+              "Dead",
+              "RunFast",
+              "Run_03",
+              "Skill_01",
+              "Skill_03",
+              "Unsteady_Walk",
+              "Walking_Woman"
+            ],
+            "worldBounds": {
+              "min": [
+                -0.9382108367251843,
+                -6.778938899738399e-7,
+                -0.2550253342498323
+              ],
+              "max": [
+                0.9382109218190399,
+                2.0991742193442624,
+                0.255025394790468
+              ]
+            },
+            "limitation": "ImageBitmap decode uses a 1x1 placeholder. Verifies loader structure, bindings, skeleton/clip parsing and scene bounds; does not test real image pixels, WebGL, animation quality or runtime performance."
+          },
+          "status": "passed"
+        },
+        {
+          "stage": "Developing",
+          "file": "C:\\Users\\ABHISHEK\\Desktop\\coding\\VYRA\\resources\\female-name-progression\\Female_Name_Developing.glb",
+          "bytes": 3788076,
+          "sha256": "ff03180a248158306e99e42d6e52f77e88340422f24f34ca5923b5926f15960e",
+          "khronos": {
+            "status": "passed",
+            "version": "2.0.0-dev.3.10",
+            "errors": 0,
+            "warnings": 42781,
+            "infos": 7,
+            "scanIssueLimit": "unlimited",
+            "issueGroups": {
+              "UNUSED_OBJECT": {
+                "severity": 2,
+                "count": 6,
+                "examples": [
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+                  },
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+                  },
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+                  }
+                ]
+              },
+              "NODE_EMPTY": {
+                "severity": 2,
+                "count": 1,
+                "examples": [
+                  {
+                    "code": "NODE_EMPTY",
+                    "message": "Empty node encountered.",
+                    "severity": 2,
+                    "pointer": "/nodes/6"
+                  }
+                ]
+              },
+              "NODE_SKINNED_MESH_NON_ROOT": {
+                "severity": 1,
+                "count": 5,
+                "examples": [
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/7"
+                  },
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/8"
+                  },
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/9"
+                  }
+                ]
+              },
+              "ACCESSOR_JOINTS_USED_ZERO_WEIGHT": {
+                "severity": 1,
+                "count": 42776,
+                "examples": [
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                    "severity": 1,
+                    "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+                  },
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                    "severity": 1,
+                    "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+                  },
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                    "severity": 1,
+                    "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+                  }
+                ]
+              }
+            },
+            "messages": [
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+              },
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+              },
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+              },
+              {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/6"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/7"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/8"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/9"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                "severity": 1,
+                "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                "severity": 1,
+                "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                "severity": 1,
+                "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+              }
+            ]
+          },
+          "vertices": 33007,
+          "triangles": 43748,
+          "primitives": 5,
+          "degenerateTriangles": 0,
+          "tangentVertices": 0,
+          "minNormalLength": 0.9999999220869129,
+          "maxNormalLength": 1.000000114858859,
+          "localBounds": {
+            "min": [
+              -0.7329862713813782,
+              0,
+              -0.1992410272359848
+            ],
+            "max": [
+              0.7329862713813782,
+              1.6400001049041748,
+              0.1992410272359848
+            ]
+          },
+          "positionsSha256": "10da0875677d7d4dc33b0e3b4df2bdc31f01f5c7fee71e6ff54105312585de12",
+          "preservation": {
+            "sourceChecksumVerified": true,
+            "originalImageBytesPreserved": true,
+            "originalRigAndAnimationsPreserved": true,
+            "originalTransformHierarchyPreserved": true,
+            "materialPolicy": "Exact original material JSON"
+          },
+          "geometryComparison": {
+            "changedVertices": 12285,
+            "newDegenerateTriangles": 0,
+            "headCheck": {
+              "axis": 1,
+              "cutoff": 1.42,
+              "preservedMeshes": [
+                0,
+                2,
+                3,
+                4
+              ],
+              "headVertices": 13720,
+              "protectedMeshVertices": 11422,
+              "maximumPositionDifference": 0,
+              "maximumNormalDifference": 0
+            },
+            "globalDiagonalFit": [
+              {
+                "scale": 0.9995052111059731,
+                "translation": -0.000060812459493847864
+              },
+              {
+                "scale": 1.0000096230931754,
+                "translation": 1.9226073482349993e-7
+              },
+              {
+                "scale": 0.9976265922686536,
+                "translation": 0.00011449291097475872
+              }
+            ],
+            "nonGlobalDeformationResidualRms": 0.0004220910056615853
+          },
+          "threeLoader": {
+            "status": "passed",
+            "meshes": 5,
+            "skinnedMeshes": 5,
+            "vertices": 33007,
+            "triangles": 43748,
+            "textureBindings": 11,
+            "animationClips": 14,
+            "animationNames": [
+              "Running",
+              "Walking",
+              "01a08a5f-260e-7737-a830-a2b07f0012d2",
+              "Arise",
+              "Attack",
+              "Boom_Dance",
+              "Casual_Walk",
+              "Dead",
+              "RunFast",
+              "Run_03",
+              "Skill_01",
+              "Skill_03",
+              "Unsteady_Walk",
+              "Walking_Woman"
+            ],
+            "worldBounds": {
+              "min": [
+                -0.9382108367251843,
+                -6.778938899738399e-7,
+                -0.2550253342498323
+              ],
+              "max": [
+                0.9382109218190399,
+                2.0991742193442624,
+                0.255025394790468
+              ]
+            },
+            "limitation": "ImageBitmap decode uses a 1x1 placeholder. Verifies loader structure, bindings, skeleton/clip parsing and scene bounds; does not test real image pixels, WebGL, animation quality or runtime performance."
+          },
+          "status": "passed"
+        },
+        {
+          "stage": "Strong",
+          "file": "C:\\Users\\ABHISHEK\\Desktop\\coding\\VYRA\\resources\\female-name-progression\\Female_Name_Strong.glb",
+          "bytes": 3788072,
+          "sha256": "d08828c63148996923173836ca9700510447b9ef51094d7689be0c85e11af227",
+          "khronos": {
+            "status": "passed",
+            "version": "2.0.0-dev.3.10",
+            "errors": 0,
+            "warnings": 42781,
+            "infos": 7,
+            "scanIssueLimit": "unlimited",
+            "issueGroups": {
+              "UNUSED_OBJECT": {
+                "severity": 2,
+                "count": 6,
+                "examples": [
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+                  },
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+                  },
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+                  }
+                ]
+              },
+              "NODE_EMPTY": {
+                "severity": 2,
+                "count": 1,
+                "examples": [
+                  {
+                    "code": "NODE_EMPTY",
+                    "message": "Empty node encountered.",
+                    "severity": 2,
+                    "pointer": "/nodes/6"
+                  }
+                ]
+              },
+              "NODE_SKINNED_MESH_NON_ROOT": {
+                "severity": 1,
+                "count": 5,
+                "examples": [
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/7"
+                  },
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/8"
+                  },
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/9"
+                  }
+                ]
+              },
+              "ACCESSOR_JOINTS_USED_ZERO_WEIGHT": {
+                "severity": 1,
+                "count": 42776,
+                "examples": [
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                    "severity": 1,
+                    "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+                  },
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                    "severity": 1,
+                    "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+                  },
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                    "severity": 1,
+                    "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+                  }
+                ]
+              }
+            },
+            "messages": [
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+              },
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+              },
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+              },
+              {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/6"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/7"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/8"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/9"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                "severity": 1,
+                "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                "severity": 1,
+                "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                "severity": 1,
+                "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+              }
+            ]
+          },
+          "vertices": 33007,
+          "triangles": 43748,
+          "primitives": 5,
+          "degenerateTriangles": 0,
+          "tangentVertices": 0,
+          "minNormalLength": 0.9999999220869129,
+          "maxNormalLength": 1.000000114858859,
+          "localBounds": {
+            "min": [
+              -0.7329862713813782,
+              0,
+              -0.1992410272359848
+            ],
+            "max": [
+              0.7329862713813782,
+              1.6400001049041748,
+              0.1992410272359848
+            ]
+          },
+          "positionsSha256": "83c78927943154028aebbe97fd0b9799fe350655e85b066ac0b2f5e898a70188",
+          "preservation": {
+            "sourceChecksumVerified": true,
+            "originalImageBytesPreserved": true,
+            "originalRigAndAnimationsPreserved": true,
+            "originalTransformHierarchyPreserved": true,
+            "materialPolicy": "Exact original material JSON"
+          },
+          "geometryComparison": {
+            "changedVertices": 12319,
+            "newDegenerateTriangles": 0,
+            "headCheck": {
+              "axis": 1,
+              "cutoff": 1.42,
+              "preservedMeshes": [
+                0,
+                2,
+                3,
+                4
+              ],
+              "headVertices": 13720,
+              "protectedMeshVertices": 11422,
+              "maximumPositionDifference": 0,
+              "maximumNormalDifference": 0
+            },
+            "globalDiagonalFit": [
+              {
+                "scale": 1.0031555842899786,
+                "translation": 0.0003583728770574059
+              },
+              {
+                "scale": 0.9999023637452075,
+                "translation": 0.000021005896563891453
+              },
+              {
+                "scale": 1.0137300912727636,
+                "translation": -0.0006826952110414156
+              }
+            ],
+            "nonGlobalDeformationResidualRms": 0.002385493309150936
+          },
+          "threeLoader": {
+            "status": "passed",
+            "meshes": 5,
+            "skinnedMeshes": 5,
+            "vertices": 33007,
+            "triangles": 43748,
+            "textureBindings": 11,
+            "animationClips": 14,
+            "animationNames": [
+              "Running",
+              "Walking",
+              "01a08a5f-260e-7737-a830-a2b07f0012d2",
+              "Arise",
+              "Attack",
+              "Boom_Dance",
+              "Casual_Walk",
+              "Dead",
+              "RunFast",
+              "Run_03",
+              "Skill_01",
+              "Skill_03",
+              "Unsteady_Walk",
+              "Walking_Woman"
+            ],
+            "worldBounds": {
+              "min": [
+                -0.9382108367251843,
+                -6.778938899738399e-7,
+                -0.2550253342498323
+              ],
+              "max": [
+                0.9382109218190399,
+                2.0991742193442624,
+                0.255025394790468
+              ]
+            },
+            "limitation": "ImageBitmap decode uses a 1x1 placeholder. Verifies loader structure, bindings, skeleton/clip parsing and scene bounds; does not test real image pixels, WebGL, animation quality or runtime performance."
+          },
+          "status": "passed"
+        },
+        {
+          "stage": "Elite",
+          "file": "C:\\Users\\ABHISHEK\\Desktop\\coding\\VYRA\\resources\\female-name-progression\\Female_Name_Elite.glb",
+          "bytes": 3788072,
+          "sha256": "0e2c2f5bb5313d1cfbbc1b9cf772b0e5dde9dccec3ae098599854bb33b89cbad",
+          "khronos": {
+            "status": "passed",
+            "version": "2.0.0-dev.3.10",
+            "errors": 0,
+            "warnings": 42781,
+            "infos": 7,
+            "scanIssueLimit": "unlimited",
+            "issueGroups": {
+              "UNUSED_OBJECT": {
+                "severity": 2,
+                "count": 6,
+                "examples": [
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+                  },
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+                  },
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+                  }
+                ]
+              },
+              "NODE_EMPTY": {
+                "severity": 2,
+                "count": 1,
+                "examples": [
+                  {
+                    "code": "NODE_EMPTY",
+                    "message": "Empty node encountered.",
+                    "severity": 2,
+                    "pointer": "/nodes/6"
+                  }
+                ]
+              },
+              "NODE_SKINNED_MESH_NON_ROOT": {
+                "severity": 1,
+                "count": 5,
+                "examples": [
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/7"
+                  },
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/8"
+                  },
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/9"
+                  }
+                ]
+              },
+              "ACCESSOR_JOINTS_USED_ZERO_WEIGHT": {
+                "severity": 1,
+                "count": 42776,
+                "examples": [
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                    "severity": 1,
+                    "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+                  },
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                    "severity": 1,
+                    "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+                  },
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                    "severity": 1,
+                    "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+                  }
+                ]
+              }
+            },
+            "messages": [
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+              },
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+              },
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+              },
+              {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/6"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/7"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/8"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/9"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                "severity": 1,
+                "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                "severity": 1,
+                "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                "severity": 1,
+                "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+              }
+            ]
+          },
+          "vertices": 33007,
+          "triangles": 43748,
+          "primitives": 5,
+          "degenerateTriangles": 0,
+          "tangentVertices": 0,
+          "minNormalLength": 0.9999999220869129,
+          "maxNormalLength": 1.000000114858859,
+          "localBounds": {
+            "min": [
+              -0.7329862713813782,
+              0,
+              -0.1992410272359848
+            ],
+            "max": [
+              0.7329862713813782,
+              1.6400001049041748,
+              0.1992410272359848
+            ]
+          },
+          "positionsSha256": "db058970f43ba08ebaec0f89be4fecd3cb6ca07734b0dc7c6de93ccaa63a2dcb",
+          "preservation": {
+            "sourceChecksumVerified": true,
+            "originalImageBytesPreserved": true,
+            "originalRigAndAnimationsPreserved": true,
+            "originalTransformHierarchyPreserved": true,
+            "materialPolicy": "Exact original material JSON"
+          },
+          "geometryComparison": {
+            "changedVertices": 12352,
+            "newDegenerateTriangles": 0,
+            "headCheck": {
+              "axis": 1,
+              "cutoff": 1.42,
+              "preservedMeshes": [
+                0,
+                2,
+                3,
+                4
+              ],
+              "headVertices": 13720,
+              "protectedMeshVertices": 11422,
+              "maximumPositionDifference": 0,
+              "maximumNormalDifference": 0
+            },
+            "globalDiagonalFit": [
+              {
+                "scale": 1.00718980618947,
+                "translation": 0.0008242465913270932
+              },
+              {
+                "scale": 0.9997613890863335,
+                "translation": 0.00003864769713004758
+              },
+              {
+                "scale": 1.0349407067213423,
+                "translation": -0.0017174928450855807
+              }
+            ],
+            "nonGlobalDeformationResidualRms": 0.005933932922075975
+          },
+          "threeLoader": {
+            "status": "passed",
+            "meshes": 5,
+            "skinnedMeshes": 5,
+            "vertices": 33007,
+            "triangles": 43748,
+            "textureBindings": 11,
+            "animationClips": 14,
+            "animationNames": [
+              "Running",
+              "Walking",
+              "01a08a5f-260e-7737-a830-a2b07f0012d2",
+              "Arise",
+              "Attack",
+              "Boom_Dance",
+              "Casual_Walk",
+              "Dead",
+              "RunFast",
+              "Run_03",
+              "Skill_01",
+              "Skill_03",
+              "Unsteady_Walk",
+              "Walking_Woman"
+            ],
+            "worldBounds": {
+              "min": [
+                -0.9382108367251843,
+                -6.778938899738399e-7,
+                -0.2550253342498323
+              ],
+              "max": [
+                0.9382109218190399,
+                2.0991742193442624,
+                0.255025394790468
+              ]
+            },
+            "limitation": "ImageBitmap decode uses a 1x1 placeholder. Verifies loader structure, bindings, skeleton/clip parsing and scene bounds; does not test real image pixels, WebGL, animation quality or runtime performance."
+          },
+          "status": "passed"
+        },
+        {
+          "stage": "Legendary",
+          "file": "C:\\Users\\ABHISHEK\\Desktop\\coding\\VYRA\\resources\\female-name-progression\\Female_Name_Legendary.glb",
+          "bytes": 3788072,
+          "sha256": "641ccadb44b51474769e38c9994707c28162f998db2e07ee3c99b2532a440d07",
+          "khronos": {
+            "status": "passed",
+            "version": "2.0.0-dev.3.10",
+            "errors": 0,
+            "warnings": 42781,
+            "infos": 7,
+            "scanIssueLimit": "unlimited",
+            "issueGroups": {
+              "UNUSED_OBJECT": {
+                "severity": 2,
+                "count": 6,
+                "examples": [
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+                  },
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+                  },
+                  {
+                    "code": "UNUSED_OBJECT",
+                    "message": "This object may be unused.",
+                    "severity": 2,
+                    "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+                  }
+                ]
+              },
+              "NODE_EMPTY": {
+                "severity": 2,
+                "count": 1,
+                "examples": [
+                  {
+                    "code": "NODE_EMPTY",
+                    "message": "Empty node encountered.",
+                    "severity": 2,
+                    "pointer": "/nodes/6"
+                  }
+                ]
+              },
+              "NODE_SKINNED_MESH_NON_ROOT": {
+                "severity": 1,
+                "count": 5,
+                "examples": [
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/7"
+                  },
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/8"
+                  },
+                  {
+                    "code": "NODE_SKINNED_MESH_NON_ROOT",
+                    "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                    "severity": 1,
+                    "pointer": "/nodes/9"
+                  }
+                ]
+              },
+              "ACCESSOR_JOINTS_USED_ZERO_WEIGHT": {
+                "severity": 1,
+                "count": 42776,
+                "examples": [
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                    "severity": 1,
+                    "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+                  },
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                    "severity": 1,
+                    "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+                  },
+                  {
+                    "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                    "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                    "severity": 1,
+                    "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+                  }
+                ]
+              }
+            },
+            "messages": [
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+              },
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+              },
+              {
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
+                "severity": 2,
+                "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+              },
+              {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/6"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/7"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/8"
+              },
+              {
+                "code": "NODE_SKINNED_MESH_NON_ROOT",
+                "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                "severity": 1,
+                "pointer": "/nodes/9"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                "severity": 1,
+                "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                "severity": 1,
+                "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+              },
+              {
+                "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                "severity": 1,
+                "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+              }
+            ]
+          },
+          "vertices": 33007,
+          "triangles": 43748,
+          "primitives": 5,
+          "degenerateTriangles": 0,
+          "tangentVertices": 0,
+          "minNormalLength": 0.9999999220869129,
+          "maxNormalLength": 1.000000114858859,
+          "localBounds": {
+            "min": [
+              -0.7329862713813782,
+              0,
+              -0.1992410272359848
+            ],
+            "max": [
+              0.7329862713813782,
+              1.6400001049041748,
+              0.1992410272359848
+            ]
+          },
+          "positionsSha256": "825401756fac76562e72b0101ea4cd18f5f72840efc0d109b4be01cf205add57",
+          "preservation": {
+            "sourceChecksumVerified": true,
+            "originalImageBytesPreserved": true,
+            "originalRigAndAnimationsPreserved": true,
+            "originalTransformHierarchyPreserved": true,
+            "materialPolicy": "Exact original material JSON"
+          },
+          "geometryComparison": {
+            "changedVertices": 12359,
+            "newDegenerateTriangles": 0,
+            "headCheck": {
+              "axis": 1,
+              "cutoff": 1.42,
+              "preservedMeshes": [
+                0,
+                2,
+                3,
+                4
+              ],
+              "headVertices": 13720,
+              "protectedMeshVertices": 11422,
+              "maximumPositionDifference": 0,
+              "maximumNormalDifference": 0
+            },
+            "globalDiagonalFit": [
+              {
+                "scale": 1.0122592669775552,
+                "translation": 0.001409248909945844
+              },
+              {
+                "scale": 0.9996014846895918,
+                "translation": 0.00006099525095637244
+              },
+              {
+                "scale": 1.059205370865417,
+                "translation": -0.002913751571172685
+              }
+            ],
+            "nonGlobalDeformationResidualRms": 0.010074505122618899
+          },
+          "threeLoader": {
+            "status": "passed",
+            "meshes": 5,
+            "skinnedMeshes": 5,
+            "vertices": 33007,
+            "triangles": 43748,
+            "textureBindings": 11,
+            "animationClips": 14,
+            "animationNames": [
+              "Running",
+              "Walking",
+              "01a08a5f-260e-7737-a830-a2b07f0012d2",
+              "Arise",
+              "Attack",
+              "Boom_Dance",
+              "Casual_Walk",
+              "Dead",
+              "RunFast",
+              "Run_03",
+              "Skill_01",
+              "Skill_03",
+              "Unsteady_Walk",
+              "Walking_Woman"
+            ],
+            "worldBounds": {
+              "min": [
+                -0.9382108367251843,
+                -6.778938899738399e-7,
+                -0.2550253342498323
+              ],
+              "max": [
+                0.9382109218190399,
+                2.0991742193442624,
+                0.255025394790468
+              ]
+            },
+            "limitation": "ImageBitmap decode uses a 1x1 placeholder. Verifies loader structure, bindings, skeleton/clip parsing and scene bounds; does not test real image pixels, WebGL, animation quality or runtime performance."
+          },
+          "status": "passed"
+        }
+      ],
+      "failures": [],
+      "source": {
+        "file": "C:\\Users\\ABHISHEK\\Desktop\\coding\\VYRA\\resources\\Female_Name.glb",
+        "bytes": 3787496,
+        "sha256": "f746641bd6764f979d244d3a9c1010f14125df72a0b814bd9763014e2a1eb54c",
+        "vertices": 33007,
+        "triangles": 43748,
+        "primitives": 5,
+        "degenerateTriangles": 0,
+        "tangentVertices": 0,
+        "minNormalLength": 0.9999999220869129,
+        "maxNormalLength": 1.0000001178731888,
+        "localBounds": {
+          "min": [
+            -0.7329862713813782,
+            0,
+            -0.1992410272359848
+          ],
+          "max": [
+            0.7329862713813782,
+            1.6400001049041748,
+            0.1992410272359848
+          ]
+        },
+        "positionsSha256": "40b2ea9dc67fc3e26916ecc3d25d2225f98d0d7e8bce6ef80755320b645a059c",
+        "images": [
+          {
+            "mimeType": "image/png",
+            "bytes": 108823,
+            "sha256": "e21c3ff180b686c8b8849f29cd48659a3914f06e52fc7bb4e15ddd09fd4c88bc"
+          },
+          {
+            "mimeType": "image/png",
+            "bytes": 222,
+            "sha256": "6a2cad43859b63a229034feb46f6a7d85115b3f19bb6336951de89f46db68169"
+          },
+          {
+            "mimeType": "image/png",
+            "bytes": 235716,
+            "sha256": "82759fcbff7339e2febeab29b0c06dc7eaa103a8dc75f32fd6567df9d731db7c"
+          },
+          {
+            "mimeType": "image/png",
+            "bytes": 29527,
+            "sha256": "ae1d3476e467149335b44d69a73c6c408496a4f9651c9ffaab20135646b2a82d"
+          },
+          {
+            "mimeType": "image/png",
+            "bytes": 301852,
+            "sha256": "29da91990f24562f574f392b83130588dd6cd9134fbaf677040992e75cfe4ae1"
+          },
+          {
+            "mimeType": "image/png",
+            "bytes": 222,
+            "sha256": "f6bc96f4ebe89f75c96d18291dd800325e3a406053fde5779f4752b848d6812c"
+          },
+          {
+            "mimeType": "image/png",
+            "bytes": 76,
+            "sha256": "e8f69ccc50e7d1ef3c4f399aa7c4c3b9dac32222ae9c23cf8eb7b14fb85ede72"
+          }
+        ],
+        "skinCount": 1,
+        "clipCount": 14,
+        "khronos": {
+          "status": "failed",
+          "version": "2.0.0-dev.3.10",
+          "errors": 430,
+          "warnings": 42781,
+          "infos": 7,
+          "scanIssueLimit": "unlimited",
+          "issueGroups": {
+            "UNUSED_OBJECT": {
+              "severity": 2,
+              "count": 6,
+              "examples": [
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "severity": 2,
+                  "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+                },
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "severity": 2,
+                  "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+                },
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "severity": 2,
+                  "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+                }
+              ]
+            },
+            "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE": {
+              "severity": 0,
+              "count": 430,
+              "examples": [
+                {
+                  "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+                  "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+                  "severity": 0,
+                  "pointer": "/animations/0/samplers/0/output"
+                },
+                {
+                  "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+                  "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+                  "severity": 0,
+                  "pointer": "/animations/0/samplers/1/output"
+                },
+                {
+                  "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+                  "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+                  "severity": 0,
+                  "pointer": "/animations/0/samplers/2/output"
+                }
+              ]
+            },
+            "NODE_EMPTY": {
+              "severity": 2,
+              "count": 1,
+              "examples": [
+                {
+                  "code": "NODE_EMPTY",
+                  "message": "Empty node encountered.",
+                  "severity": 2,
+                  "pointer": "/nodes/6"
+                }
+              ]
+            },
+            "NODE_SKINNED_MESH_NON_ROOT": {
+              "severity": 1,
+              "count": 5,
+              "examples": [
+                {
+                  "code": "NODE_SKINNED_MESH_NON_ROOT",
+                  "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                  "severity": 1,
+                  "pointer": "/nodes/7"
+                },
+                {
+                  "code": "NODE_SKINNED_MESH_NON_ROOT",
+                  "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                  "severity": 1,
+                  "pointer": "/nodes/8"
+                },
+                {
+                  "code": "NODE_SKINNED_MESH_NON_ROOT",
+                  "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                  "severity": 1,
+                  "pointer": "/nodes/9"
+                }
+              ]
+            },
+            "ACCESSOR_JOINTS_USED_ZERO_WEIGHT": {
+              "severity": 1,
+              "count": 42776,
+              "examples": [
+                {
+                  "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                  "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                  "severity": 1,
+                  "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+                },
+                {
+                  "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                  "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                  "severity": 1,
+                  "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+                },
+                {
+                  "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                  "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                  "severity": 1,
+                  "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+                }
+              ]
+            }
+          },
+          "messages": [
+            {
+              "code": "UNUSED_OBJECT",
+              "message": "This object may be unused.",
+              "severity": 2,
+              "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+            },
+            {
+              "code": "UNUSED_OBJECT",
+              "message": "This object may be unused.",
+              "severity": 2,
+              "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+            },
+            {
+              "code": "UNUSED_OBJECT",
+              "message": "This object may be unused.",
+              "severity": 2,
+              "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+            },
+            {
+              "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+              "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+              "severity": 0,
+              "pointer": "/animations/0/samplers/0/output"
+            },
+            {
+              "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+              "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+              "severity": 0,
+              "pointer": "/animations/0/samplers/1/output"
+            },
+            {
+              "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+              "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+              "severity": 0,
+              "pointer": "/animations/0/samplers/2/output"
+            },
+            {
+              "code": "NODE_EMPTY",
+              "message": "Empty node encountered.",
+              "severity": 2,
+              "pointer": "/nodes/6"
+            },
+            {
+              "code": "NODE_SKINNED_MESH_NON_ROOT",
+              "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+              "severity": 1,
+              "pointer": "/nodes/7"
+            },
+            {
+              "code": "NODE_SKINNED_MESH_NON_ROOT",
+              "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+              "severity": 1,
+              "pointer": "/nodes/8"
+            },
+            {
+              "code": "NODE_SKINNED_MESH_NON_ROOT",
+              "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+              "severity": 1,
+              "pointer": "/nodes/9"
+            },
+            {
+              "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+              "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+              "severity": 1,
+              "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+            },
+            {
+              "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+              "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+              "severity": 1,
+              "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+            },
+            {
+              "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+              "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+              "severity": 1,
+              "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+            }
+          ]
+        },
+        "sha256AfterValidation": "f746641bd6764f979d244d3a9c1010f14125df72a0b814bd9763014e2a1eb54c"
+      },
+      "commonBase": {
+        "file": "C:\\Users\\ABHISHEK\\Desktop\\coding\\VYRA\\resources\\Female_Name.glb",
+        "bytes": 3787496,
+        "sha256": "f746641bd6764f979d244d3a9c1010f14125df72a0b814bd9763014e2a1eb54c",
+        "vertices": 33007,
+        "triangles": 43748,
+        "primitives": 5,
+        "degenerateTriangles": 0,
+        "tangentVertices": 0,
+        "minNormalLength": 0.9999999220869129,
+        "maxNormalLength": 1.0000001178731888,
+        "localBounds": {
+          "min": [
+            -0.7329862713813782,
+            0,
+            -0.1992410272359848
+          ],
+          "max": [
+            0.7329862713813782,
+            1.6400001049041748,
+            0.1992410272359848
+          ]
+        },
+        "positionsSha256": "40b2ea9dc67fc3e26916ecc3d25d2225f98d0d7e8bce6ef80755320b645a059c",
+        "threeLoader": {
+          "status": "passed",
+          "meshes": 5,
+          "skinnedMeshes": 5,
+          "vertices": 33007,
+          "triangles": 43748,
+          "textureBindings": 11,
+          "animationClips": 14,
+          "animationNames": [
+            "Running",
+            "Walking",
+            "01a08a5f-260e-7737-a830-a2b07f0012d2",
+            "Arise",
+            "Attack",
+            "Boom_Dance",
+            "Casual_Walk",
+            "Dead",
+            "RunFast",
+            "Run_03",
+            "Skill_01",
+            "Skill_03",
+            "Unsteady_Walk",
+            "Walking_Woman"
+          ],
+          "worldBounds": {
+            "min": [
+              -0.9382108367251843,
+              -6.778938899738399e-7,
+              -0.2550253342498323
+            ],
+            "max": [
+              0.9382109218190399,
+              2.0991742193442624,
+              0.255025394790468
+            ]
+          },
+          "limitation": "ImageBitmap decode uses a 1x1 placeholder. Verifies loader structure, bindings, skeleton/clip parsing and scene bounds; does not test real image pixels, WebGL, animation quality or runtime performance."
+        },
+        "khronos": {
+          "status": "failed",
+          "version": "2.0.0-dev.3.10",
+          "errors": 430,
+          "warnings": 42781,
+          "infos": 7,
+          "scanIssueLimit": "unlimited",
+          "issueGroups": {
+            "UNUSED_OBJECT": {
+              "severity": 2,
+              "count": 6,
+              "examples": [
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "severity": 2,
+                  "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+                },
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "severity": 2,
+                  "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+                },
+                {
+                  "code": "UNUSED_OBJECT",
+                  "message": "This object may be unused.",
+                  "severity": 2,
+                  "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+                }
+              ]
+            },
+            "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE": {
+              "severity": 0,
+              "count": 430,
+              "examples": [
+                {
+                  "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+                  "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+                  "severity": 0,
+                  "pointer": "/animations/0/samplers/0/output"
+                },
+                {
+                  "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+                  "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+                  "severity": 0,
+                  "pointer": "/animations/0/samplers/1/output"
+                },
+                {
+                  "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+                  "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+                  "severity": 0,
+                  "pointer": "/animations/0/samplers/2/output"
+                }
+              ]
+            },
+            "NODE_EMPTY": {
+              "severity": 2,
+              "count": 1,
+              "examples": [
+                {
+                  "code": "NODE_EMPTY",
+                  "message": "Empty node encountered.",
+                  "severity": 2,
+                  "pointer": "/nodes/6"
+                }
+              ]
+            },
+            "NODE_SKINNED_MESH_NON_ROOT": {
+              "severity": 1,
+              "count": 5,
+              "examples": [
+                {
+                  "code": "NODE_SKINNED_MESH_NON_ROOT",
+                  "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                  "severity": 1,
+                  "pointer": "/nodes/7"
+                },
+                {
+                  "code": "NODE_SKINNED_MESH_NON_ROOT",
+                  "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                  "severity": 1,
+                  "pointer": "/nodes/8"
+                },
+                {
+                  "code": "NODE_SKINNED_MESH_NON_ROOT",
+                  "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+                  "severity": 1,
+                  "pointer": "/nodes/9"
+                }
+              ]
+            },
+            "ACCESSOR_JOINTS_USED_ZERO_WEIGHT": {
+              "severity": 1,
+              "count": 42776,
+              "examples": [
+                {
+                  "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                  "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+                  "severity": 1,
+                  "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+                },
+                {
+                  "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                  "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+                  "severity": 1,
+                  "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+                },
+                {
+                  "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+                  "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+                  "severity": 1,
+                  "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+                }
+              ]
+            }
+          },
+          "messages": [
+            {
+              "code": "UNUSED_OBJECT",
+              "message": "This object may be unused.",
+              "severity": 2,
+              "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_1"
+            },
+            {
+              "code": "UNUSED_OBJECT",
+              "message": "This object may be unused.",
+              "severity": 2,
+              "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_2"
+            },
+            {
+              "code": "UNUSED_OBJECT",
+              "message": "This object may be unused.",
+              "severity": 2,
+              "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_1"
+            },
+            {
+              "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+              "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+              "severity": 0,
+              "pointer": "/animations/0/samplers/0/output"
+            },
+            {
+              "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+              "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+              "severity": 0,
+              "pointer": "/animations/0/samplers/1/output"
+            },
+            {
+              "code": "ANIMATION_SAMPLER_ACCESSOR_WITH_BYTESTRIDE",
+              "message": "bufferView.byteStride must not be defined for buffer views used by animation sampler accessors.",
+              "severity": 0,
+              "pointer": "/animations/0/samplers/2/output"
+            },
+            {
+              "code": "NODE_EMPTY",
+              "message": "Empty node encountered.",
+              "severity": 2,
+              "pointer": "/nodes/6"
+            },
+            {
+              "code": "NODE_SKINNED_MESH_NON_ROOT",
+              "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+              "severity": 1,
+              "pointer": "/nodes/7"
+            },
+            {
+              "code": "NODE_SKINNED_MESH_NON_ROOT",
+              "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+              "severity": 1,
+              "pointer": "/nodes/8"
+            },
+            {
+              "code": "NODE_SKINNED_MESH_NON_ROOT",
+              "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+              "severity": 1,
+              "pointer": "/nodes/9"
+            },
+            {
+              "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+              "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (11).",
+              "severity": 1,
+              "pointer": "/meshes/2/primitives/0/attributes/JOINTS_0"
+            },
+            {
+              "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+              "message": "Joints accessor element at index 2 (component index 2) is used with zero weight but has non-zero value (13).",
+              "severity": 1,
+              "pointer": "/meshes/4/primitives/0/attributes/JOINTS_0"
+            },
+            {
+              "code": "ACCESSOR_JOINTS_USED_ZERO_WEIGHT",
+              "message": "Joints accessor element at index 3 (component index 3) is used with zero weight but has non-zero value (6).",
+              "severity": 1,
+              "pointer": "/meshes/0/primitives/0/attributes/JOINTS_0"
+            }
+          ]
+        }
+      },
+      "status": "passed"
+    }
+  ],
+  "failures": [],
+  "missing": [],
+  "limitations": [
+    "Nonadjacent intersections are audited separately where an intersection-audit.json exists; this structural check does not prove watertightness or absence of all clipping.",
+    "Three loader uses explicitly stubbed image decoding. Actual textures and deformation appearance require the accompanying Blender previews."
+  ],
+  "passedVariants": 5,
+  "status": "passed"
+}

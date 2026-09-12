@@ -8,7 +8,8 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ['starter', 'developing', 'strong', 'elite', 'legendary']
 WIDTH, HEIGHT, SCALE = 1600, 720, 2
-image = Image.new('RGB', (WIDTH * SCALE, HEIGHT * SCALE), '#122136')
+# Halo ground, matching apps/mobile/src/theme.ts `colors.background`.
+image = Image.new('RGB', (WIDTH * SCALE, HEIGHT * SCALE), '#05070A')
 draw = ImageDraw.Draw(image)
 
 def font(size, bold=False):
@@ -75,20 +76,25 @@ def load_triangles(path):
         visit(index, np.eye(4))
     return triangles
 
-label(44, 26, 'VYRA', 32, '#DCEBFA', True)
-label(44, 71, 'VANGUARD / FIVE EVOLUTIONS', 14, '#6EDBCD', True)
-label(850, 44, 'Real effort. A deliberately impossible hero.', 20, '#A9BED1')
+# Chrome colors mirror theme.ts: brand mint wordmark (10.83:1 on the ground), accent mint eyebrow
+# (13.63:1), muted silver body (9.22:1).
+label(44, 26, 'VYRA', 32, '#2DD4BF', True)
+label(44, 71, 'VANGUARD / FIVE EVOLUTIONS', 14, '#5EEAD4', True)
+label(850, 44, 'Real effort. A deliberately impossible hero.', 20, '#A8B0BC')
 eye = np.array([1.0, 1.9, 8.6])
 target = np.array([0, 1.6, 0])
 forward = target-eye; forward /= np.linalg.norm(forward)
 right = np.cross(forward, [0, 1, 0]); right /= np.linalg.norm(right)
 up = np.cross(right, forward)
 light = np.array([-.3, .8, 1]); light /= np.linalg.norm(light)
-colors = ['#81B4CF', '#55DCCE', '#5E9EFF', '#AE8AFF', '#FFD17B']
+# Mirrors the stage ramp in packages/core/src/catalog.ts — this file does not import it, so the
+# two drift silently. Keep them in step when the ramp is re-cut.
+colors = ['#8494A6', '#6FA8B8', '#4FC3C3', '#2DD4BF', '#5EEAD4']
 requirements = ['0 XP / Start here', '100 XP / 1 active day', '1,000 XP / 5 active days', '3,000 XP / 14 active days', '7,500 XP / 30 active days']
 for column, stage in enumerate(STAGES):
     left, top, card_width, card_height = 28 + column*314, 118, 298, 527
-    draw.rounded_rectangle((left*SCALE, top*SCALE, (left+card_width)*SCALE, (top+card_height)*SCALE), radius=22*SCALE, fill='#20354A')
+    # `colors.surface`; the stage number on it climbs 5.95:1 -> 12.49:1 across the ramp.
+    draw.rounded_rectangle((left*SCALE, top*SCALE, (left+card_width)*SCALE, (top+card_height)*SCALE), radius=22*SCALE, fill='#10141A')
     center = np.array([left+card_width/2, top+235]) * SCALE
     focal = 510*SCALE / (2*np.tan(np.deg2rad(32)/2))
     rendered = []
@@ -105,13 +111,13 @@ for column, stage in enumerate(STAGES):
     ground = -eye
     ground_center = center + focal*np.array([np.dot(ground, right), -np.dot(ground, up)])/np.dot(ground, forward)
     gx, gy = ground_center
-    draw.ellipse((gx-87*SCALE, gy-6*SCALE, gx+87*SCALE, gy+10*SCALE), fill='#13273B')
+    draw.ellipse((gx-87*SCALE, gy-6*SCALE, gx+87*SCALE, gy+10*SCALE), fill='#0A0D12')
     for _, points, color in sorted(rendered, key=lambda entry: -entry[0]):
         draw.polygon([tuple(point) for point in points], fill=color)
     label(left+21, top+24, f'0{column+1}', 13, colors[column], True)
-    label(left+21, top+462, stage.capitalize(), 24, '#E9F2FA', True)
-    label(left+21, top+497, requirements[column], 12, '#A9BED1')
-label(34, 674, 'Original procedural GLB assets. Offline asset study; Expo rendering and device performance still require validation.', 13, '#A9BED1')
+    label(left+21, top+462, stage.capitalize(), 24, '#F2F5F8', True)
+    label(left+21, top+497, requirements[column], 12, '#A8B0BC')
+label(34, 674, 'Original procedural GLB assets. Offline asset study; Expo rendering and device performance still require validation.', 13, '#A8B0BC')
 output = ROOT/'docs/assets/vanguard-evolutions.png'
 output.parent.mkdir(parents=True, exist_ok=True)
 image.resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS).save(output)

@@ -1,0 +1,126 @@
+{
+  "character": "Base_Male",
+  "sourceSha256": "c21339d10f1b64ca9e3e4d5d438718c662172b94ffa9c00dddcd94c1a9b3ccee",
+  "stages": [
+    {
+      "stage": "Starter",
+      "file": "Base_Male_Starter.glb",
+      "bytes": 565116,
+      "sourceSha256": "c21339d10f1b64ca9e3e4d5d438718c662172b94ffa9c00dddcd94c1a9b3ccee",
+      "geometry": [
+        {
+          "vertices": 7534,
+          "fixedVertices": 1358,
+          "jacobianMin": 0.31946820721373326,
+          "nonPositiveJacobians": 0,
+          "canonicalBoundsMin": [
+            -0.7489164027480306,
+            0.0,
+            -0.20741240878706127
+          ],
+          "canonicalBoundsMax": [
+            0.7489164027480306,
+            1.0,
+            0.22642647522688591
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Developing",
+      "file": "Base_Male_Developing.glb",
+      "bytes": 565120,
+      "sourceSha256": "c21339d10f1b64ca9e3e4d5d438718c662172b94ffa9c00dddcd94c1a9b3ccee",
+      "geometry": [
+        {
+          "vertices": 7534,
+          "fixedVertices": 1358,
+          "jacobianMin": 0.7255513922303236,
+          "nonPositiveJacobians": 0,
+          "canonicalBoundsMin": [
+            -0.7721164027480306,
+            0.0,
+            -0.21330159389197512
+          ],
+          "canonicalBoundsMax": [
+            0.7721164027480306,
+            1.0,
+            0.22642647522688591
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Strong",
+      "file": "Base_Male_Strong.glb",
+      "bytes": 565116,
+      "sourceSha256": "c21339d10f1b64ca9e3e4d5d438718c662172b94ffa9c00dddcd94c1a9b3ccee",
+      "geometry": [
+        {
+          "vertices": 7534,
+          "fixedVertices": 1358,
+          "jacobianMin": 0.9999999999905099,
+          "nonPositiveJacobians": 0,
+          "canonicalBoundsMin": [
+            -0.8011164027480305,
+            0.0,
+            -0.2632383177395181
+          ],
+          "canonicalBoundsMax": [
+            0.8011164027480305,
+            1.0,
+            0.22642647522688591
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Elite",
+      "file": "Base_Male_Elite.glb",
+      "bytes": 565116,
+      "sourceSha256": "c21339d10f1b64ca9e3e4d5d438718c662172b94ffa9c00dddcd94c1a9b3ccee",
+      "geometry": [
+        {
+          "vertices": 7534,
+          "fixedVertices": 1358,
+          "jacobianMin": 0.960040789664181,
+          "nonPositiveJacobians": 0,
+          "canonicalBoundsMin": [
+            -0.8359164027480306,
+            0.0,
+            -0.3391880564967673
+          ],
+          "canonicalBoundsMax": [
+            0.8359164027480306,
+            1.0,
+            0.22642647522688591
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Legendary",
+      "file": "Base_Male_Legendary.glb",
+      "bytes": 565116,
+      "sourceSha256": "c21339d10f1b64ca9e3e4d5d438718c662172b94ffa9c00dddcd94c1a9b3ccee",
+      "geometry": [
+        {
+          "vertices": 7534,
+          "fixedVertices": 1358,
+          "jacobianMin": 0.7956893293293401,
+          "nonPositiveJacobians": 0,
+          "canonicalBoundsMin": [
+            -0.8794164027480306,
+            0.0,
+            -0.42901973682277367
+          ],
+          "canonicalBoundsMax": [
+            0.8794164027480306,
+            1.0,
+            0.26816582082235535
+          ]
+        }
+      ]
+    }
+  ]
+}

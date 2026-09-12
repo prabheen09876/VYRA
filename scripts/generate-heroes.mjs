@@ -20,11 +20,24 @@ for (const [stage, bulk, stature, abs] of presets) {
   scene.addChild(hero);
   const mat = (name, hex, metal = 0) => doc.createMaterial(name)
     .setBaseColorFactor([...new Color(hex).toArray(), 1]).setMetallicFactor(metal).setRoughnessFactor(.58);
+  // Baked to match the Halo palette in apps/mobile/src/theme.ts and the cosmetic colors in
+  // packages/core/src/catalog.ts. These live in the GLB, so editing the catalog alone does NOT
+  // change them — `npm run assets:generate && npm run assets:verify` has to be re-run.
+  //   `coral` is the Cosmetic_Bracer_* meshes and the head Crest -> catalog pulse-bracers #FF6B3D
+  //   `gold`  is the Buckle and the legendary-only Crown_*/LegendTrim_* -> catalog nova-aura #5EEAD4
+  // (The material KEYS keep their historical names so the mesh-assignment code below is untouched;
+  // only the colors move. The `name` strings are what HeroView matches on and must not change.)
+  //
+  // The GLBs currently committed under apps/mobile/assets/heroes still carry the previous Nocturne
+  // bake — nothing in apps/mobile/src references that directory any more (the app renders the
+  // apps/mobile/assets/characters families instead), so the repalette was applied here and the
+  // binaries were deliberately left alone rather than churned. Re-run assets:generate before these
+  // procedural heroes are ever put back on screen.
   const materials = {
-    skin: mat('HeroSkin', '#7999B5', .1), suit: mat('HeroSuit', '#243C58', .22),
-    boot: mat('HeroBoot', '#15263D', .1), trim: mat('HeroTrim', '#CCDDEA', .3),
-    coral: mat('HeroCoral', '#FF9778'), gold: mat('HeroGold', '#FFD384', .3),
-    visor: mat('HeroVisor', '#90F3E5', .2).setEmissiveFactor([.08,.24,.21])
+    skin: mat('HeroSkin', '#9AA3B0', .1), suit: mat('HeroSuit', '#1E2633', .22),
+    boot: mat('HeroBoot', '#12171F', .1), trim: mat('HeroTrim', '#E2E9F2', .3),
+    coral: mat('HeroCoral', '#FF6B3D'), gold: mat('HeroGold', '#5EEAD4', .3),
+    visor: mat('HeroVisor', '#8FB4FF', .2).setEmissiveFactor([.10,.16,.34])
   };
   const geometries = {
     sphere: new SphereGeometry(1, 16, 12), box: new BoxGeometry(2, 2, 2),
