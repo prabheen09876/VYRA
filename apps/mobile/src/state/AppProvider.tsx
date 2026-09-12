@@ -9,19 +9,25 @@ import {
   type CharacterId, type FitnessSetupInput, type BodyCheckInInput,
   validateFitnessSetup, validateBodyCheckIn, isCharacterId,
 } from '@vyra/core';
-import { ApiError, errorMessage, normalizeApiUrl, request } from '../lib/api';
+import { ApiError, adoptConfiguredApiUrl, defaultApiUrl, errorMessage, normalizeApiUrl, request } from '../lib/api';
+import { normalizeRoomCode, roomCodeError } from '../lib/room-code';
 import { readSession, saveSession, type SavedSession } from '../lib/storage';
 import { rememberExerciseWindow, routeCapturedRep } from '../lib/rep-window';
+import { MatchmakingCancelled, openMatchmakingSession, type MatchmakingSession } from '../lib/matchmaking-session';
 import { waitForTerminalReceipt } from '../lib/reward-receipt';
 import { ARENA_TEST_MODE } from '../lib/testMode';
-import { createMatchmakingSearch, type MatchmakingSearch } from '../lib/matchmaking-client';
 import { HEARTBEAT_TIMEOUT, LOBBY_HEARTBEAT_TIMEOUT, type ExerciseWindow } from '@vyra/core/match';
 
 type Connection = 'disconnected' | 'connecting' | 'connected' | 'error';
 type CaptureRep = Extract<CaptureMessage, { type: 'capture.rep' }>;
 type CaptureTracking = Extract<CaptureMessage, { type: 'capture.tracking' }>;
 type RewardStatus = 'idle' | 'pending' | 'received' | 'unavailable';
-const defaultUrl = process.env.EXPO_PUBLIC_API_URL?.trim().replace(/\/+$/, '') || (Platform.OS === 'web' ? 'http://localhost:8787' : '');
+// An explicit EXPO_PUBLIC_API_URL still wins. Without one, a web build follows the host that served
+// it rather than assuming `localhost` — see defaultApiUrl for why that distinction decides whether
+// two devices share a matchmaking queue. Native has no page to follow, so it asks in Profile.
+const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim().replace(/\/+$/, '') || '';
+const defaultUrl = configuredUrl
+  || (Platform.OS === 'web' && typeof window !== 'undefined' ? defaultApiUrl(window.location) : '');
 const initialSession: SavedSession = { apiUrl: defaultUrl, token: null, name: '', muted: false, reducedMotion: false, identities: {} };
 const terminal = (snapshot: MatchSnapshot | null) => !snapshot || snapshot.phase === 'finished' || snapshot.phase === 'interrupted';
 const cancelledSearch = () => Object.assign(new Error('Opponent search cancelled.'), { name: 'AbortError' });
@@ -99,8 +105,16 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   const trackingRef = useRef({ phaseId: '', sentAt: 0, visible: false });
   const wasMatchRoute = useRef(false);
   const [calibration, setCalibrationState] = useState({ squat: 0, pushup: 0 });
-  const matchmakingSearch = useRef<MatchmakingSearch | null>(null);
-  const matchmakingGeneration = useRef(0);
+  // At most one live queue connection, plus a counter that says which search attempt owns the UI.
+  // Every `await` in enterMatchmaking re-checks the counter, so a search that has been cancelled or
+  // superseded can never write state back over the one that replaced it.
+  const matchmakingSession = useRef<MatchmakingSession | null>(null);
+  /** The last queue socket's close, kept after the session itself is dropped: the next search has to
+   *  wait for it even though nothing is "searching" any more. */
+  const matchmakingClosed = useRef<Promise<void> | null>(null);
+  /** Aborts the current attempt's ticket mint, which happens before any socket exists. */
+  const matchmakingAbort = useRef<AbortController | null>(null);
+  const matchmakingAttempt = useRef(0);
   const [matchmakingStatus, setMatchmakingStatus] = useState<'idle' | 'searching'>('idle');
 
   const setRewardState = useCallback((status: RewardStatus, error: string | null = null) => {
@@ -170,8 +184,14 @@ export function AppProvider({ children }: React.PropsWithChildren) {
         ]);
         if (!alive) return;
         const next = { ...initialSession, ...saved, reducedMotion: !!saved?.reducedMotion || reducedMotion };
+        // The saved address is spread in last, so on its own it would outrank a configured
+        // EXPO_PUBLIC_API_URL on every launch. Adopt the pin instead, and write the corrected
+        // session straight back so the superseded address cannot return on the next launch either.
+        const adopted = adoptConfiguredApiUrl(next, configuredUrl);
+        if (adopted) Object.assign(next, adopted);
         sessionRef.current = next;
         setSession(next);
+        if (adopted) void saveSession(next).catch(() => undefined);
         if (next.token && next.apiUrl) await refreshProfile().catch(() => undefined);
       } catch {
         if (alive) setConnectionError('Device settings could not be loaded. Reconnect in Profile to continue.');
@@ -449,9 +469,10 @@ export function AppProvider({ children }: React.PropsWithChildren) {
 
   useEffect(() => () => {
     socketSetup.current += 1;
-    matchmakingGeneration.current += 1;
     socketRef.current?.close();
-    matchmakingSearch.current?.cancel();
+    matchmakingAttempt.current += 1;
+    void matchmakingSession.current?.cancel();
+    matchmakingSession.current = null;
     if (rewardWaitTimer.current) clearTimeout(rewardWaitTimer.current);
     rewardRecovery.current?.abort();
     rewardAttempt.current += 1;
@@ -510,8 +531,13 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, [openSocket]);
 
   const joinMatch = useCallback(async (roomCode: string) => {
-    const code = roomCode.trim().toUpperCase();
-    if (!code) throw new Error('Enter the room code your friend shared.');
+    // Check the shape the join route accepts before spending a request on it. A code of the wrong
+    // length, or one pasted with the full stop the share text ends in, matches no route and returns
+    // "API route not found." — which blames the server for what is really a mistyped code. The
+    // worker still does its own check; this only decides which message the player reads.
+    const problem = roomCodeError(roomCode);
+    if (problem) throw new Error(problem);
+    const code = normalizeRoomCode(roomCode);
     if (!sessionRef.current.token) throw new Error('Connect your player profile before joining a room.');
     const created = await request<MatchCreated>(sessionRef.current.apiUrl, '/api/rooms/' + encodeURIComponent(code) + '/join', {
       token: sessionRef.current.token, method: 'POST', body: {},
@@ -520,44 +546,86 @@ export function AppProvider({ children }: React.PropsWithChildren) {
     return created;
   }, [openSocket]);
 
-  const cancelMatchmaking = useCallback(() => {
-    matchmakingGeneration.current += 1;
-    const search = matchmakingSearch.current;
-    matchmakingSearch.current = null;
-    setMatchmakingStatus('idle');
-    search?.cancel();
+  /** Ends any live search and waits for its socket to be gone. Safe to call at any time: with no
+   *  search running it does nothing, so leaving the arena or finishing a room-code match never
+   *  disturbs the battle socket, which lives in socketRef and is untouched here.
+   *
+   *  Deliberately refs-only — no state reads — so its identity, and cancelMatchmaking's, stay stable
+   *  for the lifetime of the provider. Screens hang unmount cleanups off cancelMatchmaking; an
+   *  identity that changed with matchmakingStatus would re-run those cleanups on every transition
+   *  and cancel the search that caused them. */
+  const releaseMatchmaking = useCallback(async () => {
+    matchmakingAbort.current?.abort();
+    matchmakingAbort.current = null;
+    const session = matchmakingSession.current;
+    matchmakingSession.current = null;
+    void session?.cancel();
+    // Await the socket, not the session: a cancel already in flight has cleared the ref above while
+    // its socket is still closing, and starting the next search then would hit ALREADY_CONNECTED.
+    await matchmakingClosed.current;
   }, []);
+
+  const cancelMatchmaking = useCallback(() => {
+    matchmakingAttempt.current += 1;
+    setMatchmakingStatus('idle');
+    void releaseMatchmaking();
+  }, [releaseMatchmaking]);
+
+  // A search belongs to the arena and nowhere else. The screen's own unmount cleanup cannot be the
+  // only guard: app/_layout.tsx renders a <Stack>, which keeps /arena mounted underneath anything
+  // pushed on top of it — including the always-visible profile avatar in ui.tsx — so its cleanup
+  // does not run for every way out of the screen. This catches the rest. Unconditional on purpose:
+  // it only ends a live search, and a pairing that has reached openSocket has already released its
+  // session, so arriving at /lobby cannot cancel the battle it just created.
+  useEffect(() => { if (pathname !== '/arena') cancelMatchmaking(); }, [pathname, cancelMatchmaking]);
 
   // "Battle with Randoms": pairs with another waiting player, then hands off into the exact same
   // openSocket()/MatchRoom path room-code matches already use — no separate battle logic here.
   const enterMatchmaking = useCallback(async (): Promise<MatchCreated> => {
     const current = sessionRef.current;
     if (!current.token) throw new Error('Connect your player profile before entering the arena.');
-    if (matchmakingSearch.current) throw new Error('An opponent search is already running.');
-    const generation = ++matchmakingGeneration.current;
-    const search = createMatchmakingSearch({
-      requestTicket: async () => {
-        const { ticket } = await request<{ ticket: string }>(current.apiUrl, '/api/matchmaking/ticket', { token: current.token!, method: 'POST', body: {} });
-        return ticket;
-      },
-      createSocket: ticket => new WebSocket(current.apiUrl.replace(/^http/, 'ws') + '/api/matchmaking/ws?ticket=' + encodeURIComponent(ticket)),
-    });
-    matchmakingSearch.current = search;
+    const attempt = ++matchmakingAttempt.current;
+    const superseded = () => matchmakingAttempt.current !== attempt;
+    // Synchronously, before any await. The arena's Cancel affordance is gated on this status, and
+    // the prelude below — closing a previous socket, then minting a ticket — can take seconds on a
+    // cold server. A search the player cannot call off is the bug, not the waiting.
     setMatchmakingStatus('searching');
     try {
-      const created = await search.result;
-      if (matchmakingSearch.current !== search || matchmakingGeneration.current !== generation) throw cancelledSearch();
-      matchmakingSearch.current = null;
+      // Wait out any previous search before claiming the queue slot. The Matchmaking Durable Object
+      // answers a second socket for the same player with 409 ALREADY_CONNECTED, so searching again
+      // straight after a cancel used to fail until the old socket happened to finish closing.
+      await releaseMatchmaking();
+      if (superseded()) throw new MatchmakingCancelled();
+      const abort = new AbortController();
+      matchmakingAbort.current = abort;
+      const { ticket } = await request<{ ticket: string }>(current.apiUrl, '/api/matchmaking/ticket', { token: current.token, method: 'POST', body: {}, signal: abort.signal });
+      if (superseded()) throw new MatchmakingCancelled();
+      const session = openMatchmakingSession({
+        url: current.apiUrl.replace(/^http/, 'ws') + '/api/matchmaking/ws?ticket=' + encodeURIComponent(ticket),
+      });
+      matchmakingSession.current = session;
+      matchmakingClosed.current = session.closed;
+      let created: MatchCreated;
+      // The session owns its own outcome, so a `matched` event is never dropped for belonging to the
+      // "wrong" socket — there is only ever one, and it is released the moment it settles.
+      try { created = await session.matched; }
+      finally { if (matchmakingSession.current === session) matchmakingSession.current = null; }
+      if (superseded()) { await session.cancel(); throw new MatchmakingCancelled(); }
       setMatchmakingStatus('idle');
-      await openSocket(created, () => matchmakingGeneration.current === generation);
+      // Guarded, not bare: openSocket awaits a ticket mint of its own, and a cancel that lands in
+      // that window has to stop the battle socket from ever opening. It reports a refusal by
+      // throwing, which the catch below re-labels as the cancellation it actually is.
+      await openSocket(created, () => !superseded());
       return created;
-    } finally {
-      if (matchmakingSearch.current === search) {
-        matchmakingSearch.current = null;
-        setMatchmakingStatus('idle');
-      }
+    } catch (error) {
+      // Anything that fails after this attempt lost ownership is reported as a cancellation, not as
+      // an error: the abort above surfaces as a failed fetch, and whoever superseded us — a cancel,
+      // or the next search — already owns the status. Touching it here would clear theirs.
+      if (superseded()) throw new MatchmakingCancelled();
+      setMatchmakingStatus('idle');
+      throw error instanceof Error ? error : new Error('Could not start matchmaking.');
     }
-  }, [openSocket]);
+  }, [openSocket, releaseMatchmaking]);
 
   const ready = useCallback(() => {
     if (!ARENA_TEST_MODE && (calibration.squat < 2 || calibration.pushup < 2)) {

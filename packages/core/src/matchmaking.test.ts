@@ -53,6 +53,21 @@ describe('matchmaking queue', () => {
     expect(enterQueue(state, entry('d'))).toEqual({ outcome: 'matched', opponent: entry('c') });
     expect(state.waiting).toHaveLength(0);
   });
+  it('re-entering pairs with a waiting opponent instead of stalling on a leftover self-entry', () => {
+    // The deadlock this guards: a queue row can outlive its socket, because nothing delivers
+    // webSocketClose when a dev server reloads or a laptop sleeps. Returning `searching` on the
+    // strength of that row skipped the opponent scan entirely, so with one stale row each, two
+    // players sat in the same queue seeing each other and neither was ever matched.
+    const state = { waiting: [entry('a', 1), entry('b', 2)] };
+    expect(enterQueue(state, entry('a', 3))).toEqual({ outcome: 'matched', opponent: entry('b', 2) });
+    expect(state.waiting).toHaveLength(0);
+  });
+  it('re-entering refreshes the entry rather than keeping the stale one', () => {
+    const state = createQueue();
+    enterQueue(state, entry('a', 1));
+    enterQueue(state, entry('a', 9));
+    expect(state.waiting).toEqual([entry('a', 9)]);
+  });
   it('a fresh queue entry after being matched is a new, independent search', () => {
     const state = createQueue();
     enterQueue(state, entry('a'));

@@ -44,13 +44,22 @@ export class Matchmaking extends DurableObject<Env> {
     const row = this.ctx.storage.sql.exec<{ player_id: string; name: string }>('DELETE FROM tickets WHERE hash = ? AND expires_at > ? RETURNING player_id, name', hashed, Date.now()).toArray()[0];
     if (!row) return Response.json({ error: 'INVALID_TICKET' }, { status: 401 });
     if (this.ctx.getWebSockets(row.player_id).length) return Response.json({ error: 'ALREADY_CONNECTED' }, { status: 409 });
+
+    // Drop entries whose socket is gone, before accepting the new one so that this player's own
+    // leftover row is dropped too. Queue rows are persisted but `webSocketClose` is not guaranteed:
+    // a `wrangler dev` reload, a slept laptop or a half-open Wi-Fi link ends the socket without it,
+    // and the row survives in SQLite. Liveness beats a TTL guess here — `getWebSockets` sees through
+    // hibernation, so an empty result means that player really is not connected to this queue. A
+    // stale row would otherwise be handed out as an opponent nobody is behind.
+    const state = this.loadQueue();
+    state.waiting = state.waiting.filter(entry => this.ctx.getWebSockets(entry.playerId).length > 0);
+
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     server.serializeAttachment({ playerId: row.player_id } satisfies SocketIdentity);
     this.ctx.acceptWebSocket(server, [row.player_id]);
 
     const self: QueueEntry = { playerId: row.player_id, name: row.name, queuedAt: Date.now() };
-    const state = this.loadQueue();
     const result = enterQueue(state, self);
     this.saveQueue(state); // Synchronous up to here: pairing is decided before any await below.
     if (result.outcome === 'searching') {

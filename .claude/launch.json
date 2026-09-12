@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "web", "-w", "@vyra/mobile", "--", "--port", "8082"],
       "port": 8082,
       "autoPort": false
+    },
+    {
+      "name": "vyra-worker",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "@vyra/worker"],
+      "port": 8787,
+      "autoPort": false
     }
   ]
 }

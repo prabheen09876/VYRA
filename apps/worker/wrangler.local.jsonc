@@ -15,9 +15,14 @@
     { "tag": "v2", "new_sqlite_classes": ["Matchmaking"] }
   ],
   "d1_databases": [{ "binding": "DB", "database_name": "vyra", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
-  // Local dev origins only. 8081 is `expo start --web`'s default; 8082 is the port .claude/launch.json
-  // pins the web preview to, and without it the previewed app cannot reach this API at all; 5173 is
-  // the capture app's Vite dev server; 19006 is the legacy Expo web port.
-  "vars": { "AI_ENABLED": "false", "CORS_ORIGINS": "http://localhost:8081,http://localhost:8082,http://localhost:19006,http://localhost:5173" },
+  // Local dev origins only — this file is never deployed. 8081 is `expo start --web`'s default; 8082
+  // is the port .claude/launch.json pins the web preview to, and without it the previewed app cannot
+  // reach this API at all; 5173 is the capture app's Vite dev server; 19006 is the legacy Expo web port.
+  //
+  // The LAN entry is listed explicitly because 172.32.x.x sits outside RFC 1918 (private is
+  // 172.16–172.31), so `isAllowedOrigin`'s private-network clause in src/http.ts does not cover it —
+  // replace it when this machine's address changes. The worker's own origin needs no entry: same-origin
+  // is allowed before this list is consulted, which is what serves /capture/ from the worker itself.
+  "vars": { "AI_ENABLED": "false", "CORS_ORIGINS": "http://localhost:8081,http://localhost:8082,http://localhost:19006,http://localhost:5173,http://172.32.2.227:8082" },
   "observability": { "enabled": true, "head_sampling_rate": 1 }
 }

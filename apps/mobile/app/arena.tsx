@@ -6,20 +6,27 @@ import { Button, Copy, Heading, Notice, Pill, Screen, layout } from '../src/comp
 import TestModeBadge from '../src/components/TestModeBadge';
 import { useApp } from '../src/state/AppProvider';
 import { errorMessage } from '../src/lib/api';
-import { isMatchmakingCancelled } from '../src/lib/matchmaking-client';
+import { isMatchmakingCancellation } from '../src/lib/matchmaking-session';
+import { ROOM_CODE_LENGTH, normalizeRoomCode } from '../src/lib/room-code';
 import { colors, displayWeight, fonts, radii } from '../src/theme';
 
 export default function ArenaScreen() {
   const params = useLocalSearchParams<{ mode?: string; room?: string }>();
   const { profile, calibrated, createMatch, joinMatch, matchmakingStatus, enterMatchmaking, cancelMatchmaking } = useApp();
   const [mode, setMode] = useState<MatchMode>(params.mode === 'pvp' ? 'pvp' : 'solo');
-  const [room, setRoom] = useState(params.room || '');
+  const [room, setRoom] = useState(() => normalizeRoomCode(params.room || ''));
   const [pending, setPending] = useState<'create' | 'join' | 'random' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const activeAttempt = useRef(0);
   const focused = useRef(false);
   const { width } = useWindowDimensions();
   const searching = matchmakingStatus === 'searching';
+  // Blur, not unmount: app/_layout.tsx renders a <Stack>, so /arena stays mounted underneath
+  // anything pushed on top of it and an unmount cleanup would never run for most ways out. Leaving
+  // must not strand the player in the server-side queue — they would be matched into a battle they
+  // cannot see, and their next search refused as ALREADY_CONNECTED. Unconditional by design: this
+  // only ends a *live* search, and a pairing already handed to the match socket has released its
+  // session by now, so an established battle (room-code or random) is never cancelled by it.
   useFocusEffect(useCallback(() => {
     focused.current = true;
     setPending(null);
@@ -29,6 +36,8 @@ export default function ArenaScreen() {
       cancelMatchmaking();
     };
   }, [cancelMatchmaking]));
+  // Bumps the attempt id before clearing anything, so the search this ends can no longer write its
+  // own outcome back — which is what makes clearing `pending` here safe rather than a second writer.
   const cancelSearch = () => {
     activeAttempt.current += 1;
     cancelMatchmaking();
@@ -42,7 +51,12 @@ export default function ArenaScreen() {
       router.push({ pathname: '/calibrate', params: { next: 'arena', mode, room: joining ? room : '' } });
       return;
     }
+    // Naming an opponent supersedes looking for any opponent. A queue search can stay open
+    // indefinitely — that is what waiting *is* — so gating this screen's other actions behind it
+    // left a player who had a room code staring at a greyed-out Join button with no hint why.
+    // Claim the attempt id first so the abandoned search cannot clear the spinner this one owns.
     const attempt = ++activeAttempt.current;
+    cancelMatchmaking();
     setPending(joining ? 'join' : 'create'); setError(null);
     try {
       await (joining ? joinMatch(room) : createMatch(mode));
@@ -56,16 +70,19 @@ export default function ArenaScreen() {
   const beginRandom = async () => {
     if (pending || searching) return;
     if (!profile) { router.push('/profile'); return; }
+    if (!calibrated) { router.push({ pathname: '/calibrate', params: { next: 'arena', mode: 'pvp' } }); return; }
+    // Ignore everything a superseded search reports: cancelling and searching again must not let the
+    // abandoned attempt clear the new one's spinner or raise a banner over it.
     const attempt = ++activeAttempt.current;
+    const mine = () => focused.current && attempt === activeAttempt.current;
     setPending('random'); setError(null);
     try {
       await enterMatchmaking();
-      if (focused.current && attempt === activeAttempt.current) router.push('/lobby');
+      if (mine()) router.push('/lobby');
     } catch (failure) {
-      if (focused.current && attempt === activeAttempt.current && !isMatchmakingCancelled(failure)) setError(errorMessage(failure));
-    } finally {
-      if (focused.current && attempt === activeAttempt.current) setPending(null);
-    }
+      // A cancel is the player's own doing — it settles the search, but it is not an error.
+      if (mine() && !isMatchmakingCancellation(failure)) setError(errorMessage(failure));
+    } finally { if (mine()) setPending(null); }
   };
   return <Screen noNav back={() => router.replace('/')}>
     <TestModeBadge />
@@ -94,15 +111,21 @@ export default function ArenaScreen() {
       </Pressable>)}
     </View>
     {error && <Notice title="Could not enter the arena">{error}</Notice>}
-    {searching && <Notice tone="info" title="Searching for an opponent…" action={cancelSearch} actionLabel="Cancel search">We’ll open your room when an opponent is found. You can prepare your camera there before getting ready.</Notice>}
+    {searching && <Notice tone="info" title="Searching for an opponent…" action={cancelSearch} actionLabel="Cancel search">Hang tight — this jumps straight into a private match the moment someone else is found.</Notice>}
     <View style={styles.actions}>
-      <Button onPress={() => begin()} loading={pending === 'create'} disabled={!!pending || searching} style={{ flex: 1 }}>{!profile ? 'Create your player' : mode === 'pvp' ? 'Create private room' : !calibrated ? 'Prepare my camera' : 'Start solo training'}</Button>
-      {mode === 'pvp' && !!profile && <Button variant="secondary" onPress={beginRandom} loading={pending === 'random'} disabled={!!pending || searching} style={{ flex: 1 }}>Battle with Randoms</Button>}
+      {/* `pending !== 'random'` throughout, and never `searching`: a search in flight is a wait, not
+          a lock. Blocking on it meant an unanswered "Battle with Randoms" disabled every other way
+          out of this screen — including the room code the player had already been given. */}
+      <Button onPress={() => begin()} loading={pending === 'create'} disabled={!!pending && pending !== 'random'} style={{ flex: 1 }}>{!profile ? 'Create your player' : mode === 'pvp' ? 'Create private room' : !calibrated ? 'Prepare my camera' : 'Start solo training'}</Button>
+      {mode === 'pvp' && !!profile && <Button variant="secondary" onPress={beginRandom} loading={pending === 'random'} disabled={!!pending && pending !== 'random'} style={{ flex: 1 }}>Battle with Randoms</Button>}
     </View>
     <View style={styles.rules}><Text style={styles.ruleText}>Squats add guard</Text><View style={styles.ruleDot} /><Text style={styles.ruleText}>Push-ups deal damage</Text><View style={styles.ruleDot} /><Text style={styles.ruleText}>Stop any time</Text></View>
     <View style={styles.join}>
       <Heading size={25}>Have a room code?</Heading><Copy>Join the private room your friend created.</Copy>
-      <View style={[layout.row, { alignItems: 'stretch' }]}><TextInput accessibilityLabel="Private room code" placeholder="ROOM CODE" placeholderTextColor={colors.faint} autoCapitalize="characters" autoCorrect={false} maxLength={12} value={room} onChangeText={setRoom} style={[layout.input, { flex: 1, letterSpacing: 3, fontWeight: '700' }]} /><Button variant="secondary" onPress={() => begin(true)} disabled={!room.trim() || !!pending || searching} loading={pending === 'join'}>Join room</Button></View>
+      {/* minWidth 0 because react-native-web resets it on View but not on TextInput: left at `auto`
+          the input refuses to shrink below its intrinsic width and pushes "Join room", which cannot
+          shrink either, off the right edge of a phone-width screen. */}
+      <View style={[layout.row, { alignItems: 'stretch' }]}><TextInput accessibilityLabel="Private room code" placeholder="ROOM CODE" placeholderTextColor={colors.faint} autoCapitalize="characters" autoCorrect={false} maxLength={ROOM_CODE_LENGTH} value={room} onChangeText={value => setRoom(normalizeRoomCode(value))} style={[layout.input, { flex: 1, minWidth: 0, letterSpacing: 3, fontWeight: '700' }]} /><Button variant="secondary" onPress={() => begin(true)} disabled={!room || (!!pending && pending !== 'random')} loading={pending === 'join'}>Join room</Button></View>
     </View>
   </Screen>;
 }

@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { characterFor, fitnessProgress, type CharacterId } from '@vyra/core';
 import CharacterGallery from '../src/components/CharacterGallery';
 import { FitnessProgressPanel, displayFitnessStage } from '../src/components/FitnessUI';
+import ModelCredit from '../src/components/ModelCredit';
 import SpaceBackdrop, { AtmosphereOrb } from '../src/components/SpaceBackdrop';
 import { HERO_GALLERY, presentationFor, type GalleryCharacter } from '../src/lib/heroGallery';
 import { displayEms, useDisplayFontReady } from '../src/lib/displayMetrics';
@@ -153,6 +154,9 @@ export default function HomeScreen() {
   };
   const selected = HERO_GALLERY.find(character => character.id === selectedId) ?? HERO_GALLERY[0];
   const presentation = presentationFor(selected);
+  // One flag for "the 3D model is on screen", so the licence credit below can never drift out of
+  // sync with whether the model it credits is actually being shown.
+  const showingModel = selected.available && !!selected.glb;
   const [captionH, setCaptionH] = useState(CAPTION_H_ESTIMATE);
   // Re-renders this screen once the web font settles. Without it the headline keeps the size it was
   // fitted to against the system fallback on first paint, which is a different width from Oswald.
@@ -244,7 +248,7 @@ export default function HomeScreen() {
         opacity: heroMotion, transform: [{ scale: heroMotion.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }],
       }]}>
         <AtmosphereOrb size={orbSize} style={[styles.orb, { top: stageCanvasH * 0.5, marginTop: -orbSize * 0.5 }]} />
-        {selected.available && selected.glb
+        {showingModel
           ? <CharacterGallery glb={characterAssetFor(selected.id, stage.id)} label={`${selected.name}, ${stage.name} stage`} active={!session.reducedMotion} style={[styles.hero, { height: stageCanvasH }]}
               yaw={presentation.yaw} targetHeight={presentation.targetHeight} framing={presentation.framing}
               flare={presentation.flare} pedestal={false} />
@@ -259,6 +263,9 @@ export default function HomeScreen() {
           <Pressable accessibilityRole="button" onPress={() => router.push('/collection')} style={styles.explore}>
             <Text style={styles.exploreText}>Explore your evolutions</Text><Triangle size={5} color={colors.brand} />
           </Pressable>
+          {/* Inside the measured caption on purpose: its onLayout above feeds the height back into
+              stageCanvasH, so the credit reserves its own space instead of overlapping the model. */}
+          {showingModel && selected.attribution && <ModelCredit attribution={selected.attribution} style={styles.credit} />}
         </View>
       </Animated.View>
     </View>
@@ -341,6 +348,8 @@ const styles = StyleSheet.create({
   stageBlurb: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, lineHeight: 19, textAlign: 'right' },
   explore: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 40 },
   exploreText: { fontFamily: fonts.body, color: colors.text, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.4 },
+  // Sits inside the measured stage caption, so it stays narrower than the caption's 250 cap.
+  credit: { maxWidth: 230, marginTop: 2 },
 
   // 560, not the 420 this block used inside the copy column: out here the container is up to
   // 1272px wide, where 420 strands a fragment and an unconstrained Meter becomes a hairline.

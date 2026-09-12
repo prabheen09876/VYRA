@@ -82,6 +82,70 @@ describe('corsHeaders', () => {
     const request = new Request('https://worker.test/api/x', { headers: { origin: 'https://app.example.com' } });
     expect(corsHeaders(request, env).get('Vary')).toBe('Origin');
   });
+
+  // Local development: the web dev server's port moves (Expo takes 8082 when 8081 is busy), so a
+  // loopback caller is allowed when the worker is itself on loopback — and only then.
+  const localRequest = (origin: string, url = 'http://localhost:8787/api/x') => new Request(url, { headers: { origin } });
+  it('allows any loopback port when the worker is itself on loopback', () => {
+    for (const origin of ['http://localhost:8082', 'http://127.0.0.1:19006', 'http://[::1]:5173', 'https://localhost:8443']) {
+      expect(corsHeaders(localRequest(origin), env).get('Access-Control-Allow-Origin')).toBe(origin);
+    }
+  });
+  it('still rejects a non-loopback origin when the worker is on loopback', () => {
+    expect(corsHeaders(localRequest('https://evil.example.com'), env).get('Access-Control-Allow-Origin')).toBeNull();
+  });
+  it('rejects a host that merely looks loopback', () => {
+    for (const origin of ['http://localhost.evil.com', 'http://127.0.0.1.evil.com', 'http://notlocalhost']) {
+      expect(corsHeaders(localRequest(origin), env).get('Access-Control-Allow-Origin')).toBeNull();
+    }
+  });
+  it('does NOT allow a loopback origin once the worker is deployed to a public origin', () => {
+    // The clause is self-gating: production keeps the strict exact-match allowlist.
+    const request = new Request('https://worker.test/api/x', { headers: { origin: 'http://localhost:8082' } });
+    expect(corsHeaders(request, env).get('Access-Control-Allow-Origin')).toBeNull();
+  });
+
+  // Two players on two laptops need the LAN address, not loopback — `localhost` on the second
+  // laptop is the second laptop. Rejecting the LAN origin used to surface as "cannot reach your
+  // VYRA server", pointing at the network rather than at CORS.
+  const lan = (origin: string, url = 'http://192.168.1.20:8787/api/x') => new Request(url, { headers: { origin } });
+  it('allows a private-network origin when the worker is itself on a private network', () => {
+    for (const origin of ['http://192.168.1.20:8082', 'http://10.0.0.5:8082', 'http://172.16.3.4:8082', 'http://vyra.local:8082']) {
+      expect(corsHeaders(lan(origin), env).get('Access-Control-Allow-Origin')).toBe(origin);
+    }
+  });
+  it('allows loopback and LAN to mix, since both ends are still this machine or its network', () => {
+    expect(corsHeaders(lan('http://localhost:8082'), env).get('Access-Control-Allow-Origin')).toBe('http://localhost:8082');
+    const toLoopback = new Request('http://localhost:8787/api/x', { headers: { origin: 'http://192.168.1.20:8082' } });
+    expect(corsHeaders(toLoopback, env).get('Access-Control-Allow-Origin')).toBe('http://192.168.1.20:8082');
+  });
+  it('still rejects a public origin when the worker is on a private address', () => {
+    expect(corsHeaders(lan('https://evil.example.com'), env).get('Access-Control-Allow-Origin')).toBeNull();
+  });
+  it('does NOT allow a private-network origin once the worker is deployed publicly', () => {
+    const request = new Request('https://worker.test/api/x', { headers: { origin: 'http://192.168.1.20:8082' } });
+    expect(corsHeaders(request, env).get('Access-Control-Allow-Origin')).toBeNull();
+  });
+  it('allows a non-private LAN origin only when CORS_ORIGINS names it explicitly', () => {
+    // 172.32.x.x is outside RFC 1918 (private ends at 172.31), so the private-network clause does
+    // not cover it and the allowlist has to carry it — which is how wrangler.local.jsonc is set up.
+    const listed = fakeEnv({});
+    (listed as { CORS_ORIGINS: string }).CORS_ORIGINS = 'http://172.32.2.227:8082';
+    const request = new Request('http://172.32.2.227:8787/api/x', { headers: { origin: 'http://172.32.2.227:8082' } });
+    expect(corsHeaders(request, listed).get('Access-Control-Allow-Origin')).toBe('http://172.32.2.227:8082');
+    expect(corsHeaders(request, env).get('Access-Control-Allow-Origin')).toBeNull();
+  });
+  it('allows the worker to call itself, so a listed API origin is never needed for same-origin pages', () => {
+    // /capture/ is served by the worker: its Origin equals the worker's own, allowed before the list.
+    const request = new Request('http://172.32.2.227:8787/api/x', { headers: { origin: 'http://172.32.2.227:8787' } });
+    expect(corsHeaders(request, env).get('Access-Control-Allow-Origin')).toBe('http://172.32.2.227:8787');
+  });
+  it('rejects public addresses that merely sit near a private range', () => {
+    // 172.32 is outside 172.16–172.31, 11.x and 193.168 are public, and 999.1.1.1 is not an address.
+    for (const origin of ['http://172.32.0.1:8082', 'http://11.0.0.1:8082', 'http://193.168.1.20:8082', 'http://999.1.1.1:8082']) {
+      expect(corsHeaders(lan(origin), env).get('Access-Control-Allow-Origin')).toBeNull();
+    }
+  });
 });
 
 describe('HttpError', () => {
