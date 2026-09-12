@@ -23,7 +23,7 @@ function FitnessSetupGate() {
   useEffect(() => {
     if (!navigation?.key || booting || !profile || profile.fitness) return;
     // Existing matches and reward recovery must remain reachable while a player finishes setup.
-    if (['/profile', '/onboarding', '/lobby', '/calibrate', '/battle', '/results'].includes(pathname)) return;
+    if (['/profile', '/onboarding', '/lobby', '/calibrate', '/battle', '/results', '/coach', '/train'].includes(pathname)) return;
     router.replace('/onboarding');
   }, [navigation?.key, booting, profile?.id, profile?.fitness, pathname]);
   return null;

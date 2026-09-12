@@ -76,10 +76,12 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
   const wide = width >= 850;
   const nav = [
     { path: '/', title: 'My hero' },
+    { path: '/coach', title: 'Coach' },
     { path: '/collection', title: 'Collection' },
     { path: '/profile', title: 'Profile' },
   ] as const;
-  const navMarks = { '/': '◈', '/collection': '◇', '/profile': '◎' } as const;
+  const navMarks = { '/': '◈', '/coach': '✧', '/collection': '◇', '/profile': '◎' } as const;
+  const activePath = pathname === '/train' ? '/coach' : pathname;
   return <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
     {/* Default top-of-page wash for screens that don't mount a full SpaceBackdrop. Cool blue at a
         very low alpha — the `hazeSoft` hue, thinned further because this sits directly under the
@@ -92,9 +94,9 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
           <Text style={styles.wordmark}>{back ? 'BACK' : 'VYRA'}</Text>
         </Pressable>
         {wide && !noNav && <View style={styles.desktopNav}>{nav.map(item =>
-          <Pressable key={item.path} accessibilityRole="button" accessibilityState={{ selected: pathname === item.path }} onPress={() => { if (pathname !== item.path) router.push(item.path); }} style={styles.desktopNavItem}>
-            <Text style={[styles.navText, pathname === item.path && styles.navTextActive]}>{item.title}</Text>
-            <View style={[styles.navIndicator, pathname === item.path && styles.navIndicatorActive]} />
+          <Pressable key={item.path} accessibilityRole="button" accessibilityState={{ selected: activePath === item.path }} onPress={() => { if (pathname !== item.path) router.push(item.path); }} style={styles.desktopNavItem}>
+            <Text style={[styles.navText, activePath === item.path && styles.navTextActive]}>{item.title}</Text>
+            <View style={[styles.navIndicator, activePath === item.path && styles.navIndicatorActive]} />
           </Pressable>
         )}</View>}
         {/* Mirrors brandHit's minWidth so the centred nav is centred on the PAGE, not on whatever
@@ -111,9 +113,9 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
     </ScrollView>
     {!wide && !noNav && <SafeAreaView edges={['bottom']} style={styles.bottomNav}>
       <View style={styles.bottomRow}>{nav.map(item =>
-        <Pressable key={item.path} accessibilityRole="button" accessibilityState={{ selected: pathname === item.path }} onPress={() => { if (pathname !== item.path) router.push(item.path); }} style={styles.bottomItem}>
-          <Text style={[styles.navMark, { color: pathname === item.path ? colors.brand : colors.faint }]}>{navMarks[item.path]}</Text>
-          <Text style={[styles.navText, { fontSize: 11, color: pathname === item.path ? colors.text : colors.faint }]}>{item.title}</Text>
+        <Pressable key={item.path} accessibilityRole="button" accessibilityState={{ selected: activePath === item.path }} onPress={() => { if (pathname !== item.path) router.push(item.path); }} style={styles.bottomItem}>
+          <Text style={[styles.navMark, { color: activePath === item.path ? colors.brand : colors.faint }]}>{navMarks[item.path]}</Text>
+          <Text style={[styles.navText, { fontSize: 11, color: activePath === item.path ? colors.text : colors.faint }]}>{item.title}</Text>
         </Pressable>
       )}</View>
     </SafeAreaView>}

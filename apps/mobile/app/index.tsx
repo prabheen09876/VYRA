@@ -137,7 +137,8 @@ export default function HomeScreen() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const wide = width >= 850;
-  const stage = displayFitnessStage(profile?.stage);
+  // The landing showcase previews each character's final evolution.
+  const stage = displayFitnessStage('elite');
   const [selectedId, setSelectedId] = useState<CharacterId>(characterFor(profile?.characterId).id);
   const [selecting, setSelecting] = useState(false);
   const [selectionError, setSelectionError] = useState<string | null>(null);
@@ -249,7 +250,7 @@ export default function HomeScreen() {
       }]}>
         <AtmosphereOrb size={orbSize} style={[styles.orb, { top: stageCanvasH * 0.5, marginTop: -orbSize * 0.5 }]} />
         {showingModel
-          ? <CharacterGallery glb={characterAssetFor(selected.id, stage.id)} label={`${selected.name}, ${stage.name} stage`} active={!session.reducedMotion} style={[styles.hero, { height: stageCanvasH }]}
+          ? <CharacterGallery glb={characterAssetFor(selected.id, stage.id)} characterId={selected.id} equipment={profile?.equipped} label={`${selected.name}, ${stage.name} preview`} active={!session.reducedMotion} style={[styles.hero, { height: stageCanvasH }]}
               yaw={presentation.yaw} targetHeight={presentation.targetHeight} framing={presentation.framing}
               flare={presentation.flare} pedestal={false} />
           : <View style={[styles.hero, { height: stageCanvasH }, styles.comingSoon]}><Text style={styles.comingSoonGlyph}>{selected.glyph}</Text><Text style={styles.comingSoonText}>{selected.name} is coming soon</Text></View>}
@@ -259,7 +260,7 @@ export default function HomeScreen() {
         <View style={styles.stageCaption} pointerEvents="box-none"
           onLayout={event => { const next = Math.ceil(event.nativeEvent.layout.height); setCaptionH(current => (current === next ? current : next)); }}>
           <View style={styles.captionRow}><View style={[styles.captionDot, { backgroundColor: selected.available ? selected.accent : colors.faint }]} /><Text style={styles.stageName}>{selected.name.toUpperCase()}</Text></View>
-          <Text style={styles.stageBlurb} numberOfLines={2}>{selected.available ? `${stage.name} · ${selected.blurb || selected.name + ' — ready to battle.'}` : 'This model will unlock soon.'}</Text>
+          <Text style={styles.stageBlurb} numberOfLines={2}>{selected.available ? `${stage.name} preview · ${selected.blurb || selected.name + ' — ready to battle.'}` : 'This model will unlock soon.'}</Text>
           <Pressable accessibilityRole="button" onPress={() => router.push('/collection')} style={styles.explore}>
             <Text style={styles.exploreText}>Explore your evolutions</Text><Triangle size={5} color={colors.brand} />
           </Pressable>
@@ -290,9 +291,9 @@ export default function HomeScreen() {
         <View style={{ flex: 1, gap: 5 }}><Text style={styles.challengeTitle}>Better with a rival.</Text><Text style={styles.challengeCopy}>Invite a friend to a private 1v1 workout.</Text></View><Text style={styles.chevron}>›</Text>
       </Pressable>
       <View style={styles.practice}>
-        <Text style={styles.practiceTitle}>Make room for your next level.</Text>
-        <Text style={styles.challengeCopy}>A clear floor, your phone, and a few minutes. Your camera counts every valid rep.</Text>
-        <Button variant="quiet" onPress={() => router.push('/calibrate')} style={{ alignSelf: 'flex-start', paddingHorizontal: 0 }}>Check my camera</Button>
+        <Text style={styles.practiceTitle}>A little guidance. A stronger next rep.</Text>
+        <Text style={styles.challengeCopy}>Ask the Coach about training and recovery, or practise with a live avatar that follows your movement.</Text>
+        <Button variant="quiet" onPress={() => router.push('/coach')} style={{ alignSelf: 'flex-start', paddingHorizontal: 0 }}>Meet your Coach</Button>
       </View>
     </View>
   </Screen>;

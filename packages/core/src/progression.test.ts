@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { applyReward, createProgression, dayKey, displayProfile, equipCosmetic, weekKey, type ProgressionState } from './progression';
+import { CHARACTERS } from './characters';
+import { COSMETICS } from './catalog';
+import { applyReward, createProgression, dayKey, displayProfile, equipCosmetic, recordBodyCheckIn, resetEquipment, setupFitness, unequipCosmetic, weekKey, type ProgressionState } from './progression';
 const date = (day: string) => Date.parse(`${day}T12:00:00+05:30`);
 function award(state: ProgressionState, day: string, id: string, totalReps = 10, won = false) {
   return applyReward(state, { matchId: id, totalReps, won, finishedAt: date(day) });
@@ -58,5 +60,46 @@ describe('permanent account progression', () => {
     const equipped = equipCosmetic(state, 'skin', 'ion-skin');
     expect(equipped.profile.equipped.skin).toBe('ion-skin'); expect(equipped.profile.xp).toBe(state.profile.xp);
     expect(() => equipCosmetic(state, 'outfit', 'ion-skin')).toThrow();
+  });
+  it('still unlocks earned rep and win cosmetics after the daily XP cap', () => {
+    let state = createProgression('a', 'A');
+    for (let index = 0; index < 4; index++) state = award(state, '2026-09-07', String(index), 20, true).state;
+    expect(state.profile.ownedCosmetics).not.toContain('pulse-bracers');
+    expect(state.profile.ownedCosmetics).not.toContain('champion-pose');
+    const fifth = award(state, '2026-09-07', 'fifth', 20, true);
+    expect(fifth.receipt).toMatchObject({ xp: 0, dailyLimitReached: true, unlocked: ['pulse-bracers', 'champion-pose'] });
+    expect(fifth.state.profile).toMatchObject({ wins: 5, totalReps: 100, activeDays: 1 });
+  });
+
+  it.each(CHARACTERS)('removes effects and restores the original look for $name without resetting achievements', character => {
+    let state = setupFitness(createProgression('a', 'A'), {
+      goal: 'gain_weight', startingBuild: 'thin', weightKg: 55, targetWeightKg: 65,
+      heightCm: 175, characterId: character.id,
+    }, date('2026-09-06'));
+    for (let index = 7; index <= 20; index++) state = award(state, `2026-09-${String(index).padStart(2, '0')}`, String(index), 50, index <= 11).state;
+    state = recordBodyCheckIn(state, { weightKg: 65, heightCm: 175 }, date('2026-09-21'));
+    expect(state.profile.stage).toBe('elite');
+    expect(state.profile.ownedCosmetics).toEqual(expect.arrayContaining(COSMETICS.map(item => item.id)));
+    for (const item of COSMETICS) state = equipCosmetic(state, item.slot, item.id);
+    const before = structuredClone(state);
+    const removed = unequipCosmetic(state, 'skin');
+    expect(removed).toEqual({ ...before, profile: { ...before.profile, equipped: {
+      outfit: 'origin-suit', accessory: 'pulse-bracers', pose: 'champion-pose', aura: 'nova-aura',
+    } } });
+    expect(unequipCosmetic(removed, 'skin')).toEqual(removed);
+    const noOutfit = unequipCosmetic(removed, 'outfit');
+    expect(noOutfit.profile.equipped.outfit).toBeUndefined();
+    expect(resetEquipment(noOutfit)).toEqual({ ...before, profile: { ...before.profile, equipped: { outfit: 'origin-suit' } } });
+    expect(state).toEqual(before);
+  });
+
+  it('validates removal slots and keeps locked items locked after resetting equipment', () => {
+    const state = createProgression('a', 'A');
+    expect(() => unequipCosmetic(state, '__proto__' as never)).toThrow(/slot/);
+    expect(() => unequipCosmetic(state, 'xp' as never)).toThrow(/slot/);
+    const reset = resetEquipment(unequipCosmetic(state, 'outfit'));
+    expect(reset.profile.ownedCosmetics).toEqual(['origin-suit']);
+    expect(() => equipCosmetic(reset, 'aura', 'nova-aura')).toThrow(/unlocked/);
+    expect(reset).toEqual(state);
   });
 });

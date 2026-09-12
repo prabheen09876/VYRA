@@ -1,8 +1,9 @@
 import { COSMETICS, isCharacterId } from '@vyra/core';
-import type { BodyCheckInInput, CosmeticSlot, FitnessSetupInput, GuestSession, MatchCreated } from '@vyra/core';
-import { createProgression } from '@vyra/core/progression';
+import type { BodyCheckInInput, FitnessSetupInput, GuestSession, MatchCreated } from '@vyra/core';
+import { createProgression, isCosmeticSlot } from '@vyra/core/progression';
 import { authenticate, corsHeaders, hashToken, HttpError, randomToken, readJson } from './http';
 import { createPvpMatchRecord } from './matches';
+import { handleCoachChat } from './coach';
 export { MatchRoom } from './match-room';
 export { ProfileCoordinator } from './profile';
 export { Matchmaking } from './matchmaking';
@@ -28,6 +29,9 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (path === '/api/matchmaking/ws' && request.method === 'GET') return env.MATCHMAKING.getByName(MATCHMAKING_QUEUE_NAME).fetch(request);
   const playerId = await authenticate(request, env);
   const profiles = env.PROFILES.getByName(playerId);
+  if (path === '/api/coach/chat' && request.method === 'POST') {
+    return Response.json(await handleCoachChat(request, env, playerId));
+  }
   if (path === '/api/profile' && request.method === 'GET') {
     const profile = await profiles.getProfile(playerId);
     if (!profile) throw new HttpError(404, 'PROFILE_NOT_FOUND', 'Profile not found.');
@@ -35,9 +39,18 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
   if (path === '/api/profile/equip' && request.method === 'POST') {
     const body = await readJson(request);
-    if (typeof body.slot !== 'string' || typeof body.itemId !== 'string' || !COSMETICS.some(c => c.id === body.itemId && c.slot === body.slot)) throw new HttpError(400, 'INVALID_COSMETIC', 'Select an existing cosmetic and its matching slot.');
-    const result = await profiles.equip(playerId, body.slot as CosmeticSlot, body.itemId);
-    if (!result.profile) throw new HttpError(403, 'COSMETIC_LOCKED', result.error ?? 'Cosmetic locked.');
+    if (!isCosmeticSlot(body.slot) || (body.itemId !== null &&
+      (typeof body.itemId !== 'string' || !COSMETICS.some(c => c.id === body.itemId && c.slot === body.slot)))) {
+      throw new HttpError(400, 'INVALID_COSMETIC', 'Select an existing cosmetic and its matching slot, or remove a cosmetic from a valid slot.');
+    }
+    const result = await profiles.equip(playerId, body.slot, body.itemId);
+    if (!result.profile) throw new HttpError(result.status, result.code, result.error);
+    return Response.json(result.profile);
+  }
+  if (path === '/api/profile/equipment/reset' && request.method === 'POST') {
+    await readJson(request);
+    const result = await profiles.resetEquipment(playerId);
+    if (!result.profile) throw new HttpError(result.status, result.code, result.error);
     return Response.json(result.profile);
   }
   if (path === '/api/profile/fitness' && request.method === 'POST') {

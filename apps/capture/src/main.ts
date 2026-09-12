@@ -1,8 +1,9 @@
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
 import {
   BASELINE_VERSION, CompleteCycleCounter, MOVEMENT_STAGES, assessPose, classifyBaseline,
-  extractPoseFeatures, predictMovementStage, validateStageModel,
-  type CaptureControl, type CaptureMessage, type Exercise, type MovementStage,
+  extractPoseFeatures, predictMovementStage, validateStageModel, emptyCapturePose, parseCapturePoseMessage,
+  LIVE_POSE_INTERVAL_MS, LIVE_POSE_MAX_AGE_MS,
+  type CaptureCameraState, type CaptureControl, type CaptureMessage, type Exercise, type MovementStage,
   type PoseLandmark, type StageModelArtifact,
 } from '@vyra/core';
 import { createCaptureBridge } from './bridge';
@@ -14,18 +15,19 @@ const labMode = params.get('lab') === '1';
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
   <main class="studio">
-    <header class="masthead"><span class="brand">VYRA</span><span class="mode" id="mode">Geometric baseline · no team model loaded</span></header>
+    <header class="masthead"><span class="brand">VYRA</span><span class="mode" id="mode">On-device tracking</span></header>
     <h1>Make your movement count.</h1>
     <p class="intro">Set your device down, leave room to move, and keep your whole body in view. Start with a comfortable practice rep.</p>
     <div class="workspace">
       <section class="camera" aria-label="Live movement camera">
-        <video id="video" autoplay playsinline muted></video><canvas id="overlay" aria-hidden="true"></canvas>
+        <video id="video" autoplay playsinline muted></video><canvas id="overlay" aria-hidden="true" hidden></canvas>
         <div class="camera-placeholder" id="placeholder">
           <svg viewBox="0 0 80 80" fill="none" aria-hidden="true"><rect x="11" y="21" width="58" height="44" rx="10" stroke="currentColor" stroke-width="2"/><path d="M27 21l5-8h16l5 8" stroke="currentColor" stroke-width="2"/><circle cx="40" cy="43" r="13" stroke="currentColor" stroke-width="2"/><path d="M53 31h6" stroke="currentColor" stroke-width="2"/></svg>
           <p id="camera-help">Your camera stays on this device. Only movement results are shared with the game.</p>
           <button class="primary" id="start-camera">Enable camera</button>
         </div>
         <span class="camera-badge" id="status" data-visible="false">Camera off</span>
+        <div class="camera-tools" id="camera-tools" hidden><button id="mirror-camera" aria-pressed="true">Mirror on</button><button id="pause-camera">Stop camera</button></div>
         <p class="cue" id="cue" aria-live="polite">Place the camera at a slight side angle for squats.</p>
       </section>
       <aside class="side-panel" aria-label="Practice controls">
@@ -37,7 +39,7 @@ app.innerHTML = `
       </aside>
     </div>
     <div class="error" id="error" role="status"></div>
-    <div class="actions"><button id="reset">Reset practice</button><button id="stop-camera" disabled>Stop camera</button></div>
+    <div class="actions"><button id="reset">Reset practice</button><button id="stop-camera" disabled>Stop camera</button><button id="debug-overlay" aria-pressed="false">Show tracking overlay</button></div>
     <footer class="footer"><span>On-device pose processing. No video recording or upload.</span><a href="${labMode ? './' : '?lab=1'}">${labMode ? 'Back to practice' : 'Open dataset recorder'}</a></footer>
     ${labMode ? `<section class="lab"><h2>Team dataset recorder</h2><p class="note">Record only consenting participants. P01–P03 are training, P04 is validation, and P05 is the final held-out participant. Label the actual movement yourself; the baseline never supplies training labels.</p>
       <div class="lab-grid"><label>Participant<select id="participant">${['P01','P02','P03','P04','P05'].map(id => `<option>${id}</option>`).join('')}</select></label><label>Clip ID<input id="clip" maxlength="64" /></label><label>Current ground-truth stage<select id="label">${MOVEMENT_STAGES.map(stage => `<option value="${stage}">${stage.replaceAll('_', ' ')}</option>`).join('')}</select></label></div>
@@ -55,9 +57,10 @@ const counter = new CompleteCycleCounter(), recorder = new DatasetRecorder();
 let control: CaptureControl = { type: 'capture.configure', exercise: 'squat', enabled: false, reset: true };
 let detector: PoseLandmarker | null = null, stream: MediaStream | null = null, stageModel: StageModelArtifact | null = null;
 let running = false, booting = false, frameRequest = 0, runGeneration = 0;
-let embeddedStartAttempted = false;
 let calibrated = false, calibrationStarted: number | null = null;
 let lastVideoTime = -1, lastInferenceTime = -Infinity, lastTrackingMessage = -Infinity, practiceReps = 0;
+let lastPoseMessage = -Infinity, lastFrameProcessed = -Infinity, poseWasVisible = false, frameStale = false;
+let modelDetail = 'Rule-based movement baseline';
 let frameTimes: number[] = [];
 const bridge = createCaptureBridge(configure);
 document.body.classList.toggle('embedded', bridge.embedded);
@@ -65,25 +68,41 @@ if (bridge.embedded) { mode.parentElement!.removeChild(mode); element<HTMLElemen
 
 const modelVersion = () => stageModel?.modelVersion ?? BASELINE_VERSION;
 const emit = (message: CaptureMessage) => bridge.send(message);
+const emitCameraState = (state: CaptureCameraState) => emit({ type: 'capture.camera', protocolVersion: 1, state });
+const updateModelLabel = () => { mode.textContent = control.debugOverlay ? modelDetail : 'On-device tracking'; };
 function setError(code: string, message: string) {
   errorBox.textContent = message;
+  emitCameraState('stopped');
   emit({ type: 'capture.error', protocolVersion: 1, code, message });
 }
 function clearCalibration() { calibrated = false; calibrationStarted = null; counter.reset(); }
+function clearLivePose(force = false) {
+  if (control.poseStream || force) emit(emptyCapturePose(Date.now(), video.videoWidth, video.videoHeight));
+  poseWasVisible = false; lastPoseMessage = -Infinity;
+}
 function configure(next: CaptureControl) {
   const changed = next.reset || next.exercise !== control.exercise || next.enabled !== control.enabled;
+  const streamChanged = !!next.poseStream !== !!control.poseStream;
+  const wasStreaming = !!control.poseStream;
   control = { ...next };
   counter.configure(next);
-  if (changed) clearCalibration();
+  if (changed) { clearCalibration(); clearLivePose(wasStreaming); }
+  else if (streamChanged) clearLivePose(wasStreaming);
+  canvas.hidden = !next.debugOverlay;
+  if (!next.debugOverlay) context.clearRect(0, 0, canvas.width, canvas.height);
+  const debugButton = element<HTMLButtonElement>('debug-overlay');
+  debugButton.setAttribute('aria-pressed', String(!!next.debugOverlay));
+  debugButton.textContent = next.debugOverlay ? 'Hide tracking overlay' : 'Show tracking overlay';
+  updateModelLabel();
   if (next.exercise) exerciseSelect.value = next.exercise;
   if (bridge.embedded) recorder.stop();
-  if (bridge.embedded && !embeddedStartAttempted && !document.hidden) {
-    embeddedStartAttempted = true;
-    void startCamera();
+  if (!running && !booting) {
+    emitCameraState('stopped');
+    emit({ type: 'capture.tracking', protocolVersion: 1, visible: false, confidence: 0, stage: 'other', fps: 0, cue: 'Camera off. Tap Enable camera when you are ready.' });
   }
 }
 function setPractice(enabled: boolean) {
-  configure({ type: 'capture.configure', exercise: exerciseSelect.value as Exercise, enabled, reset: true });
+  configure({ ...control, type: 'capture.configure', exercise: exerciseSelect.value as Exercise, enabled, reset: true });
   practiceButton.textContent = enabled ? 'Pause practice' : 'Start practice';
 }
 
@@ -94,7 +113,7 @@ async function fetchWithTimeout(url: string, timeout = 12000): Promise<Response>
 }
 async function loadStageModel() {
   stageModel = null;
-  mode.textContent = 'Geometric baseline · no team model loaded';
+  modelDetail = 'Rule-based movement baseline'; updateModelLabel();
   try {
     const response = await fetchWithTimeout(params.get('model') ?? '/models/movement-stage.json');
     if (response.status === 404) return;
@@ -105,25 +124,27 @@ async function loadStageModel() {
     const validated = validateStageModel(JSON.parse(text));
     if (validated.provenance.kind !== 'team-recorded') throw new Error('Synthetic test fixtures cannot be used as a team-trained model');
     stageModel = validated;
-    mode.textContent = `Team-trained stage model · ${stageModel.modelVersion}`;
+    modelDetail = `Team-trained stage model · ${stageModel.modelVersion}`; updateModelLabel();
   } catch (error) {
-    mode.textContent = 'Geometric baseline · trained model unavailable';
-    errorBox.textContent = `Continuing in geometric baseline mode. ${error instanceof Error ? error.message : 'The trained model could not be loaded.'}`;
+    modelDetail = 'Rule-based movement baseline · training model unavailable'; updateModelLabel();
+    if (control.debugOverlay) errorBox.textContent = `Continuing with the movement baseline. ${error instanceof Error ? error.message : 'The trained model could not be loaded.'}`;
   }
 }
 
 async function startCamera() {
-  if (running || booting) return;
-  if (bridge.embedded) embeddedStartAttempted = true;
+  if (running || booting || document.hidden) return;
   if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
     setError('SECURE_CONTEXT_REQUIRED', 'Camera access requires HTTPS or localhost. A plain HTTP address on your Wi-Fi network cannot enable the camera.'); return;
   }
   const generation = ++runGeneration;
   booting = true; startButton.disabled = true; errorBox.textContent = '';
   status.textContent = 'Opening camera…';
+  emitCameraState('starting');
+  emit({ type: 'capture.tracking', protocolVersion: 1, visible: false, confidence: 0, stage: 'other', fps: 0, cue: 'Opening camera and loading movement detection…' });
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'user' }, width: { ideal: 640 }, height: { ideal: 480 } } });
     if (generation !== runGeneration) { stream.getTracks().forEach(track => track.stop()); stream = null; return; }
+    for (const track of stream.getTracks()) track.addEventListener('ended', () => { if (generation === runGeneration) stopCamera(); }, { once: true });
     video.srcObject = stream;
     await video.play();
     status.textContent = 'Loading pose detector…';
@@ -138,9 +159,11 @@ async function startCamera() {
     }
     await loadStageModel();
     if (generation !== runGeneration) { detector?.close(); detector = null; return; }
-    running = true; lastVideoTime = -1; lastInferenceTime = -Infinity; frameTimes = []; clearCalibration();
+    running = true; lastVideoTime = -1; lastInferenceTime = -Infinity; lastFrameProcessed = -Infinity; frameStale = false; frameTimes = []; clearCalibration(); clearLivePose();
     element<HTMLElement>('placeholder').hidden = true; stopButton.disabled = false; practiceButton.disabled = false;
+    element<HTMLElement>('camera-tools').hidden = false;
     if (labMode) element<HTMLButtonElement>('record').disabled = false;
+    emitCameraState('running');
     emit({ type: 'capture.ready', protocolVersion: 1, modelVersion: modelVersion(), inferenceMode: stageModel ? 'learned' : 'baseline' });
     frameRequest = requestAnimationFrame(processFrame);
   } catch (error) {
@@ -157,10 +180,13 @@ function stopCamera() {
   stream?.getTracks().forEach(track => track.stop()); stream = null; video.srcObject = null;
   detector?.close(); detector = null; recorder.stop();
   context.clearRect(0, 0, canvas.width, canvas.height);
+  clearLivePose();
+  element<HTMLElement>('camera-tools').hidden = true;
   element<HTMLElement>('placeholder').hidden = false; startButton.textContent = 'Enable camera';
   status.textContent = 'Camera off'; status.dataset.visible = 'false'; stopButton.disabled = true; practiceButton.disabled = true;
   element<HTMLElement>('fps').textContent = '—'; element<HTMLElement>('confidence').textContent = '—';
   if (labMode) { element<HTMLButtonElement>('record').disabled = true; updateLab(); }
+  emitCameraState('stopped');
   emit({ type: 'capture.tracking', protocolVersion: 1, visible: false, confidence: 0, stage: 'other', fps: 0, cue: 'Camera paused. Tap Enable camera to resume.' });
 }
 
@@ -185,11 +211,19 @@ function drawPose(landmarks: PoseLandmark[], visible: boolean) {
 
 function processFrame(now: number) {
   if (!running || !detector) return;
-  if (video.readyState < 2 || video.currentTime === lastVideoTime || now - lastInferenceTime < 95) { frameRequest = requestAnimationFrame(processFrame); return; }
+  if (video.readyState < 2 || video.currentTime === lastVideoTime) {
+    if (Number.isFinite(lastFrameProcessed) && now - lastFrameProcessed > LIVE_POSE_MAX_AGE_MS && !frameStale) {
+      frameStale = true; clearCalibration(); clearLivePose();
+      emit({ type: 'capture.tracking', protocolVersion: 1, visible: false, confidence: 0, stage: 'other', fps: 0, cue: 'Camera feed paused. Check your camera or restart it.' });
+    }
+    frameRequest = requestAnimationFrame(processFrame); return;
+  }
+  if (now - lastInferenceTime < (control.poseStream ? LIVE_POSE_INTERVAL_MS : 95)) { frameRequest = requestAnimationFrame(processFrame); return; }
   lastInferenceTime = now; lastVideoTime = video.currentTime;
   try {
     const result = detector.detectForVideo(video, now);
     const landmarks: PoseLandmark[] = result.landmarks[0] ?? [];
+    lastFrameProcessed = now; frameStale = false;
     const exercise = control.exercise ?? exerciseSelect.value as Exercise;
     const assessment = assessPose(landmarks, exercise);
     const features = extractPoseFeatures(landmarks, { width: video.videoWidth, height: video.videoHeight }, assessment.side);
@@ -200,6 +234,14 @@ function processFrame(now: number) {
       prediction = { ...geometric, stage: learned.confidence >= 0.65 ? learned.stage : 'other', confidence: learned.confidence };
     }
     const visible = assessment.visible && features !== null;
+    if (control.poseStream) {
+      if (visible && now - lastPoseMessage >= LIVE_POSE_INTERVAL_MS) {
+        const message = parseCapturePoseMessage({ type: 'capture.pose', protocolVersion: 1, timestamp: Date.now(),
+          width: video.videoWidth, height: video.videoHeight, landmarks, visible: true, confidence: assessment.confidence });
+        emit(message ?? emptyCapturePose(Date.now(), video.videoWidth, video.videoHeight));
+        lastPoseMessage = now; poseWasVisible = !!message;
+      } else if (!visible && poseWasVisible) clearLivePose();
+    }
     const expectedTop = `${exercise}_top`;
     if (!visible) clearCalibration();
     else if (!calibrated) {
@@ -223,7 +265,7 @@ function processFrame(now: number) {
       emit({ type: 'capture.tracking', protocolVersion: 1, visible: visible && calibrated, confidence: visible ? assessment.confidence : 0, stage: prediction.stage, fps: Math.round(fps * 10) / 10, formScore: visible ? geometric.formScore : undefined, cue: messageCue });
       lastTrackingMessage = now;
     }
-    drawPose(landmarks, visible && calibrated);
+    if (control.debugOverlay) drawPose(landmarks, visible && calibrated);
     if (labMode && features && visible && recorder.recording) {
       recorder.record({ features, landmarks, capturedAt: Date.now(), videoTime: video.currentTime * 1000, width: video.videoWidth, height: video.videoHeight }); updateLab();
     }
@@ -244,11 +286,19 @@ function updateLab() {
 }
 startButton.addEventListener('click', () => void startCamera());
 stopButton.addEventListener('click', stopCamera);
+element<HTMLButtonElement>('pause-camera').addEventListener('click', stopCamera);
+element<HTMLButtonElement>('mirror-camera').addEventListener('click', event => {
+  const button = event.currentTarget as HTMLButtonElement;
+  const mirrored = button.getAttribute('aria-pressed') !== 'true';
+  button.setAttribute('aria-pressed', String(mirrored)); button.textContent = mirrored ? 'Mirror on' : 'Mirror off';
+  video.parentElement!.classList.toggle('unmirrored', !mirrored);
+});
+element<HTMLButtonElement>('debug-overlay').addEventListener('click', () => configure({ ...control, reset: false, debugOverlay: !control.debugOverlay }));
 practiceButton.addEventListener('click', () => setPractice(!control.enabled));
 exerciseSelect.addEventListener('change', () => { setPractice(false); recorder.stop(); updateLab(); });
 element<HTMLButtonElement>('reset').addEventListener('click', () => { practiceReps = 0; element<HTMLElement>('reps').textContent = '0'; configure({ ...control, reset: true }); });
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { embeddedStartAttempted = true; if (running || booting) stopCamera(); }
+  if (document.hidden && (running || booting)) stopCamera();
 });
 window.addEventListener('pagehide', stopCamera);
 if (labMode) {

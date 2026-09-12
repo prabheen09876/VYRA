@@ -1,21 +1,33 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { COSMETICS, FITNESS_STAGES, RARITY_COLORS, characterFor, type CharacterId, type Cosmetic, type Equipment, type EvolutionStage } from '@vyra/core';
+import { COSMETICS, FITNESS_STAGES, RARITY_COLORS, characterFor, type CharacterId, type Cosmetic, type Equipment, type EvolutionStage, type Profile } from '@vyra/core';
 import HeroView from '../src/components/HeroShowcase';
 import { CharacterPicker, displayFitnessStage, fitnessStyles } from '../src/components/FitnessUI';
-import { Button, Copy, Heading, Notice, Pill, Screen, layout } from '../src/components/ui';
+import { Button, Copy, Heading, Meter, Notice, Pill, Screen, layout } from '../src/components/ui';
 import { useApp } from '../src/state/AppProvider';
 import { errorMessage } from '../src/lib/api';
 import { alpha, colors, displayWeight, fonts, radii, stageLabel } from '../src/theme';
 
-const collectibleName = (item: Cosmetic) => item.id === 'origin-suit' ? 'Original character look' : item.slot === 'aura' ? item.name : `${item.name} badge`;
+const collectibleName = (item: Cosmetic) => item.id === 'origin-suit' ? 'Original character look' : item.name;
 const collectibleDescription = (item: Cosmetic) => item.id === 'origin-suit'
-  ? 'Your selected character keeps its original outfit and appearance.'
-  : item.slot === 'aura' ? item.description : 'An earned badge in your collection. This celebrates your milestone and does not change your character’s appearance.';
+  ? 'Restore your character’s original colors and outfit, with no skin effect, bracers, flex pose, or aura. Your earned evolution stays the same.'
+  : item.description;
+
+function unlockProgress(item: Cosmetic, profile: Profile | null) {
+  if (item.id === 'ion-skin') return { value: profile?.qualifiedMatches ?? 0, max: 1, label: `${profile?.qualifiedMatches ?? 0} / 1 qualified workout` };
+  if (item.id === 'pulse-bracers') return { value: profile?.totalReps ?? 0, max: 100, label: `${profile?.totalReps ?? 0} / 100 valid reps` };
+  if (item.id === 'champion-pose') return { value: profile?.wins ?? 0, max: 5, label: `${profile?.wins ?? 0} / 5 battle wins` };
+  if (item.id === 'nova-aura') {
+    const current = displayFitnessStage(profile?.stage);
+    return { value: current.id === 'elite' ? 1 : 0, max: 1, label: `Reach Elite · Current stage: ${current.name}` };
+  }
+  return { value: 1, max: 1, label: 'Available from the start' };
+}
 
 export default function CollectionScreen() {
-  const { profile, session, equip, selectCharacter } = useApp();
+  const { profile, session, equip, unequip, resetEquipment, selectCharacter } = useApp();
   const earnedStage = displayFitnessStage(profile?.stage);
   const [previewStage, setPreviewStage] = useState<EvolutionStage>(earnedStage.id);
   const [characterId, setCharacterId] = useState<CharacterId>(characterFor(profile?.characterId).id);
@@ -25,7 +37,14 @@ export default function CollectionScreen() {
   const [selected, setSelected] = useState<Cosmetic | null>(null);
   const [equipping, setEquipping] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { width } = useWindowDimensions();
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [previewWithoutItem, setPreviewWithoutItem] = useState(false);
+  const savePending = useRef(false);
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const dialogWide = width >= 760;
+  const dialogHeight = Math.max(260, height - insets.top - insets.bottom - 32);
+  const previewHeight = dialogWide ? Math.min(430, Math.max(260, height - 260)) : Math.min(340, Math.max(210, height * 0.4));
   useEffect(() => { setPreviewStage(displayFitnessStage(profile?.stage).id); }, [profile?.id, profile?.stage]);
   useEffect(() => { if (profile) setCharacterId(characterFor(profile.characterId).id); }, [profile?.id, profile?.characterId]);
   const stage = displayFitnessStage(previewStage);
@@ -40,13 +59,38 @@ export default function CollectionScreen() {
     catch (failure) { setCharacterError(errorMessage(failure)); }
     finally { characterPending.current = false; setSelecting(false); }
   };
-  const previewEquipment: Equipment = { ...profile?.equipped, ...(selected?.slot === 'aura' ? { aura: selected.id } : {}) };
+  const previewEquipment: Equipment = selected?.id === 'origin-suit' ? {} : { ...profile?.equipped };
+  if (selected && selected.id !== 'origin-suit') {
+    if (previewWithoutItem) delete previewEquipment[selected.slot];
+    else previewEquipment[selected.slot] = selected.id;
+  }
   const owned = !!selected && !!profile?.ownedCosmetics.includes(selected.id);
   const equipped = !!selected && profile?.equipped[selected.slot] === selected.id;
+  const originalActive = !Object.entries(profile?.equipped ?? {}).some(([slot, item]) => slot !== 'outfit' && !!item);
+  const selectedProgress = selected ? unlockProgress(selected, profile) : null;
+  const closePreview = () => { setSelected(null); setPreviewWithoutItem(false); };
+  const openPreview = (item: Cosmetic) => {
+    if (savePending.current) return;
+    setSelected(item); setPreviewWithoutItem(false); setError(null); setSavedMessage(null);
+  };
   const apply = async () => {
-    if (!selected || !owned || selected.slot !== 'aura') return;
-    setEquipping(true); setError(null);
-    try { await equip(selected.slot, selected.id); } catch (failure) { setError(errorMessage(failure)); } finally { setEquipping(false); }
+    if (!selected || !profile || savePending.current || (selected.id !== 'origin-suit' && !owned)) return;
+    savePending.current = true; setEquipping(true); setError(null); setSavedMessage(null);
+    try {
+      if (selected.id === 'origin-suit') {
+        await resetEquipment();
+        setSavedMessage('Original look restored. Your earned stage is unchanged.');
+      } else if (equipped) {
+        await unequip(selected.slot);
+        setPreviewWithoutItem(true);
+        setSavedMessage(`${selected.name} removed from your saved look.`);
+      } else {
+        await equip(selected.slot, selected.id);
+        setPreviewWithoutItem(false);
+        setSavedMessage(`${selected.name} equipped and saved.`);
+      }
+    } catch (failure) { setError(errorMessage(failure)); }
+    finally { savePending.current = false; setEquipping(false); }
   };
   return <Screen>
     <View style={layout.section}><Heading size={41}>A hero with your story.</Heading><Copy>Choose your character and explore four evolutions. Every character carries the same earned progress.</Copy></View>
@@ -54,7 +98,7 @@ export default function CollectionScreen() {
       <View style={[styles.viewer, width >= 850 && { flex: 1.2 }]}>
         <View style={styles.modelStage}>
           <View style={styles.viewerGlow} />
-          <HeroView characterId={characterId} stage={previewStage} equipment={previewEquipment} pose="idle" active={!session.reducedMotion} style={styles.hero} />
+          {!selected && <HeroView characterId={characterId} stage={previewStage} equipment={profile?.equipped} pose={profile?.equipped.pose === 'champion-pose' ? 'flex' : 'idle'} active={!session.reducedMotion} style={styles.hero} />}
           {/* The caption below takes its natural height; this canvas receives the remaining space. */}
           <View style={styles.previewTag}><Pill color={previewIndex > earnedIndex ? colors.muted : stage.color}>{previewIndex > earnedIndex ? 'Locked stage preview' : previewStage === earnedStage.id ? 'Your current evolution' : 'Earned stage preview'}</Pill></View>
         </View>
@@ -75,23 +119,48 @@ export default function CollectionScreen() {
       {!profile && <Button onPress={() => router.push('/profile')}>Create a player</Button>}
     </View>
     <View style={[layout.split, { marginTop: 35, marginBottom: 20 }]}><Heading size={29}>The collection</Heading><Text style={styles.collectionCount}>{profile?.ownedCosmetics.length || 0} / {COSMETICS.length} owned</Text></View>
-    <Copy style={{ marginBottom: 20 }}>Collectible badges celebrate your milestones. Nova aura also adds a visible glow to your character.</Copy>
+    <Copy style={{ marginBottom: 20 }}>Try each look on your character. Locked items can be previewed, and earned items can be equipped or removed.</Copy>
+    {!selected && error && <View accessibilityLiveRegion="polite"><Notice title="Could not save your look">{error}</Notice></View>}
+    {!selected && savedMessage && <Text accessibilityLiveRegion="polite" style={[fitnessStyles.success, { marginBottom: 16 }]}>{savedMessage}</Text>}
     <View style={styles.cosmetics}>{COSMETICS.map(item => {
       const isOwned = !!profile?.ownedCosmetics.includes(item.id);
-      const isEquipped = item.slot === 'aura' && profile?.equipped[item.slot] === item.id;
+      const isEquipped = item.id === 'origin-suit' ? originalActive : profile?.equipped[item.slot] === item.id;
       const color = RARITY_COLORS[item.rarity];
-      return <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={collectibleName(item) + ', ' + item.rarity + ', ' + (isOwned ? 'owned' : 'locked') + (item.slot === 'aura' ? '. Preview aura.' : '. View collectible details.')} onPress={() => { setSelected(item); setError(null); }} style={[styles.cosmetic, width >= 850 ? { width: '18.7%' } : width >= 500 ? { width: '31.5%' } : { width: '47.7%' }, selected?.id === item.id && { borderColor: color, backgroundColor: colors.glassStrong }]}>
+      return <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={collectibleName(item) + ', ' + item.rarity + ', ' + (isOwned ? 'owned' : item.id === 'origin-suit' ? 'available' : 'locked') + '. Preview on your character.'} disabled={equipping} onPress={() => openPreview(item)} style={[styles.cosmetic, width >= 850 ? { width: '18.7%' } : width >= 500 ? { width: '31.5%' } : { width: '47.7%' }, selected?.id === item.id && { borderColor: color, backgroundColor: colors.glassStrong }]}>
         <View style={[styles.itemArt, { backgroundColor: alpha(color, 0.08) }]}><CosmeticArt item={item} /><View style={[styles.rarityDot, { backgroundColor: color }]} /></View>
-        <Text style={[styles.rarity, { color }]}>{stageLabel(item.rarity)}</Text><Text style={styles.itemName}>{collectibleName(item)}</Text><Text style={styles.itemStatus}>{isEquipped ? 'Equipped' : item.id === 'origin-suit' ? 'Original look' : isOwned ? 'Earned' : 'Locked'}</Text>
+        <Text style={[styles.rarity, { color }]}>{stageLabel(item.rarity)}</Text><Text style={styles.itemName}>{collectibleName(item)}</Text><Text style={styles.itemStatus}>{isEquipped ? item.id === 'origin-suit' ? 'Original look active' : 'Equipped' : item.id === 'origin-suit' ? 'Restore original look' : isOwned ? 'Owned · try it on' : 'Locked · preview available'}</Text>
+        <Text style={styles.cardProgress}>{unlockProgress(item, profile).label}</Text>
       </Pressable>;
     })}</View>
-    {selected && <View style={styles.detail}>
-      <View style={[layout.split, { flexWrap: 'wrap', gap: 12 }]}><View style={{ gap: 6, flex: 1, minWidth: 190 }}><Pill color={RARITY_COLORS[selected.rarity]}>{stageLabel(selected.rarity)} {selected.slot === 'aura' ? 'aura' : selected.id === 'origin-suit' ? 'look' : 'badge'}</Pill><Heading size={27}>{collectibleName(selected)}</Heading></View><Button variant="quiet" onPress={() => setSelected(null)}>{selected.slot === 'aura' ? 'Close preview' : 'Close details'}</Button></View>
-      <Copy>{collectibleDescription(selected)}</Copy><Text style={styles.requirement}>{selected.requirement}</Text>
-      {error && <Notice title="Could not save your look">{error}</Notice>}
-      {selected.slot === 'aura' ? <Button onPress={profile ? apply : () => router.push('/profile')} loading={equipping} disabled={!!profile && (!owned || equipped)}>{!profile ? 'Create a player to collect' : equipped ? 'Equipped' : owned ? 'Equip ' + selected.name : 'Keep training to unlock'}</Button> : !profile ? <Button onPress={() => router.push('/profile')}>Create a player to collect</Button> : selected.id !== 'origin-suit' && <Pill color={owned ? colors.accent : colors.muted}>{owned ? 'Badge earned' : 'Keep training to earn this badge'}</Pill>}
-      <Text style={styles.cosmeticNote}>Looks only. Collectibles never increase battle power.</Text>
-    </View>}
+    <Modal visible={!!selected} transparent animationType={session.reducedMotion ? 'none' : 'fade'} onRequestClose={closePreview} presentationStyle="overFullScreen" accessibilityLabel={selected ? `${collectibleName(selected)} preview` : 'Cosmetic preview'}>
+      <View style={[styles.modalBackdrop, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16, paddingHorizontal: width < 500 ? 12 : 24 }]}>
+        {selected && <View accessibilityViewIsModal style={[styles.modalFrame, { maxHeight: dialogHeight }]}>
+          <View style={styles.modalHeader}><View style={{ flex: 1, minWidth: 0, gap: 5 }}><Text style={styles.modalEyebrow}>Character preview</Text><Heading size={dialogWide ? 30 : 25}>{collectibleName(selected)}</Heading></View><Button variant="quiet" onPress={closePreview} accessibilityLabel="Close cosmetic preview" style={styles.closeButton}>Close</Button></View>
+          <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled">
+            <View style={[styles.modalColumns, dialogWide && { flexDirection: 'row', alignItems: 'center' }]}>
+              <View style={[styles.viewer, { height: previewHeight }, dialogWide && { flex: 1.1 }]}>
+                <View style={styles.modelStage}><View style={styles.viewerGlow} /><HeroView characterId={characterId} stage={previewStage} equipment={previewEquipment} pose={previewEquipment.pose === 'champion-pose' ? 'flex' : 'idle'} active={!session.reducedMotion} style={styles.hero} /></View>
+                <View style={[styles.viewerBottom, { paddingBottom: 14, paddingTop: 6 }]}><Text style={[styles.stageName, { fontSize: 21, lineHeight: 27 }]}>{characterFor(characterId).name} · {stage.name}</Text><Text style={styles.stageDescription}>{selected.id === 'origin-suit' ? 'Original look preview' : previewWithoutItem ? `Without ${selected.name}` : `${selected.name} preview`}</Text></View>
+              </View>
+              <View style={[styles.modalDetails, dialogWide && { flex: 1 }]}>
+                <Pill color={owned || selected.id === 'origin-suit' ? RARITY_COLORS[selected.rarity] : colors.muted}>{selected.id === 'origin-suit' ? 'Always available' : equipped ? 'Equipped' : owned ? 'Owned' : 'Locked · preview only'}</Pill>
+                <Copy>{collectibleDescription(selected)}</Copy>
+                {selectedProgress && <View style={styles.unlockProgress}><Text style={styles.requirement}>{selected.requirement}</Text><Text style={styles.progressValue}>{selectedProgress.label}</Text><Meter value={selectedProgress.value} max={selectedProgress.max} color={owned || selected.id === 'origin-suit' ? colors.accent : colors.muted} label={`${collectibleName(selected)} unlock progress`} /></View>}
+                <Text style={fitnessStyles.small}>{selected.id === 'origin-suit' ? 'Restoring this look clears every cosmetic effect. Your chosen character and evolution stay the same.' : owned ? 'Equip to save this item, or remove it when you want to change your look.' : 'This is a visual preview. Meet the requirement to save this item to your character.'}</Text>
+                {previewIndex > earnedIndex && <Text style={fitnessStyles.small}>You are viewing a locked evolution. Saving a cosmetic keeps your earned {earnedStage.name} stage.</Text>}
+                {selected.id !== 'origin-suit' && <Button variant="secondary" onPress={() => setPreviewWithoutItem(value => !value)} disabled={equipping}>{previewWithoutItem ? 'Show item preview' : 'Compare without item'}</Button>}
+              </View>
+            </View>
+          </ScrollView>
+          <View style={styles.modalFooter}>
+            {error && <Text accessibilityLiveRegion="polite" style={layout.error}>Could not save your look. {error}</Text>}
+            {savedMessage && <Text accessibilityLiveRegion="polite" style={fitnessStyles.success}>{savedMessage}</Text>}
+            <Button onPress={profile ? apply : () => { closePreview(); router.push('/profile'); }} loading={equipping} disabled={!!profile && selected.id !== 'origin-suit' && !owned}>{!profile ? 'Create player to save' : selected.id === 'origin-suit' ? 'Restore original look' : equipped ? `Remove ${selected.name}` : owned ? `Equip ${selected.name}` : 'Locked · preview only'}</Button>
+            <Text style={styles.cosmeticNote}>Cosmetics change your look. They never increase battle power.</Text>
+          </View>
+        </View>}
+      </View>
+    </Modal>
   </Screen>;
 }
 
@@ -127,7 +196,15 @@ const styles = StyleSheet.create({
   rarity: { fontFamily: fonts.body, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }, itemName: { fontFamily: fonts.body, color: colors.text, fontSize: 15, fontWeight: '700' }, itemStatus: { fontFamily: fonts.body, color: colors.muted, fontSize: 11 },
   // The unlock condition is a locked-state hint, so it is desaturated (4.94:1 on the glass panel)
   // and sits a step below the muted description — never a warm "warning" hue. Matches role.locked.
-  detail: { marginTop: 24, padding: 26, borderRadius: radii.xl, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.line, gap: 16 }, requirement: { fontFamily: fonts.body, color: colors.faint, fontSize: 14 },
+  requirement: { fontFamily: fonts.body, color: colors.faint, fontSize: 14, lineHeight: 21 },
+  cardProgress: { fontFamily: fonts.body, color: colors.muted, fontSize: 11, lineHeight: 18 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(2,4,8,0.88)', justifyContent: 'center', alignItems: 'center' },
+  modalFrame: { width: '100%', maxWidth: 980, backgroundColor: colors.backgroundElevated, borderRadius: radii.xl, borderWidth: 1, borderColor: colors.lineStrong, overflow: 'hidden' },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 18, borderBottomWidth: 1, borderBottomColor: colors.line, flexShrink: 0 },
+  modalEyebrow: { fontFamily: fonts.body, color: colors.muted, fontSize: 11, fontWeight: '600', letterSpacing: 1.4, textTransform: 'uppercase' },
+  closeButton: { flexShrink: 0 }, modalScroll: { flexShrink: 1 }, modalBody: { padding: 18 }, modalColumns: { gap: 22 },
+  modalDetails: { gap: 18, minWidth: 0 }, unlockProgress: { gap: 9 }, progressValue: { fontFamily: fonts.body, color: colors.text, fontSize: 15, fontWeight: '600', lineHeight: 23 },
+  modalFooter: { gap: 12, padding: 18, borderTopWidth: 1, borderTopColor: colors.line, flexShrink: 0 },
   cosmeticNote: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, lineHeight: 20, textAlign: 'center' },
   suitShoulder: { width: 64, height: 20, borderRadius: 7 }, suitBody: { width: 38, height: 48, borderBottomLeftRadius: 14, borderBottomRightRadius: 14, marginTop: -6 },
   // Chest core reads as the suit's power source, so it takes the brand orchid against the muted

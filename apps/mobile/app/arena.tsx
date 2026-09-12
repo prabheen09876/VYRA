@@ -120,6 +120,7 @@ export default function ArenaScreen() {
       {mode === 'pvp' && !!profile && <Button variant="secondary" onPress={beginRandom} loading={pending === 'random'} disabled={!!pending && pending !== 'random'} style={{ flex: 1 }}>Battle with Randoms</Button>}
     </View>
     <View style={styles.rules}><Text style={styles.ruleText}>Squats add guard</Text><View style={styles.ruleDot} /><Text style={styles.ruleText}>Push-ups deal damage</Text><View style={styles.ruleDot} /><Text style={styles.ruleText}>Stop any time</Text></View>
+    {!searching && <Button variant="quiet" onPress={() => router.push('/train')} disabled={!!pending}>Practise with a live avatar</Button>}
     <View style={styles.join}>
       <Heading size={25}>Have a room code?</Heading><Copy>Join the private room your friend created.</Copy>
       {/* minWidth 0 because react-native-web resets it on View but not on TextInput: left at `auto`
