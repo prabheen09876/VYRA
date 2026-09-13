@@ -1,0 +1,19 @@
+# Camera inference only. The website, D1 and multiplayer stay on Cloudflare.
+# 1c-2g is a PAID plan; review the displayed price before creating the service.
+services:
+  - type: web
+    name: vyra-pose
+    runtime: docker
+    repo: https://github.com/prabheen09876/VYRA
+    branch: codex/render-pose-deployment
+    rootDir: apps/pose-server
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: singapore
+    plan: 1c-2g
+    numInstances: 1
+    autoDeployTrigger: 'off'
+    healthCheckPath: /health
+    envVars:
+      - key: VYRA_POSE_ALLOWED_ORIGINS
+        value: https://vyra.admin-dashboard-346samy.workers.dev

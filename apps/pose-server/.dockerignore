@@ -1,0 +1,8 @@
+**
+!Dockerfile
+!server.py
+!pose_engine.py
+!analyzers.py
+!hosted.py
+!models/
+!models/yolo26n-pose.pt
