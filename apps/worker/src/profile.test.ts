@@ -69,8 +69,13 @@ async function fixture() {
     coordinators.set(id, value);
     return value;
   }
+  // The router spends a rate-limit binding on every request before it reaches a handler, so the
+  // fixture has to carry them or every assertion below reads 500. These always allow, keeping these
+  // tests about authentication and validation; the limits themselves are covered in index.test.ts.
+  const allowAll = { limit: async () => ({ success: true }) };
   const env = {
     CORS_ORIGINS: 'http://localhost:8081',
+    IP_LIMITER: allowAll, GUEST_LIMITER: allowAll, PLAYER_LIMITER: allowAll,
     DB: {
       prepare: (sql: string) => new SqliteStatement(db, sql),
       async batch(statements: SqliteStatement[]) {

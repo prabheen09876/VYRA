@@ -3,6 +3,7 @@ import type { BodyCheckInInput, CosmeticSlot, FitnessSetupInput, GuestSession, M
 import { createProgression } from '@vyra/core/progression';
 import { authenticate, corsHeaders, hashToken, HttpError, randomToken, readJson } from './http';
 import { createPvpMatchRecord } from './matches';
+import { clientKey, enforceLimit } from './rate-limit';
 export { MatchRoom } from './match-room';
 export { ProfileCoordinator } from './profile';
 export { Matchmaking } from './matchmaking';
@@ -12,8 +13,16 @@ async function route(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url), path = url.pathname;
   if (!path.startsWith('/api/')) return env.ASSETS.fetch(request);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204 });
+  // Before anything that costs a D1 read or a Durable Object wake-up. Unauthenticated callers are
+  // held to this alone, which is what bounds a flood of invalid bearer tokens: `authenticate` spends
+  // a database read on every one of them and would otherwise do so without limit.
+  await enforceLimit(env.IP_LIMITER, clientKey(request), 'RATE_LIMITED', 'Too many requests from this network. Wait a moment and try again.');
   if (path === '/api/health' && request.method === 'GET') return Response.json({ ok: true, protocolVersion: 1, aiEnabled: String(env.AI_ENABLED) === 'true' });
   if (path === '/api/guests' && request.method === 'POST') {
+    // The only route that mints credentials, and the only one an attacker can call with none. Left
+    // open it hands out unlimited profile rows, each of which is a fresh PLAYER_LIMITER key and so a
+    // way around every per-player limit below.
+    await enforceLimit(env.GUEST_LIMITER, clientKey(request), 'RATE_LIMITED', 'Too many new players from this network. Wait a moment and try again.');
     const body = await readJson(request);
     if (typeof body.name !== 'string' || body.name.trim().length < 1 || body.name.trim().length > 24) throw new HttpError(400, 'INVALID_NAME', 'Choose a name between 1 and 24 characters.');
     const name = body.name.trim().replace(/[\u0000-\u001f\u007f]/g, '');
@@ -27,6 +36,11 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (ws && request.method === 'GET') return env.MATCHES.getByName(ws[1]).fetch(request);
   if (path === '/api/matchmaking/ws' && request.method === 'GET') return env.MATCHMAKING.getByName(MATCHMAKING_QUEUE_NAME).fetch(request);
   const playerId = await authenticate(request, env);
+  // Keyed by the profile the server resolved, never by anything the client asserts. This is the
+  // limit that can afford to be strict, because one account cannot spend another's budget: it is
+  // what makes brute-forcing the six-character room codes on /api/rooms/{code}/join hopeless, and it
+  // bounds match creation, ticket minting and profile writes per player rather than per network.
+  await enforceLimit(env.PLAYER_LIMITER, playerId, 'RATE_LIMITED', 'You are sending requests too quickly. Wait a moment and try again.');
   const profiles = env.PROFILES.getByName(playerId);
   if (path === '/api/profile' && request.method === 'GET') {
     const profile = await profiles.getProfile(playerId);
@@ -113,10 +127,24 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     try {
       const response = await route(request, env);
-      if (response.status === 101 || !new URL(request.url).pathname.startsWith('/api/')) return response;
+      if (response.status === 101) return response;
       const headers = new Headers(response.headers);
-      corsHeaders(request, env).forEach((value, key) => headers.set(key, value));
-      return new Response(response.body, { status: response.status, headers });
+      if (new URL(request.url).pathname.startsWith('/api/')) corsHeaders(request, env).forEach((value, key) => headers.set(key, value));
+      else {
+        // The same two headers `corsHeaders` sets on API responses, now also on everything the
+        // assets binding serves — /capture/ is a real web app with camera access, served from this
+        // origin, and it was going out without them. `nosniff` keeps a file whose extension the
+        // asset server does not recognise from being re-interpreted as script by the browser.
+        //
+        // Framing is deliberately left alone: apps/mobile/src/components/CaptureFrame.web.tsx
+        // embeds /capture/ in an <iframe>, and in development its parent is the Expo dev server on
+        // another port, so both `X-Frame-Options: DENY` and `frame-ancestors 'self'` would break
+        // camera capture on web. Constraining that needs an allowlist of the embedding origin,
+        // which is an architectural decision rather than a header to add blind.
+        headers.set('X-Content-Type-Options', 'nosniff');
+        headers.set('Referrer-Policy', 'same-origin');
+      }
+      return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
     } catch (error) {
       if (error instanceof HttpError) return Response.json({ error: error.code, message: error.message }, { status: error.status, headers: corsHeaders(request, env) });
       console.error(JSON.stringify({ event: 'request_failed', path: new URL(request.url).pathname, error: error instanceof Error ? error.name : 'unknown' }));

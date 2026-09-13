@@ -3,6 +3,7 @@ import type { MatchmakingCommand, MatchmakingEvent } from '@vyra/core';
 import { createQueue, enterQueue, leaveQueue, type QueueEntry, type QueueState } from '@vyra/core/matchmaking';
 import { createPvpMatchRecord } from './matches';
 import { hashToken, randomToken } from './http';
+import { SocketBudgets } from './rate-limit';
 
 interface SocketIdentity { playerId: string }
 const TICKET_TTL_MS = 30000;
@@ -12,6 +13,13 @@ const TICKET_TTL_MS = 30000;
  *  next). This intentionally does not shard across regions/instances — reasonable for the
  *  current scale, called out in docs as a known limitation rather than solved speculatively. */
 export class Matchmaking extends DurableObject<Env> {
+  /**
+   * 4 messages a second sustained, 20 in a burst, per socket. A searching client sends a ping every
+   * three seconds and one `cancel`, so this is far above any honest use. It matters more here than
+   * in a match room because this object is a single global instance: every player queueing shares
+   * it, so one socket's flood is contention for everyone searching, not just for its own room.
+   */
+  private budgets = new SocketBudgets(20, 4);
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS queue (player_id TEXT PRIMARY KEY, name TEXT NOT NULL, queued_at INTEGER NOT NULL)');
@@ -85,6 +93,12 @@ export class Matchmaking extends DurableObject<Env> {
     return new Response(null, { status: 101, webSocket: client });
   }
   async webSocketMessage(socket: WebSocket, raw: string | ArrayBuffer): Promise<void> {
+    const now = Date.now();
+    const budget = this.budgets.for(socket, now);
+    if (!budget.take(now)) {
+      if (budget.shouldDisconnect()) try { socket.close(1008, 'Too many messages'); } catch { /* already closed */ }
+      return;
+    }
     const identity = socket.deserializeAttachment() as SocketIdentity | null;
     if (!identity) { socket.close(1008, 'Missing player identity'); return; }
     let command: MatchmakingCommand;
@@ -97,7 +111,7 @@ export class Matchmaking extends DurableObject<Env> {
     switch (command.type) {
       case 'ping':
         if (!Number.isFinite(command.sentAt)) { this.send(socket, { type: 'error', code: 'INVALID_PING', message: 'Ping timestamp must be finite.' }); break; }
-        this.send(socket, { type: 'pong', sentAt: command.sentAt, serverNow: Date.now() });
+        this.send(socket, { type: 'pong', sentAt: command.sentAt, serverNow: now });
         break;
       case 'cancel':
         this.removeFromQueue(identity.playerId);

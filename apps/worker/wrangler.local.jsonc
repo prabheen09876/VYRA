@@ -15,6 +15,14 @@
     { "tag": "v2", "new_sqlite_classes": ["Matchmaking"] }
   ],
   "d1_databases": [{ "binding": "DB", "database_name": "vyra", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
+  // Identical to wrangler.jsonc on purpose. These limits are behaviour the worker depends on rather
+  // than environment separation, and the binding has to exist here too or every request throws on a
+  // missing `env.IP_LIMITER`. Sized in src/rate-limit.ts; `period` only accepts 10 or 60.
+  "ratelimits": [
+    { "name": "IP_LIMITER", "namespace_id": "1001", "simple": { "limit": 300, "period": 60 } },
+    { "name": "GUEST_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } },
+    { "name": "PLAYER_LIMITER", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } }
+  ],
   // Local dev origins only — this file is never deployed. 8081 is `expo start --web`'s default; 8082
   // is the port .claude/launch.json pins the web preview to, and without it the previewed app cannot
   // reach this API at all; 5173 is the capture app's Vite dev server; 19006 is the legacy Expo web port.

@@ -6,10 +6,23 @@ import {
 } from '@vyra/core/match';
 import { chooseNextRound } from './game-master';
 import { hashToken, randomToken } from './http';
+import { SocketBudgets } from './rate-limit';
 
 interface SocketIdentity { playerId: string }
 export class MatchRoom extends DurableObject<Env> {
   private settling = false;
+  /**
+   * 8 messages a second sustained, 30 in a burst, per socket.
+   *
+   * A playing client sends about three a second at peak: tracking once a second, a rep at most
+   * every 600 ms (the shortest minimum interval `recordRep` enforces, for squats) and a ping every
+   * three. The allowance is well clear of that, and the burst covers a client that reconnects and
+   * catches up. What it stops is the shape below it: every message runs `tick`, a SQLite write and
+   * `publish`, which syncs storage, broadcasts a snapshot to every socket in the room and re-arms
+   * the alarm. One flooding socket therefore multiplies into work on all of them, so the ceiling
+   * has to sit on the inbound side rather than on the broadcast.
+   */
+  private budgets = new SocketBudgets(30, 8);
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS match_state (singleton INTEGER PRIMARY KEY CHECK(singleton=1), json TEXT NOT NULL)');
@@ -128,6 +141,16 @@ export class MatchRoom extends DurableObject<Env> {
     return new Response(null, { status: 101, webSocket: client });
   }
   async webSocketMessage(socket: WebSocket, raw: string | ArrayBuffer): Promise<void> {
+    const now = Date.now();
+    // First, ahead of the parse: a 4 KB `JSON.parse` per message is itself part of what a flood
+    // buys. Dropping is silent because replying would hand the flooder an outbound message for
+    // every inbound one; a client that keeps pushing through a hundred refusals is not
+    // misconfigured, so its socket goes.
+    const budget = this.budgets.for(socket, now);
+    if (!budget.take(now)) {
+      if (budget.shouldDisconnect()) try { socket.close(1008, 'Too many messages'); } catch { /* already closed */ }
+      return;
+    }
     const identity = socket.deserializeAttachment() as SocketIdentity | null;
     if (!identity) { socket.close(1008, 'Missing player identity'); return; }
     let command: ClientCommand;
@@ -138,7 +161,7 @@ export class MatchRoom extends DurableObject<Env> {
       command = parsed as ClientCommand;
     } catch { this.send(socket, { type: 'error', code: 'INVALID_COMMAND', message: 'Invalid protocol message.' }); return; }
     const state = this.load(); if (!state) return;
-    const now = Date.now(); this.tick(state, now);
+    this.tick(state, now);
     let error: { code: string; message: string } | undefined;
     switch (command.type) {
       case 'ping':

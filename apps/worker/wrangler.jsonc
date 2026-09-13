@@ -18,6 +18,19 @@
   // and paste the returned database_id here. `wrangler deploy` will fail against this value.
   "d1_databases": [{ "binding": "DB", "database_name": "vyra", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
   "ai": { "binding": "AI", "remote": false },
+  // Rate limits, sized in src/rate-limit.ts where they are spent. Keep these identical in
+  // wrangler.local.jsonc: they are behaviour the code depends on, not environment separation, and a
+  // missing binding is a TypeError at the first request rather than a config warning. `period` only
+  // accepts 10 or 60.
+  //
+  // IP_LIMITER is deliberately loose because the key is a source address and a whole venue can share
+  // one; the tight limit is PLAYER_LIMITER, which keys on the authenticated profile and so cannot
+  // punish a bystander behind the same NAT.
+  "ratelimits": [
+    { "name": "IP_LIMITER", "namespace_id": "1001", "simple": { "limit": 300, "period": 60 } },
+    { "name": "GUEST_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } },
+    { "name": "PLAYER_LIMITER", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } }
+  ],
   // REQUIRED BEFORE A REAL DEPLOY: these are local dev origins only. Replace CORS_ORIGINS with
   // the exact deployed web/preview origin(s) that should be allowed to call this API — no
   // wildcards. Flip AI_ENABLED to "true" only after confirming Workers AI quota is available.
