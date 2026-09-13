@@ -63,6 +63,12 @@ export interface RewardReceipt {
 }
 export type MovementStage = 'squat_top' | 'squat_bottom' | 'pushup_top' | 'pushup_bottom' | 'other';
 export interface PoseLandmark { x: number; y: number; z?: number; visibility?: number; presence?: number }
+/** Raw, unmirrored landmarks shared only between the local capture surface and avatar. */
+export interface CapturePoseMessage {
+  type: 'capture.pose'; protocolVersion: 1; timestamp: number;
+  width: number; height: number; landmarks: PoseLandmark[]; visible: boolean; confidence: number;
+}
+export type CaptureCameraState = 'starting' | 'running' | 'stopped';
 export interface DenseLayer { weights: number[][]; bias: number[]; activation: 'relu' | 'softmax' }
 export interface StageModelArtifact {
   schemaVersion: 1; modelVersion: string; featureVersion: string; featureNames: string[];
@@ -78,8 +84,13 @@ export type MatchmakingEvent =
   | { type: 'error'; code: string; message: string }
   | { type: 'pong'; sentAt: number; serverNow: number };
 export type CaptureMessage =
+  | CapturePoseMessage
+  | { type: 'capture.camera'; protocolVersion: 1; state: CaptureCameraState }
   | { type: 'capture.ready'; protocolVersion: 1; modelVersion: string; inferenceMode: 'learned' | 'baseline' }
   | { type: 'capture.tracking'; protocolVersion: 1; visible: boolean; confidence: number; stage: MovementStage; fps: number; formScore?: number; cue: string }
   | { type: 'capture.rep'; protocolVersion: 1; exercise: Exercise; confidence: number; formScore: number; modelVersion: string; occurredAt: number }
   | { type: 'capture.error'; protocolVersion: 1; code: string; message: string };
-export interface CaptureControl { type: 'capture.configure'; exercise: Exercise | null; enabled: boolean; reset: boolean }
+export interface CaptureControl {
+  type: 'capture.configure'; exercise: Exercise | null; enabled: boolean; reset: boolean;
+  poseStream?: boolean; debugOverlay?: boolean;
+}

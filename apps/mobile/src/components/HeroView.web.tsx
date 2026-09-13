@@ -14,8 +14,9 @@ function Model(props: HeroViewProps & { reducedMotion: boolean; rotation: number
   const model = useGLTF(url);
   const presentation = CHARACTER_PRESENTATIONS[character.id];
   useEffect(props.onReady, [props.onReady, model]);
-  return <HeroScene source={model.scene} equipment={props.equipment} pose={props.pose} active={props.active}
-    reducedMotion={props.reducedMotion} rotation={props.rotation} normalization={presentation} framing={presentation.framing} />;
+  return <HeroScene source={model.scene} characterId={character.id} equipment={props.equipment} pose={props.pose} active={props.active}
+    reducedMotion={props.reducedMotion} rotation={props.rotation} normalization={presentation} livePose={props.livePose}
+    framing={props.livePose ? { fitHeight: 2.6, fitWidth: 2.5, centerY: 1.05 } : presentation.framing} />;
 }
 
 export function HeroView({ active = true, ...props }: HeroViewProps) {
@@ -34,9 +35,9 @@ export function HeroView({ active = true, ...props }: HeroViewProps) {
     query.addEventListener('change', change);
     return () => query.removeEventListener('change', change);
   }, []);
-  return <View accessibilityLabel={`${character.name}, ${props.stage} stage. Drag to rotate.`} style={[{ height: 340, width: '100%' }, props.style]}>
-    <HeroRenderBoundary resetKey={selection}><Canvas frameloop={active && !reducedMotion ? 'always' : 'demand'} camera={{ position: [0, .94, 6.8], fov: 32 }} dpr={[1, 1.5]}
-      onPointerMove={event => { if (event.buttons === 1) setRotation(r => r + event.movementX * .012); }} style={{ touchAction: 'pan-y', cursor: 'grab' }}>
+  return <View accessibilityLabel={`${character.name}, ${props.stage} stage. ${props.livePose ? 'Live training avatar.' : 'Drag to rotate.'}`} style={[{ height: 340, width: '100%' }, props.style]}>
+    <HeroRenderBoundary resetKey={selection}><Canvas frameloop={active && (!reducedMotion || props.livePose) ? 'always' : 'demand'} camera={{ position: [0, .94, 6.8], fov: 32 }} dpr={[1, 1.5]}
+      onPointerMove={event => { if (!props.livePose && event.buttons === 1) setRotation(r => r + event.movementX * .012); }} style={{ touchAction: 'pan-y', cursor: props.livePose ? 'default' : 'grab' }}>
       <Suspense fallback={null}><Model {...props} active={active} reducedMotion={reducedMotion} rotation={rotation} onReady={onReady} /></Suspense>
     </Canvas>
       {loaded !== selection && <ModelLoading label={character.name} />}

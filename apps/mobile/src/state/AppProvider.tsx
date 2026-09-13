@@ -42,6 +42,8 @@ interface AppContextValue {
   refreshProfile: () => Promise<void>;
   setPreferences: (patch: Partial<Pick<SavedSession, 'muted' | 'reducedMotion'>>) => void;
   equip: (slot: CosmeticSlot, itemId: string) => Promise<void>;
+  unequip: (slot: CosmeticSlot) => Promise<void>;
+  resetEquipment: () => Promise<void>;
   setupFitness: (input: FitnessSetupInput) => Promise<void>;
   recordCheckIn: (input: BodyCheckInInput) => Promise<void>;
   selectCharacter: (characterId: CharacterId) => Promise<void>;
@@ -245,6 +247,12 @@ export function AppProvider({ children }: React.PropsWithChildren) {
 
   const equip = useCallback(async (slot: CosmeticSlot, itemId: string) => {
     await requestProfile('/api/profile/equip', { slot, itemId });
+  }, [requestProfile]);
+  const unequip = useCallback(async (slot: CosmeticSlot) => {
+    await requestProfile('/api/profile/equip', { slot, itemId: null });
+  }, [requestProfile]);
+  const resetEquipment = useCallback(async () => {
+    await requestProfile('/api/profile/equipment/reset', {});
   }, [requestProfile]);
 
   const setupFitness = useCallback(async (input: FitnessSetupInput) => {
@@ -689,7 +697,7 @@ export function AppProvider({ children }: React.PropsWithChildren) {
   }, []);
 
   return <AppContext.Provider value={{
-    profile, session, booting, busy, connectionError, connect, refreshProfile, setPreferences, equip,
+    profile, session, booting, busy, connectionError, connect, refreshProfile, setPreferences, equip, unequip, resetEquipment,
     setupFitness, recordCheckIn, selectCharacter,
     snapshot, match, socketStatus, matchError, localStopped, serverOffset,
     createMatch, joinMatch, matchmakingStatus, enterMatchmaking, cancelMatchmaking, ready, sendRep, sendTracking, stopMatch, resetMatch,

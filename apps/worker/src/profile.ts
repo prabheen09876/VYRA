@@ -1,11 +1,11 @@
 import { DurableObject } from 'cloudflare:workers';
 import type { BodyCheckInInput, CharacterId, CosmeticSlot, FitnessSetupInput, Profile, RewardReceipt } from '@vyra/core';
-import { displayProfile, equipCosmetic, recordBodyCheckIn, selectCharacter, setupFitness, type ProgressionState, type RewardInput } from '@vyra/core/progression';
+import { displayProfile, equipCosmetic, recordBodyCheckIn, resetEquipment, selectCharacter, setupFitness, unequipCosmetic, type ProgressionState, type RewardInput } from '@vyra/core/progression';
 import { D1RewardStore, SerialExecutor, settleRewardOnce } from './rewards';
 
 type ProfileMutationResult =
   | { profile: Profile; status?: never; code?: never; error?: never }
-  | { profile?: never; status: 400 | 404 | 409; code: string; error: string };
+  | { profile?: never; status: 400 | 403 | 404 | 409; code: string; error: string };
 
 /** One coordinator per profile serializes external D1 read/modify/write operations across match rooms. */
 export class ProfileCoordinator extends DurableObject<Env> {
@@ -13,6 +13,7 @@ export class ProfileCoordinator extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS identity (singleton INTEGER PRIMARY KEY CHECK(singleton=1), profile_id TEXT NOT NULL)');
+    this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS coach_quota (singleton INTEGER PRIMARY KEY CHECK(singleton=1), minute_bucket INTEGER NOT NULL, minute_count INTEGER NOT NULL, day_bucket INTEGER NOT NULL, day_count INTEGER NOT NULL)');
   }
   private identity(id: string): void {
     this.ctx.storage.sql.exec('INSERT OR IGNORE INTO identity (singleton, profile_id) VALUES (1, ?)', id);
@@ -23,20 +24,40 @@ export class ProfileCoordinator extends DurableObject<Env> {
     const row = await this.env.DB.prepare('SELECT state_json FROM profiles WHERE id = ?').bind(id).first<{ state_json: string }>();
     return row ? JSON.parse(row.state_json) as ProgressionState : null;
   }
+  /** Atomic, persistent provider quota; guide retrieval does not consume paid generation. */
+  consumeCoachRequest(id: string): { allowed: boolean; retryAfterSeconds: number } {
+    this.identity(id);
+    const now = Date.now();
+    const minute = Math.floor(now / 60_000);
+    const day = Math.floor(now / 86_400_000);
+    // The conditional UPSERT is a single SQLite write, including both quota checks.
+    const accepted = this.ctx.storage.sql.exec(`
+      INSERT INTO coach_quota (singleton, minute_bucket, minute_count, day_bucket, day_count) VALUES (1, ?, 1, ?, 1)
+      ON CONFLICT(singleton) DO UPDATE SET
+        minute_bucket = excluded.minute_bucket,
+        minute_count = CASE WHEN minute_bucket = excluded.minute_bucket THEN minute_count + 1 ELSE 1 END,
+        day_bucket = excluded.day_bucket,
+        day_count = CASE WHEN day_bucket = excluded.day_bucket THEN day_count + 1 ELSE 1 END
+      WHERE (minute_bucket != excluded.minute_bucket OR minute_count < 6)
+        AND (day_bucket != excluded.day_bucket OR day_count < 60)
+      RETURNING singleton`, minute, day).toArray().length > 0;
+    if (accepted) return { allowed: true, retryAfterSeconds: 0 };
+    const quota = this.ctx.storage.sql.exec<{ minute_bucket: number; minute_count: number; day_bucket: number; day_count: number }>('SELECT * FROM coach_quota WHERE singleton = 1').one();
+    const retryAt = quota.day_bucket === day && quota.day_count >= 60 ? (day + 1) * 86_400_000 : (minute + 1) * 60_000;
+    return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil((retryAt - now) / 1000)) };
+  }
   async getProfile(id: string): Promise<Profile | null> {
     this.identity(id);
     return this.serial.run(async () => { const state = await this.load(id); return state ? displayProfile(state, Date.now()) : null; });
   }
-  async equip(id: string, slot: CosmeticSlot, itemId: string): Promise<{ profile?: Profile; error?: string }> {
-    this.identity(id);
-    return this.serial.run(async () => {
-      const state = await this.load(id);
-      if (!state) return { error: 'Profile not found.' };
-      let next: ProgressionState;
-      try { next = equipCosmetic(state, slot, itemId); } catch { return { error: 'Unlock this cosmetic before equipping it.' }; }
-      await this.env.DB.prepare('UPDATE profiles SET state_json = ?, updated_at = ? WHERE id = ?').bind(JSON.stringify(next), Date.now(), id).run();
-      return { profile: displayProfile(next, Date.now()) };
-    });
+  async equip(id: string, slot: CosmeticSlot, itemId: string | null): Promise<ProfileMutationResult> {
+    return this.updateProfile(id, 'INVALID_COSMETIC', state =>
+      itemId === null ? unequipCosmetic(state, slot) : equipCosmetic(state, slot, itemId), state =>
+      itemId !== null && !state.profile.ownedCosmetics.includes(itemId)
+        ? { status: 403, code: 'COSMETIC_LOCKED', error: 'Unlock this cosmetic before equipping it.' } : undefined);
+  }
+  async resetEquipment(id: string): Promise<ProfileMutationResult> {
+    return this.updateProfile(id, 'INVALID_EQUIPMENT', state => resetEquipment(state));
   }
   private async updateProfile(
     id: string,

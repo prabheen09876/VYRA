@@ -34,10 +34,10 @@ export interface Cosmetic { id: string; name: string; slot: CosmeticSlot; rarity
 // Those literals are copies of the values below; change both together or an equipped cosmetic
 // renders one color on its card and another on the character.
 export const COSMETICS: Cosmetic[] = [
-  { id: 'origin-suit', name: 'Origin suit', slot: 'outfit', rarity: 'common', color: '#6E7A8C', requirement: 'Yours from the start', description: 'The uniform of a future legend.' },
+  { id: 'origin-suit', name: 'Original character look', slot: 'outfit', rarity: 'common', color: '#6E7A8C', requirement: 'Yours from the start', description: 'Restore your character’s original colors and pose, with accessories and aura removed.' },
   { id: 'ion-skin', name: 'Ion skin', slot: 'skin', rarity: 'rare', color: '#4D8BFF', requirement: 'Complete your first workout', description: 'An electric blue finish, earned in motion.' },
-  { id: 'pulse-bracers', name: 'Pulse bracers', slot: 'accessory', rarity: 'rare', color: '#FF6B3D', requirement: 'Complete 100 valid reps', description: 'A bright mark of work put in.' },
-  { id: 'champion-pose', name: 'Champion flex', slot: 'pose', rarity: 'epic', color: '#2DD4BF', requirement: 'Win 5 battles', description: 'A victory worth showing off.' },
+  { id: 'pulse-bracers', name: 'Pulse bracers', slot: 'accessory', rarity: 'rare', color: '#FF6B3D', requirement: 'Complete 100 valid reps', description: 'Bright orange bracers fitted to your character’s forearms.' },
+  { id: 'champion-pose', name: 'Champion flex', slot: 'pose', rarity: 'epic', color: '#2DD4BF', requirement: 'Win 5 battles', description: 'A double-arm flex to celebrate your victories.' },
   { id: 'nova-aura', name: 'Nova aura', slot: 'aura', rarity: 'legendary', color: '#5EEAD4', requirement: 'Reach Elite evolution', description: 'Your consistency lights up the arena.' }
 ];
 // Drawn as the card border, rarity dot and rarity LABEL around art tinted with the cosmetic's own

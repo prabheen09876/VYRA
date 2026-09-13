@@ -1,16 +1,19 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
   AdditiveBlending, ClampToEdgeWrapping, Color, DataTexture, Group, LinearFilter, Mesh,
-  MeshStandardMaterial, Object3D, RGBAFormat, Skeleton, SkinnedMesh, SRGBColorSpace,
+  MeshStandardMaterial, Object3D, RGBAFormat, Skeleton, SkinnedMesh, SRGBColorSpace, type Material,
 } from 'three';
 import { cloneCharacterScene, type HeroNormalization } from '../lib/characterScene';
+import { applyIonFinish } from '../lib/characterFinish';
+import { prepareCharacterCosmetics } from '../lib/characterCosmetics';
+import { createLiveCharacter, type LivePoseRef } from '../lib/liveCharacter';
 import type { CharacterId, Equipment, EvolutionStage } from '@vyra/core';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts } from '../theme';
 
-export interface HeroViewProps { stage: EvolutionStage; characterId?: CharacterId; equipment?: Equipment; pose?: 'idle' | 'flex' | 'victory'; active?: boolean; style?: StyleProp<ViewStyle> }
+export interface HeroViewProps { stage: EvolutionStage; characterId?: CharacterId; equipment?: Equipment; pose?: 'idle' | 'flex' | 'victory'; active?: boolean; livePose?: LivePoseRef; style?: StyleProp<ViewStyle> }
 
 export { fitSceneToStage } from '../lib/characterScene';
 /**
@@ -214,40 +217,70 @@ function HeroCamera({ fitHeight, fitWidth, centerY = 1.6 }: HeroFraming) {
   }, [camera, size.width, size.height, invalidate, fitHeight, fitWidth, centerY]);
   return null;
 }
-export function HeroScene({ source, equipment = {}, pose = 'idle', active = true, reducedMotion = false, rotation = 0, pedestal = true, flare, framing, normalization, proceduralRig = false }: { source: Object3D; equipment?: Equipment; pose?: HeroViewProps['pose']; active?: boolean; reducedMotion?: boolean; rotation?: number; pedestal?: boolean; flare?: HeroFlare; framing?: HeroFraming; normalization?: HeroNormalization; proceduralRig?: boolean }) {
+export function HeroScene({ source, characterId, modelHeight = 1.8, equipment = {}, pose = 'idle', active = true, reducedMotion = false, rotation = 0, pedestal = true, flare, framing, normalization, proceduralRig = false, livePose }: { source: Object3D; characterId?: CharacterId; modelHeight?: number; equipment?: Equipment; pose?: HeroViewProps['pose']; active?: boolean; reducedMotion?: boolean; rotation?: number; pedestal?: boolean; flare?: HeroFlare; framing?: HeroFraming; normalization?: HeroNormalization; proceduralRig?: boolean; livePose?: LivePoseRef }) {
   const root = useRef<Group>(null);
   const clock = useRef(0);
   const invalidate = useThree(state => state.invalidate);
-  useEffect(() => { invalidate(); }, [invalidate, rotation, pose, equipment.pose, active, reducedMotion]);
-  const scene = useMemo(() => {
+  useEffect(() => { invalidate(); }, [invalidate, rotation, pose, equipment.pose, equipment.skin, equipment.accessory, equipment.aura, active, reducedMotion]);
+  const flex = !livePose && (pose === 'flex' || pose === 'victory' || equipment.pose === 'champion-pose');
+  const rendered = useMemo(() => {
     const clone = cloneCharacterScene(source, normalization);
+    const materials = new Set<Material>();
     clone.traverse(object => {
       if (object instanceof Mesh) {
         object.material = Array.isArray(object.material) ? object.material.map(m=>m.clone()) : object.material.clone();
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        // Mirrors COSMETICS['ion-skin'].color in packages/core/src/catalog.ts — the card swatch and
-        // the character must agree, so change both together.
-        for (const material of materials) if (proceduralRig && material instanceof MeshStandardMaterial && material.name === 'HeroSkin' && equipment.skin === 'ion-skin') material.color = new Color('#4D8BFF');
+        (Array.isArray(object.material) ? object.material : [object.material]).forEach(material => materials.add(material));
       }
       if (proceduralRig && object.name.startsWith('Cosmetic_Bracer_')) object.visible = equipment.accessory === 'pulse-bracers';
     });
-    return clone;
-  }, [source, equipment.skin, equipment.accessory, normalization, proceduralRig]);
+    const resources = !proceduralRig && characterId
+      ? prepareCharacterCosmetics(clone, characterId, { flex, bracers: equipment.accessory === 'pulse-bracers', targetHeight: modelHeight })
+      : { geometries: [], materials: [] };
+    resources.materials.forEach(material => materials.add(material));
+    const bindings: Array<{ mesh: Mesh; material: Material | Material[] }> = [];
+    clone.traverse(object => { if (object instanceof Mesh) bindings.push({ mesh: object, material: object.material }); });
+    return { scene: clone, resources, materials, bindings };
+  }, [source, characterId, modelHeight, equipment.accessory, flex, normalization, proceduralRig]);
+  const scene = rendered.scene;
+  const liveCharacter = useMemo(() => livePose && characterId ? createLiveCharacter(scene, characterId) : null, [scene, characterId, livePose]);
+  // A color comparison must not repeat the expensive vertex fitting of dense models.
+  // Keep immutable private base materials so removing Ion restores the exact original finish.
+  const finishes = useMemo(() => {
+    const owned: Material[] = [];
+    const accessories = new Set(rendered.resources.materials);
+    const finish = (base: Material) => {
+      const material = base.clone();
+      owned.push(material);
+      if (equipment.skin === 'ion-skin' && !accessories.has(base)) {
+        if (!proceduralRig) applyIonFinish(material);
+        else if (material instanceof MeshStandardMaterial && material.name === 'HeroSkin') material.color = new Color('#4D8BFF');
+      }
+      return material;
+    };
+    const bindings = rendered.bindings.map(({ mesh, material }) => ({ mesh, material: Array.isArray(material) ? material.map(finish) : finish(material) }));
+    return { owned, bindings };
+  }, [rendered, equipment.skin, proceduralRig]);
+  useLayoutEffect(() => {
+    finishes.bindings.forEach(({ mesh, material }) => { mesh.material = material; });
+    invalidate();
+    return () => { finishes.owned.forEach(material => material.dispose()); };
+  }, [finishes, invalidate]);
   useEffect(() => () => {
     const skeletons = new Set<Skeleton>();
     scene.traverse(object => {
-      if (object instanceof Mesh) (Array.isArray(object.material) ? object.material : [object.material]).forEach(material => material.dispose());
       if (object instanceof SkinnedMesh) skeletons.add(object.skeleton);
     });
     // Geometry and textures belong to useGLTF's cache; these bone textures belong to our clones.
     skeletons.forEach(skeleton => skeleton.dispose());
-  }, [scene]);
+    rendered.materials.forEach(material => material.dispose());
+    rendered.resources.geometries.forEach(geometry => geometry.dispose());
+  }, [scene, rendered]);
   useFrame((_, delta) => {
-    const animate = active && !reducedMotion;
+    const animate = active && !reducedMotion && !livePose;
     if (animate) clock.current += Math.min(delta,.04);
     const t = clock.current;
     if(root.current) { root.current.rotation.y = rotation + (animate ? Math.sin(t*.4)*.075 : 0); root.current.position.y = animate ? Math.sin(t*1.8)*.015 : 0; }
-    const flex = pose === 'flex' || pose === 'victory' || equipment.pose === 'champion-pose';
+    if (active && liveCharacter) liveCharacter.update(livePose?.current ?? null, delta);
     for(const [side,sign] of proceduralRig ? [['L',-1],['R',1]] as const : []) {
       const shoulder=scene.getObjectByName('Shoulder_'+side), elbow=scene.getObjectByName('Elbow_'+side);
       const victoryArm = pose === 'victory' && side === 'L';
@@ -295,9 +328,10 @@ export function HeroScene({ source, equipment = {}, pose = 'idle', active = true
     </>}
     {/* Mirrors COSMETICS['nova-aura'].color in packages/core/src/catalog.ts (= the Legendary stage
         accent); change both together or the equipped aura disagrees with its card. */}
-    {equipment.aura === 'nova-aura' && <group>
-      <mesh rotation={[-Math.PI/2,0,0]} position={[0,.028,0]}><ringGeometry args={[1.18,1.22,64]}/><meshBasicMaterial color="#5EEAD4" transparent opacity={.75}/></mesh>
-      <mesh position={[0,1.8,-.62]}><torusGeometry args={[1.25,.015,8,64]}/><meshBasicMaterial color="#5EEAD4" transparent opacity={.7}/></mesh>
+    {equipment.aura === 'nova-aura' && <group scale={modelHeight / 1.8}>
+      <mesh rotation={[-Math.PI/2,0,0]} position={[0,.028,0]}><ringGeometry args={[.84,.91,64]}/><meshBasicMaterial color="#5EEAD4" transparent opacity={.9} toneMapped={false}/></mesh>
+      <mesh position={[0,.96,-.3]} scale={[1,1.12,1]}><torusGeometry args={[.81,.022,10,80]}/><meshBasicMaterial color="#5EEAD4" transparent opacity={.95} toneMapped={false}/></mesh>
+      <mesh position={[0,.96,-.32]} scale={[1,1.12,1]}><torusGeometry args={[.81,.07,10,80]}/><meshBasicMaterial color="#5EEAD4" transparent opacity={.18} depthWrite={false} blending={AdditiveBlending} toneMapped={false}/></mesh>
     </group>}
   </>;
 }

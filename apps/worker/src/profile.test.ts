@@ -110,7 +110,7 @@ afterEach(() => {
 describe('fitness profile API', () => {
   it('authenticates all new profile writes', async () => {
     const { api, stored } = await fixture();
-    for (const path of ['fitness', 'check-ins', 'character']) {
+    for (const path of ['fitness', 'check-ins', 'character', 'equip', 'equipment/reset']) {
       expect((await api(`/api/profile/${path}`, {}, null)).status).toBe(401);
     }
     expect(stored().profile.fitness).toBeUndefined();
@@ -198,5 +198,109 @@ describe('fitness profile API', () => {
       characterId: 'sakura', xp: 110, activeDays: 1, stage: 'developing', totalReps: 10,
       fitness: { startWeightKg: 55, checkIns: [{ weightKg: 58, heightCm: 175 }] },
     });
+  });
+});
+
+describe('cosmetic equipment API', () => {
+  it('rejects malformed slots, mismatched cosmetics, and unearned effects without changing the profile', async () => {
+    const { api, stored } = await fixture();
+    const before = stored();
+    for (const body of [
+      { slot: '__proto__', itemId: null }, { slot: 'xp', itemId: null },
+      { slot: 'skin' }, { slot: 'skin', itemId: false },
+      { slot: 'outfit', itemId: 'ion-skin' },
+    ]) expect((await api('/api/profile/equip', body)).status).toBe(400);
+    const locked = await api('/api/profile/equip', { slot: 'aura', itemId: 'nova-aura', ownedCosmetics: ['nova-aura'], stage: 'elite' });
+    expect(locked.status).toBe(403);
+    expect(await locked.json()).toMatchObject({ error: 'COSMETIC_LOCKED' });
+    expect(stored()).toEqual(before);
+  });
+
+  it('persists per-slot removal and original-look reset without clearing ownership, character, or fitness', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(NOW);
+    const { api, coordinator, stored, recreate } = await fixture();
+    await api('/api/profile/fitness', { ...setupInput, characterId: 'nami' });
+    await coordinator().settle(PLAYER, { matchId: 'cosmetics', totalReps: 100, won: true, finishedAt: NOW });
+    expect((await api('/api/profile/equip', { slot: 'skin', itemId: 'ion-skin' })).status).toBe(200);
+    expect((await api('/api/profile/equip', { slot: 'accessory', itemId: 'pulse-bracers' })).status).toBe(200);
+    const before = stored();
+    const removed = await api('/api/profile/equip', { slot: 'skin', itemId: null, xp: 9000, characterId: 'sakura' });
+    expect(removed.status).toBe(200);
+    expect(stored()).toEqual({ ...before, profile: { ...before.profile, equipped: { outfit: 'origin-suit', accessory: 'pulse-bracers' } } });
+    recreate();
+    expect(await (await api('/api/profile')).json()).toEqual(await removed.json());
+    const reset = await api('/api/profile/equipment/reset', { ownedCosmetics: ['nova-aura'], fitness: null, stage: 'elite' });
+    expect(reset.status).toBe(200);
+    expect(stored()).toEqual({ ...before, profile: { ...before.profile, equipped: { outfit: 'origin-suit' } } });
+    recreate();
+    expect(await (await api('/api/profile')).json()).toEqual(await reset.json());
+    expect((await api('/api/profile/equip', { slot: 'aura', itemId: 'nova-aura' })).status).toBe(403);
+  });
+
+  it('allows removing an empty slot or the original outfit without affecting other fields', async () => {
+    const { api, stored } = await fixture();
+    const before = stored();
+    expect((await api('/api/profile/equip', { slot: 'skin', itemId: null })).status).toBe(200);
+    expect(stored()).toEqual(before);
+    expect((await api('/api/profile/equip', { slot: 'outfit', itemId: null })).status).toBe(200);
+    expect(stored()).toEqual({ ...before, profile: { ...before.profile, equipped: {} } });
+    expect((await api('/api/profile/equipment/reset', {})).status).toBe(200);
+    expect(stored()).toEqual(before);
+  });
+
+  it('serializes resets and removals with completed workouts without losing earned rewards', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(NOW);
+    const { api, coordinator, stored } = await fixture();
+    await api('/api/profile/fitness', { ...setupInput, characterId: 'mikasa' });
+    await coordinator().settle(PLAYER, { matchId: 'first', totalReps: 10, won: false, finishedAt: NOW });
+    await api('/api/profile/equip', { slot: 'skin', itemId: 'ion-skin' });
+    const before = stored();
+    clock.mockReturnValue(NOW + DAY);
+    const [reset, removed, receipt] = await Promise.all([
+      api('/api/profile/equipment/reset', {}),
+      api('/api/profile/equip', { slot: 'skin', itemId: null }),
+      coordinator().settle(PLAYER, { matchId: 'second', totalReps: 100, won: true, finishedAt: NOW + DAY }),
+    ]);
+    expect(reset.status).toBe(200); expect(removed.status).toBe(200);
+    expect(receipt.unlocked).toContain('pulse-bracers');
+    expect(stored().profile).toMatchObject({
+      equipped: { outfit: 'origin-suit' }, characterId: 'mikasa', fitness: before.profile.fitness,
+      xp: before.profile.xp + receipt.xp, totalReps: 110, activeDays: 2, wins: 1,
+    });
+    expect(stored().profile.equipped.skin).toBeUndefined();
+    expect(stored().profile.ownedCosmetics).toEqual(expect.arrayContaining(['origin-suit', 'ion-skin', 'pulse-bracers']));
+  });
+});
+
+describe('persistent Coach generation quota', () => {
+  it('atomically allows only six concurrent requests per minute, persists across recreation, and leaves profiles untouched', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(NOW);
+    const { coordinator, recreate, stored } = await fixture();
+    const before = stored();
+    const attempts = await Promise.all(Array.from({ length: 12 }, () => coordinator().consumeCoachRequest(PLAYER)));
+    expect(attempts.filter(attempt => attempt.allowed)).toHaveLength(6);
+    expect(attempts.filter(attempt => !attempt.allowed).every(attempt => attempt.retryAfterSeconds > 0 && attempt.retryAfterSeconds <= 60)).toBe(true);
+    recreate();
+    expect(coordinator().consumeCoachRequest(PLAYER).allowed).toBe(false);
+    clock.mockReturnValue(NOW + 60_000);
+    expect(coordinator().consumeCoachRequest(PLAYER)).toEqual({ allowed: true, retryAfterSeconds: 0 });
+    expect(stored()).toEqual(before);
+  });
+
+  it('limits a player to sixty generation attempts per UTC day, independently of another player', async () => {
+    const start = Date.parse('2026-09-13T12:00:00Z');
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(start);
+    const { coordinator, recreate } = await fixture();
+    for (let minute = 0; minute < 10; minute++) {
+      clock.mockReturnValue(start + minute * 60_000);
+      for (let call = 0; call < 6; call++) expect(coordinator().consumeCoachRequest(PLAYER).allowed).toBe(true);
+    }
+    clock.mockReturnValue(start + 10 * 60_000);
+    recreate();
+    expect(coordinator().consumeCoachRequest(PLAYER)).toEqual({ allowed: false, retryAfterSeconds: 42_600 });
+    expect(coordinator('other-player').consumeCoachRequest('other-player').allowed).toBe(true);
+    expect(() => coordinator().consumeCoachRequest('other-player')).toThrow('identity mismatch');
+    clock.mockReturnValue(Date.parse('2026-09-14T00:00:00Z'));
+    expect(coordinator().consumeCoachRequest(PLAYER).allowed).toBe(true);
   });
 });

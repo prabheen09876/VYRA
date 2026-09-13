@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCameraPermissions } from 'expo-camera';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
-import type { CaptureControl, CaptureMessage } from '@vyra/core';
+import { parseCaptureMessage, type CaptureControl, type CaptureMessage } from '@vyra/core';
 import { colors, displayWeight, fonts } from '../theme';
 
 export interface CaptureFrameProps {
@@ -20,14 +20,15 @@ export default function CaptureFrame({ url, control, resetKey, onMessage }: Capt
   const controlRef = useRef(control);
   controlRef.current = control;
   const allowedOrigin = new URL(url).origin;
-  const configure = () => webView.current?.postMessage(JSON.stringify(controlRef.current));
+  const configure = (reset = controlRef.current.reset) => webView.current?.postMessage(JSON.stringify({ ...controlRef.current, reset }));
   useEffect(() => { if (loaded) configure(); }, [control.exercise, control.enabled, resetKey, loaded]);
+  useEffect(() => { if (loaded) configure(false); }, [control.poseStream, control.debugOverlay, loaded]);
 
   const receive = (event: WebViewMessageEvent) => {
     if (event.nativeEvent.url && !event.nativeEvent.url.startsWith(allowedOrigin + '/')) return;
     try {
-      const message = JSON.parse(event.nativeEvent.data) as CaptureMessage;
-      if (message.protocolVersion !== 1 || !message.type?.startsWith('capture.')) return;
+      const message = parseCaptureMessage(event.nativeEvent.data);
+      if (!message) return;
       if (message.type === 'capture.ready') configure();
       onMessage(message);
     } catch { /* Ignore messages outside the capture protocol. */ }
