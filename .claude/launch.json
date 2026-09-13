@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "web", "-w", "@vyra/mobile", "--", "--port", "8082"],
       "port": 8082,
       "autoPort": false
+    },
+    {
+      "name": "vyra-capture",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "@vyra/capture", "--", "--port", "5178"],
+      "port": 5178,
+      "autoPort": false
     }
   ]
 }

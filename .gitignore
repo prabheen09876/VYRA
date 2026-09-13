@@ -36,3 +36,10 @@ apps/capture/.native-game/
 # a 160MB polars runtime and a 462MB zip of itself.
 Prototype/
 Prototype.zip
+
+# Local runtime and cache files from the supplied resource folders.
+resources/**/rag-env/
+resources/**/__MACOSX/
+resources/**/chroma_db/
+resources/**/.DS_Store
+*.crdownload

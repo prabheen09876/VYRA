@@ -1,0 +1,68 @@
+================================================================================
+VYRA AI — REAL-WORLD FITNESS × GAMING PLATFORM
+"Your body is the controller. AI is the Game Master."
+================================================================================
+
+1. PIPELINE
+Camera
+  -> ImageBitmap (main thread, ~0.6ms)
+  -> JPEG encode in a Web Worker (off the main thread)
+  -> binary WebSocket
+  -> YOLO26 Pose, ONNX Runtime, imgsz=384
+  -> confidence tiers + orientation (SIDE / FRONT / PARTIAL / NONE)
+  -> One Euro adaptive smoothing
+  -> reversal-driven rep detector (push-up OR squat, never both)
+  -> 51-float pose packet back to the browser
+  -> body-relative 3D joints (torso-normalised, mirroring-safe)
+  -> universal segment table
+  -> per-character rig, rest-relative solve
+  -> requestAnimationFrame render
+
+2. ARCHITECTURE NOTES
+- Detection and rendering are decoupled. Inference results are parked in a
+  pose target; the render loop eases the skeleton toward it at display rate.
+  The character follows continuous movement and never waits on a rep.
+- The server keeps only the NEWEST frame; stale frames are dropped, so latency
+  cannot grow without bound.
+- Rep phase is driven by direction reversal, not by dwell time past a
+  threshold, which is why it behaves the same at any rep speed.
+- Motion is expressed once in universal segments; characters only supply a
+  bone map. Adding a rig is a mapping change, not a code change.
+- Mirroring is presentation-only. Pose data always comes from the raw sensor
+  frame and YOLO labels keypoints anatomically, so joint angles, exercise
+  phase and rep counts are identical flipped or not.
+- The camera feed the user sees is clean. Landmarks are drawn only when the
+  DEV HUD is on.
+
+3. LAYOUT
+  model/Push-ups.py             Protected reference (form scoring authority)
+  vyra_cv/pose_engine.py        Inference, smoothing, angle extraction, telemetry
+  vyra_cv/rep_detector.py       Temporal push-up / squat rep detection
+  vyra_cv/pose_validation.py    Orientation, confidence tiers, framing
+  vyra_cv/pose_filters.py       One Euro adaptive filter
+  vyra_cv/server.py             FastAPI + WebSocket bridge
+  .../three-model/main.html     Frontend entry point
+  .../src/main.js               App, render loop, HUD, popup
+  .../src/character/            Universal skeleton abstraction
+  .../src/pose/                 Detector, camera transform, conversion, retarget
+  .../src/pose/frameEncoder.worker.js  Off-thread JPEG encode
+  .../src/utils/                Bone discovery and vector bone solver
+
+4. HOW TO RUN
+  Backend:   python vyra_cv/server.py            -> http://127.0.0.1:8000
+  Frontend:  cd fig/Prototype/Prototype/three-model && npm run dev
+             -> http://localhost:5173/main.html
+
+5. TESTS
+  python vyra_cv/test_cv_engine.py                55/55 checks
+  node scripts/test_pipeline.mjs                  38/38 checks
+  npm run lint && npm run build                   clean
+
+6. CHARACTERS
+  Selectable (rigged, all follow identically):
+    Base_Male (66 bones), luffy (452), luffy1 (138), Female_Nami (29)
+  Excluded: Base_Female, goku, Female_Sakura, Female_Mikasa
+    These GLBs contain zero bones and zero skin weights - static meshes that
+    no retargeting layer can pose. Replace with rigged assets and add them
+    back to CHARACTER_CATALOG in src/main.js.
+================================================================================

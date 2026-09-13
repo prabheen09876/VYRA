@@ -1,0 +1,225 @@
+================================================================================
+                       VYRA AI FITNESS × GAMING PLATFORM
+                   OPTIMISATION & ACCURACY PASS - FINDINGS
+================================================================================
+
+Everything below was measured, not assumed. Where a number is environment-
+dependent it says so.
+
+================================================================================
+1. PROFILE FIRST
+================================================================================
+Backend stage profile (480x270 input, per frame):
+
+    jpeg decode            0.42 ms
+    YOLO inference        24.47 ms      <- 97% of the total
+    One Euro smoothing     0.11 ms
+    validation             0.15 ms
+    angle extraction       0.04 ms
+    -------------------------------
+    process_frame         25.10 ms
+
+Inference is effectively the entire backend. Micro-optimising the rest would
+have bought nothing, so the work went into inference and into the frontend.
+
+Frontend per-frame cost, measured in-browser:
+
+    drawImage              0.5 ms
+    createImageBitmap      0.6 ms
+    canvas.toBlob (JPEG)  42.8 ms      <- larger than the whole backend
+    bone solve, 10 seg    <0.05 ms
+    three.js render        0.7 ms
+
+The real frontend bottleneck was JPEG encoding on the main thread, where it
+competed directly with the render loop.
+
+================================================================================
+2. WHAT WAS CHANGED, AND WHY
+================================================================================
+
+Inference resolution
+  Swept capture width against inference resolution, scored against a 640px
+  native reference:
+
+    imgsz  latency  detection rate  median keypoint error
+     448   35.9 ms       100%             18.2 px
+     384   29.5 ms        94%             20.7 px
+     320   21.4 ms        94%             27.4 px
+
+  Capture width barely moved the error; inference resolution dominated it.
+  Settled on imgsz=384 and matched the upload width to it - sending more
+  pixels than the model consumes was pure waste.
+
+ONNX thread pool
+  ONNX Runtime defaults to the physical core count. Measured at 384px:
+  2 threads 26.7 ms, 4 threads 23.0 ms, 6 threads 19.0 ms, 8 threads 20.3 ms.
+  Pinned to (logical cores - 2), leaving headroom for the event loop and JPEG
+  decode. Fails soft: if the ultralytics internals move, the original session
+  keeps working.
+
+  Backend result: 25.10 ms -> 20.43 ms per frame (40 -> 49 FPS).
+
+Off-thread JPEG encode
+  The main thread now only calls createImageBitmap (~0.6 ms, transferable with
+  no copy) and hands the bitmap to a worker that owns an OffscreenCanvas.
+
+  Main-thread cost per frame: 19.3 ms -> 0.7 ms (p95 28.5 -> 1.0 ms).
+
+  Note: 42.8 ms for toBlob is inflated by this headless, software-rendered
+  test browser. Real hardware encodes far faster. The architectural point
+  stands either way - encoding does not belong on the thread that renders.
+
+================================================================================
+3. FAST-MOTION REP DETECTION
+================================================================================
+Measured failure of the previous threshold-and-confirm logic at 30 FPS:
+
+    2.00 s/rep -> 6 of 6      0.45 s/rep -> 0 of 6
+    1.00 s/rep -> 5 of 6      0.35 s/rep -> 0 of 6
+    0.60 s/rep -> 5 of 6
+
+The cause was not threshold sensitivity. The smoothing EMA is a low-pass
+filter, so faster reps lose amplitude: at 0.45 s/rep the smoothed elbow angle
+bottomed out at 87 deg instead of 72, and the top was pulled below the 155 deg
+extension gate. The rep happened; the filtered signal never reached either gate.
+
+Two changes, neither of which is "lower the threshold":
+
+  1. Phase is driven by direction reversal. A reversal is declared once the
+     angle retreats REVERSAL_DELTA (10 deg) from the running extreme. That is
+     an amplitude test, so it behaves identically at any frame rate or speed,
+     and fires on the first sample after the turn rather than after N
+     confirmations.
+
+  2. Rep extrema are measured on the RAW angle. Smoothing still decides
+     direction, but depth and extension are judged on unfiltered samples, so
+     fast reps keep their true amplitude.
+
+Result - push-ups, 6 of 6 counted at every speed tested:
+
+    speed        20 FPS  30 FPS  50 FPS
+    2.00 s/rep     6       6       6
+    1.00 s/rep     6       6       6
+    0.60 s/rep     6       6       6
+    0.45 s/rep     6       6       6
+    0.35 s/rep     6       6       6
+    0.25 s/rep     6       6       6
+
+And still rejects what it should:
+    half-depth reps     0 counted, 10 flagged as no-reps
+    jitter at the top   0 counted
+    sagging body        0 counted
+    shallow squats      0 counted, 10 flagged
+
+Squats use the same machine on knee angle: 6 of 6 from 2.0 s down to 0.4 s.
+
+Exercise modes are separate detector instances selected by exerciseMode. Test
+9 in the Python suite drives one and asserts the other's counter never moves.
+
+================================================================================
+4. UNIVERSAL RETARGETING
+================================================================================
+Motion is expressed once as universal segments (SPINE, NECK, UPPER_ARM_L/R,
+FOREARM_L/R, THIGH_L/R, SHIN_L/R). Each character supplies a bone map; the
+solver is rest-relative, so it measures each segment's own rest direction on
+load and rotates relative to that. That is why rigs as different as Mixamo
+(66 bones), a 452-bone anime rig and a 29-bone rig need no hand-authored
+rotation offsets.
+
+Verified: all four rigged characters bind 10/10 segments, every segment is
+driven by the pose, and the forearm sweep spread across all four rigs is
+0.00 deg from identical input - the motion layer is genuinely character-
+independent.
+
+A measurement trap worth recording: a first pass appeared to show Luffy's
+thighs static. They were not. SPINE solves first and rotates the whole lower
+body, so a child's LOCAL quaternion barely changes even as the limb clearly
+moves in world space. The tests now measure world-space segment directions.
+
+================================================================================
+5. CAMERA ORIENTATION
+================================================================================
+Mirroring now has exactly one owner (src/pose/CameraTransform.js) and is
+presentation-only:
+
+  - drawImage ignores CSS transforms, so the frame sent for inference is always
+    the raw sensor image.
+  - YOLO labels keypoints anatomically, so `left_shoulder` is the person's own
+    left however the image is flipped.
+  - Nothing downstream flips coordinates.
+
+Verified: joint angle identical mirrored (79.70 vs 79.70 deg), orientation
+class and animatability survive mirroring, elbow angle unchanged by flip
+(114.78 vs 114.78 deg), anatomical left/right stay on the correct character
+side, and rep count is identical mirrored vs unmirrored (6 vs 6).
+
+================================================================================
+6. CLEAN CAMERA FEED
+================================================================================
+No landmark dots, skeleton lines or boxes are drawn on the user's camera.
+Detection is unaffected - only the drawing is suppressed. The DEV HUD button
+toggles DEBUG_TRACKING, which re-enables the overlay plus FPS, latency, angles
+and confidence. Default is off.
+
+================================================================================
+7. MEASURED RESULTS
+================================================================================
+Backend, isolated:
+    process_frame            20.43 ms median  (49 FPS capability)
+    server inference         24.9 ms median, 28.2 ms p95
+    round trip send->reply   26.5 ms median   (network + queue = ~1.6 ms)
+    upstream                 ~10 KB/frame
+    downstream               1221 B/frame  (36 KB/s at 30 FPS)
+
+Frontend, in-browser:
+    capture + encode (main)   0.7 ms median, 1.0 ms p95
+    bone solve, 10 segments  <0.05 ms
+    three.js render           0.7 ms
+
+Caveat: when the dev server, headless browser and video decode all share this
+8-core machine, measured inference rises to ~70 ms. The 24.9 ms figure is the
+clean one; the contended figure is an artefact of testing everything on one box.
+
+Render work reduced structurally, with no change to geometry or textures:
+pixel ratio capped at 1.5, render-on-demand when idle, per-segment deadband so
+unchanged bones are not re-solved, skinned meshes exempt from frustum culling
+(their rest-pose bounds would clip limbs mid-rep), and full GPU disposal on
+character swap - previously every swap leaked a model.
+
+================================================================================
+8. TEST COVERAGE
+================================================================================
+python vyra_cv/test_cv_engine.py    55/55
+  model load, angle geometry, mirroring invariance, push-up counting at 5
+  speeds x 3 frame rates, half-depth/jitter/sagging rejection, squat counting
+  at 4 speeds, shallow rejection, exercise-mode isolation, effort model,
+  orientation classification, rep count across camera flip, live inference.
+
+node scripts/test_pipeline.mjs      38/38
+  coordinate conversion, scale invariance, character tracks user, left/right
+  mapping, detection-loss recovery, jitter stability, multi-character rigs,
+  full-body segment coverage, cross-rig motion equality, squat leg drive,
+  camera mirroring.
+
+Live browser run with the test clip injected as a synthetic webcam exercises
+the real path end to end: capture, worker encode, WebSocket, YOLO, convert,
+retarget, render.
+
+================================================================================
+9. KNOWN LIMITS
+================================================================================
+- Four supplied characters (Base_Female, goku, Female_Sakura, Female_Mikasa)
+  have no skeleton in the GLB and cannot be posed. They are excluded from the
+  catalog rather than shipped as characters that silently refuse to move.
+- COCO-17 has no hand or toe landmarks, so hands and feet inherit their parent
+  bone rather than being driven. Head, neck, spine, arms and legs are driven.
+- Depth is synthesised, not measured. Movement toward or away from the camera
+  is not reproduced on the character.
+- Inference is CPU-only here (torch reports CUDA unavailable). A CUDA or
+  DirectML execution provider would add significant headroom.
+- Rep and gamification state is global to the server process, so it assumes a
+  single trainee; a new connection resets the session.
+- requestAnimationFrame is throttled in a hidden tab, so the browser
+  measurements above were taken by driving the loops on a timer. Real
+  foreground rAF scheduling was not measurable in this headless environment.
+================================================================================
