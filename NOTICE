@@ -1,0 +1,126 @@
+VYRA — Third-Party Notices
+==========================
+
+This file lists third-party material redistributed as part of this repository, together with the
+credit its licence requires. It covers the redistributed *files*; the matching in-app credit shown
+to people who see the work is rendered by apps/mobile/src/components/ModelCredit.tsx, and the
+machine-readable source of truth for both is apps/mobile/src/lib/attribution.ts. Update all three
+together.
+
+Every runtime character in apps/mobile/assets/characters/ is a *derivative* of a third-party model:
+the five evolution stages in each family are localized physique deformations of a supplied source
+mesh, not original artwork. A derivative carries the original licence, so each family below owes its
+author credit. The per-family modification notice lives in that directory's SOURCE.md, and each
+output GLB keeps the author/source/licence fields embedded in its own glTF `asset.extras` metadata —
+do not strip that metadata when processing or re-exporting an asset.
+
+
+3D Models
+---------
+
+### Goku 3D Character Model
+
+    Files:      apps/mobile/assets/characters/goku/{starter,developing,strong,elite,legendary}.glb
+                apps/mobile/assets/heroes/goku.glb
+    Model name: Goku 3D Character Model
+    Creator:    3D MORE
+    Profile:    https://sketchfab.com/abdulrehmansoomro648
+    Source:     https://sketchfab.com/3d-models/gokucharacter3dmodel-5c47727ff7aa4b0ab8e416fa6468bfd1
+    License:    Creative Commons Attribution 4.0 International (CC BY 4.0)
+    License URL: https://creativecommons.org/licenses/by/4.0/
+
+apps/mobile/assets/heroes/goku.glb is the unmodified original. The five files under
+assets/characters/goku/ are derivatives: attribute-aware mesh simplification, localized anatomical
+surface deformation and corresponding normal updates. Texture bytes, material, UVs on retained
+vertices and the character design are unchanged. See assets/characters/goku/SOURCE.md.
+
+Note on the depicted character: CC BY 4.0 covers this particular 3D artwork as authored by 3D MORE.
+It does not grant any right in the underlying character, name or franchise, which remain the
+property of their respective owners. Attribution satisfies the licence; it does not by itself make
+commercial or promotional use of the depicted character permissible. The same caveat applies to
+every other depicted character listed below.
+
+### Basic Human Male
+
+    Files:      apps/mobile/assets/characters/base-male/{starter,developing,strong,elite,legendary}.glb
+    Model name: Basic Human Male
+    Creator:    DNC44
+    Profile:    https://sketchfab.com/DNC44
+    Source:     https://sketchfab.com/3d-models/basic-human-male-598d1d1866df48f999fabadb017429d1
+    License:    Creative Commons Attribution 4.0 International (CC BY 4.0)
+    License URL: https://creativecommons.org/licenses/by/4.0/
+
+Derivatives modify body geometry and normals; the 66-joint skin, weights, inverse bind matrices,
+UVs, material and scene transforms are retained. See assets/characters/base-male/SOURCE.md.
+
+### Low Poly Female Base Character
+
+    Files:      apps/mobile/assets/characters/base-female/{starter,developing,strong,elite,legendary}.glb
+    Model name: Low Poly Female Base Character
+    Creator:    b000f
+    Profile:    https://sketchfab.com/big000f
+    Source:     https://sketchfab.com/3d-models/low-poly-female-base-character-b71e4d0c82e847508648715cc8081e40
+    License:    Creative Commons Attribution 4.0 International (CC BY 4.0)
+    License URL: https://creativecommons.org/licenses/by/4.0/
+
+Derivatives subdivide the surface and modify body geometry and normals; material, UV mapping, scene
+transforms and pose are retained. See assets/characters/base-female/SOURCE.md.
+
+### Bloodstrike Mikasa
+
+    Files:      apps/mobile/assets/characters/mikasa/{starter,developing,strong,elite,legendary}.glb
+    Model name: Bloodstrike Mikasa
+    Creator:    Adkloss
+    Profile:    https://sketchfab.com/AdklossD
+    Source:     https://sketchfab.com/3d-models/bloodstrike-mikasa-fcb54ed1b3db43d7a0c6b70ae48ef11d
+    License:    Creative Commons Attribution 4.0 International (CC BY 4.0)
+    License URL: https://creativecommons.org/licenses/by/4.0/
+
+Derivatives reshape the clothed body surface. Topology, UVs, materials, the three embedded images,
+scene transforms, face and hair are retained. See assets/characters/mikasa/SOURCE.md.
+
+### Nami Animated
+
+    Files:      apps/mobile/assets/characters/nami/{starter,developing,strong,elite,legendary}.glb
+    Model name: Nami Animated
+    Creator:    XenonRig
+    Profile:    https://sketchfab.com/7minustesbros
+    Source:     https://sketchfab.com/3d-models/nami-animated-8690d04ac76d465e8fe482ef43199b95
+    License:    Creative Commons Attribution 4.0 International (CC BY 4.0)
+    License URL: https://creativecommons.org/licenses/by/4.0/
+
+Derivatives change only the body mesh's position and normal streams, plus a metadata repair to two
+animation buffer views. The 29-joint skin, all 14 animation clips, topology, UVs and textures are
+byte-identical to the source. See assets/characters/nami/SOURCE.md.
+
+### Sakura
+
+    Files:      apps/mobile/assets/characters/sakura/{starter,developing,strong,elite,legendary}.glb
+    Model name: Sakura
+    Creator:    danigamer495channel
+    Profile:    https://sketchfab.com/danigamer495channel
+    Source:     https://sketchfab.com/3d-models/sakura-6409fbcec6864a72b1011856a068fd52
+    License:    Creative Commons Attribution 4.0 International (CC BY 4.0)
+    License URL: https://creativecommons.org/licenses/by/4.0/
+
+Derivatives remove duplicate coincident character copies, migrate the deprecated specular-glossiness
+materials to metallic/roughness PBR, subdivide locally and deform the physique. Diffuse texture
+images and factors are retained exactly. See assets/characters/sakura/SOURCE.md.
+
+
+Portrait card art
+-----------------
+
+The `card.png` beside each family's GLBs is a Blender render of that family's Starter model, cropped
+by scripts/character-assets.mjs. A render of a CC BY 4.0 model is itself a derivative of that model,
+so each card carries the credit listed for its family above.
+
+
+Original VYRA assets
+--------------------
+
+The five evolution-stage character models (`starter.glb`, `developing.glb`, `strong.glb`,
+`elite.glb`, `legendary.glb` in apps/mobile/assets/heroes/) are original VYRA procedural artwork
+generated by scripts/generate-heroes.mjs. Their provenance is recorded per-asset in
+apps/mobile/assets/heroes/manifest.json. They predate the assets/characters/ pipeline and are no
+longer what the app loads at runtime; they need no third-party credit.

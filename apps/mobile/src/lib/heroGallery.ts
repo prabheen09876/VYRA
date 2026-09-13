@@ -1,6 +1,7 @@
 import type { HeroFlare, HeroFraming } from '../components/HeroView.shared';
 import { CHARACTERS, type CharacterId } from '@vyra/core';
 import { CHARACTER_ART, CHARACTER_ASSETS, CHARACTER_PRESENTATIONS } from './characterAssets';
+import { CHARACTER_ATTRIBUTIONS, type ModelAttribution } from './attribution';
 
 // Browsing here previews the same character families used by saved fitness progression.
 // Run scripts/character-assets.mjs to reproduce their runtime assets and portrait cards.
@@ -76,6 +77,14 @@ export interface GalleryCharacter {
   available: boolean;
   /** Blurb shown beside the character on the hero stage. */
   blurb?: string;
+  /** Who made the model, or `null` for original VYRA artwork that needs no third-party credit.
+   *
+   *  Required rather than optional on purpose: a licence like CC BY 4.0 is only satisfied while the
+   *  credit is actually shown, so adding a model must force a deliberate answer about its
+   *  provenance. Omitting the field fails `npm run typecheck` instead of silently shipping an
+   *  uncredited asset. When non-null it is rendered automatically by the hero stage — see
+   *  components/ModelCredit.tsx — and must also be listed in the NOTICE file at the repo root. */
+  attribution: ModelAttribution | null;
   /** Per-model overrides, merged over HERO_PRESENTATION. Most models need none. */
   presentation?: Partial<HeroPresentation>;
   /**
@@ -114,6 +123,10 @@ export const HERO_GALLERY: GalleryCharacter[] = CHARACTERS.map(character => ({
   accent: CHARACTER_PRESENTATIONS[character.id].accent,
   badge: '🔥',
   blurb: character.description,
+  // Every family is a derivative of a third-party CC BY 4.0 model, so all six owe credit — the
+  // Record type in attribution.ts is what makes a missing one a typecheck failure rather than an
+  // uncredited model on the hero stage.
+  attribution: CHARACTER_ATTRIBUTIONS[character.id],
   presentation: { yaw: CHARACTER_PRESENTATIONS[character.id].galleryYaw },
 }));
 

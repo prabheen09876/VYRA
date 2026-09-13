@@ -6,14 +6,15 @@ import { Button, Copy, Heading, Notice, Pill, Screen, layout } from '../src/comp
 import TestModeBadge from '../src/components/TestModeBadge';
 import { useApp } from '../src/state/AppProvider';
 import { errorMessage } from '../src/lib/api';
-import { isMatchmakingCancelled } from '../src/lib/matchmaking-client';
+import { isMatchmakingCancellation } from '../src/lib/matchmaking-session';
+import { ROOM_CODE_LENGTH, normalizeRoomCode } from '../src/lib/room-code';
 import { colors, displayWeight, fonts, radii } from '../src/theme';
 
 export default function ArenaScreen() {
   const params = useLocalSearchParams<{ mode?: string; room?: string }>();
   const { profile, calibrated, createMatch, joinMatch, matchmakingStatus, enterMatchmaking, cancelMatchmaking } = useApp();
   const [mode, setMode] = useState<MatchMode>(params.mode === 'pvp' ? 'pvp' : 'solo');
-  const [room, setRoom] = useState(params.room || '');
+  const [room, setRoom] = useState(() => normalizeRoomCode(params.room || ''));
   const [pending, setPending] = useState<'create' | 'join' | 'random' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const activeAttempt = useRef(0);
@@ -37,6 +38,8 @@ export default function ArenaScreen() {
       cancelMatchmaking();
     };
   }, [cancelMatchmaking]));
+  // Bumps the attempt id before clearing anything, so the search this ends can no longer write its
+  // own outcome back — which is what makes clearing `pending` here safe rather than a second writer.
   const cancelSearch = () => {
     activeAttempt.current += 1;
     cancelMatchmaking();
@@ -44,14 +47,19 @@ export default function ArenaScreen() {
     setError(null);
   };
   const begin = async (joining = false) => {
-    if (pending || searching) return;
+    if (pending && pending !== 'random') return;
     if (!profile) { router.push('/profile'); return; }
     if (!profile.fitness) { router.push('/onboarding'); return; }
     if (!joining && mode === 'solo' && !calibrated) {
       router.push({ pathname: '/calibrate', params: { next: 'arena', mode, room: joining ? room : '' } });
       return;
     }
+    // Naming an opponent supersedes looking for any opponent. A queue search can stay open
+    // indefinitely — that is what waiting *is* — so gating this screen's other actions behind it
+    // left a player who had a room code staring at a greyed-out Join button with no hint why.
+    // Claim the attempt id first so the abandoned search cannot clear the spinner this one owns.
     const attempt = ++activeAttempt.current;
+    cancelMatchmaking();
     setPending(joining ? 'join' : 'create'); setError(null);
     try {
       await (joining ? joinMatch(room) : createMatch(mode));
@@ -67,15 +75,15 @@ export default function ArenaScreen() {
     if (!profile) { router.push('/profile'); return; }
     if (!profile.fitness) { router.push('/onboarding'); return; }
     const attempt = ++activeAttempt.current;
+    const mine = () => focused.current && attempt === activeAttempt.current;
     setPending('random'); setError(null);
     try {
       await enterMatchmaking();
-      if (focused.current && attempt === activeAttempt.current) router.push('/lobby');
+      if (mine()) router.push('/lobby');
     } catch (failure) {
-      if (focused.current && attempt === activeAttempt.current && !isMatchmakingCancelled(failure)) setError(errorMessage(failure));
-    } finally {
-      if (focused.current && attempt === activeAttempt.current) setPending(null);
-    }
+      // A cancel is the player's own doing — it settles the search, but it is not an error.
+      if (mine() && !isMatchmakingCancellation(failure)) setError(errorMessage(failure));
+    } finally { if (mine()) setPending(null); }
   };
   return <Screen>
     <TestModeBadge />
