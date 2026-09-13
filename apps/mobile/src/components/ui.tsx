@@ -68,14 +68,18 @@ function FadeIn({ children, skip }: React.PropsWithChildren<{ skip?: boolean }>)
   </Animated.View>;
 }
 
-export function Screen({ children, noNav = false, back, style, backdrop }: React.PropsWithChildren<{
-  noNav?: boolean; back?: () => void; style?: StyleProp<ViewStyle>; backdrop?: React.ReactNode;
+export function Screen({ children, noNav = false, back, style, backdrop, hideHeaderOnMobile = false }: React.PropsWithChildren<{
+  noNav?: boolean; back?: () => void; style?: StyleProp<ViewStyle>; backdrop?: React.ReactNode; hideHeaderOnMobile?: boolean;
 }>) {
   const pathname = usePathname();
   const params = useLocalSearchParams<{ mode?: string }>();
   const { width } = useWindowDimensions();
   const { profile, session } = useApp();
   const wide = width >= 850;
+  // The home screen leads with the character on phones, so its top chrome is dropped there — only on
+  // mobile (the bottom-nav layout still provides Profile), and never on desktop, where the header
+  // also carries the primary nav. Every other screen keeps the header (and its back button).
+  const headerHidden = hideHeaderOnMobile && !wide;
   const nav = [
     { path: '/', title: 'My hero' },
     { path: '/arena', title: 'Multiplayer' },
@@ -95,7 +99,7 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
         very low alpha — the `hazeSoft` hue, thinned further because this sits directly under the
         header rule and anything stronger reads as a tint on the chrome rather than as depth. */}
     {backdrop ?? <LinearGradient pointerEvents="none" colors={['rgba(61,123,255,0.06)', 'transparent']} style={styles.atmosphere} />}
-    <View style={styles.header}>
+    {!headerHidden && <View style={styles.header}>
       <View style={styles.headerInner}>
         <Pressable accessibilityRole="button" accessibilityLabel={back ? 'Go back' : 'VYRA home'} onPress={back || (() => { if (pathname !== '/') router.push('/'); })} style={styles.brandHit}>
           {back ? <Text style={styles.back}>‹</Text> : <BrandLogo />}
@@ -115,7 +119,7 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
           </Pressable>
         </View>
       </View>
-    </View>
+    </View>}
     <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, !wide && !noNav && { paddingBottom: 112 }, style]} keyboardShouldPersistTaps="handled">
       <FadeIn key={pathname} skip={session.reducedMotion}>{children}</FadeIn>
     </ScrollView>

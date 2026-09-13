@@ -227,11 +227,14 @@ export default function HomeScreen() {
     </ScrollView>
   </View>;
 
-  return <Screen backdrop={<SpaceBackdrop />}>
+  return <Screen backdrop={<SpaceBackdrop />} hideHeaderOnMobile>
     {connectionError && <Notice title="Your profile is offline" action={() => refreshProfile().catch(() => undefined)}>{connectionError}</Notice>}
     {selectionError && <View accessibilityLiveRegion="polite"><Notice title="Could not save your character">{selectionError} Your previous character is still selected. Choose a card to try again.</Notice></View>}
     {selecting && <Text accessibilityLiveRegion="polite" style={styles.next}>Saving your character…</Text>}
-    <View style={[styles.heroSection, cinematic && [styles.heroWide, { height: heroH }]]}>
+    {/* On phones the character leads and the copy follows it (column-reverse of intro→stage). The
+        cinematic two-column row and the ≥850 desktop stack are never given this, so they are
+        unchanged. `!wide` (not `!cinematic`) so the 850–977 desktop-nav band keeps copy-first too. */}
+    <View style={[styles.heroSection, cinematic && [styles.heroWide, { height: heroH }], !wide && styles.heroStacked]}>
       <Animated.View style={[styles.intro, cinematic && { flex: COPY_FLEX, minWidth: 0 }, {
         opacity: introMotion, transform: [{ translateY: introMotion.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }],
       }]}>
@@ -303,6 +306,9 @@ export default function HomeScreen() {
 }
 const styles = StyleSheet.create({
   heroSection: { gap: 40 },
+  // Phones only: character (heroStage) on top, copy (intro) beneath. column-reverse keeps each
+  // block's internal order and only swaps the two, so the intro's own children stay in sequence.
+  heroStacked: { flexDirection: 'column-reverse' },
   heroWide: { flexDirection: 'row', alignItems: 'stretch', gap: HERO_GAP },
   // 20, not 26: the rail is 135px taller than the chip row it replaced, and this gap plus the
   // rail's own paddingBottom are where that height is bought back out of the fold budget.
