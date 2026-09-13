@@ -30,7 +30,7 @@
   --track: #3D7BFF;     /* pose visible   — colors.spark, 5.26:1 */
   --alert: #FF5A5F;     /* pose lost / errors / recording — colors.danger, 6.61:1 */
   --accent: #5EEAD4;    /* rep count, provenance caveat — colors.accent, 13.63:1 */
-  --brand: #2DD4BF;     /* wordmark, links, focus ring — colors.brand, 10.83:1 */
+  --brand: #2DD4BF;     /* links, focus ring — colors.brand, 10.83:1 */
   --line: rgba(180,200,228,.11);        /* decorative rules only — 1.18:1 over the ground */
   --line-strong: rgba(190,208,232,.24); /* decorative panel edges — 1.69:1 over the ground, so it
                                            must never be the only thing marking out a control */
@@ -90,7 +90,8 @@ select, input { background: #10141A; border: 1px solid var(--line-control); colo
 /* Oswald tops out at wght 700 and theme.ts pins its heavy step to 600 — the whole point of moving
    off the system stack was that the display face read as too heavy. Matching `displayWeight.heavy`
    here keeps the wordmark the same weight as the one in ui.tsx. */
-.brand { font-family: var(--font-display); font-weight: 600; font-size: 25px; letter-spacing: -.04em; color: var(--brand); }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: 25px; letter-spacing: -.04em; color: var(--text); }
+.brand-logo { display: block; width: 38px; height: 38px; object-fit: contain; flex-shrink: 0; }
 h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 4vw, 42px); letter-spacing: -.02em; line-height: 1.08; margin: 0 0 10px; }
 .intro { max-width: 670px; color: var(--muted); line-height: 1.55; margin: 0 0 22px; }
 /* Provenance caveat ("geometric baseline, no team model loaded"), not an error. --accent for the
@@ -106,11 +107,16 @@ h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 
 .camera { position: relative; aspect-ratio: 4/3; overflow: hidden; background: #10141A; border: 1px solid var(--line-strong); border-radius: 16px; }
 .camera video, .camera canvas { position: absolute; inset: 0; height: 100%; width: 100%; object-fit: contain; transform: scaleX(-1); }
 .camera canvas { pointer-events: none; }
+.camera canvas[hidden] { display: none; }
+.camera.unmirrored video, .camera.unmirrored canvas { transform: none; }
+.camera-tools { position: absolute; top: 58px; right: 12px; display: flex; gap: 8px; z-index: 1; }
+.camera-tools[hidden] { display: none; }
+.camera-tools button { min-height: 36px; padding: 7px 10px; font-size: 11px; background: #171C24ee; }
 .camera::after { content: ''; pointer-events: none; position: absolute; inset: 0; border: 1px solid rgba(200,214,236,.07); border-radius: 16px; }
 .camera-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; gap: 16px; }
 /* Neutral, not tinted. Nocturne painted this glyph colors.violet, which sat inside that palette's
    purple family; under Halo violet is an outlier and an 80px saturated shape is the largest single
-   splash of colour on the page. The mint is spent on the wordmark and links instead. main.ts
+   splash of colour on the page. The mint is spent on links and controls instead. main.ts
    renders this svg aria-hidden and the placeholder also carries a <p> and the Enable-camera button,
    so 1.4.11 does not bind to the glyph; it is 8.44:1 on the #10141A .camera fill regardless. */
 .camera-placeholder svg { width: 80px; height: 80px; color: var(--muted); }

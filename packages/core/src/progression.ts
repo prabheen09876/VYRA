@@ -77,10 +77,25 @@ export function applyReward(state: ProgressionState, input: RewardInput): { stat
   return { state: next, receipt: { id: `${input.matchId}:${p.id}`, qualified, xp: matchXp + streakXp + goalXp,
     matchXp, streakXp, goalXp, stageBefore: before, stageAfter: p.stage, unlocked, dailyLimitReached: capped } };
 }
+export function isCosmeticSlot(value: unknown): value is CosmeticSlot {
+  return value === 'outfit' || value === 'skin' || value === 'accessory' || value === 'pose' || value === 'aura';
+}
 export function equipCosmetic(state: ProgressionState, slot: CosmeticSlot, itemId: string): ProgressionState {
+  if (!isCosmeticSlot(slot)) throw new Error('Choose a valid cosmetic slot.');
   const item = COSMETICS.find(c => c.id === itemId && c.slot === slot);
   if (!item || !state.profile.ownedCosmetics.includes(itemId)) throw new Error('This cosmetic has not been unlocked for that slot.');
   const next = structuredClone(state); next.profile.equipped[slot] = itemId; return next;
+}
+export function unequipCosmetic(state: ProgressionState, slot: CosmeticSlot): ProgressionState {
+  if (!isCosmeticSlot(slot)) throw new Error('Choose a valid cosmetic slot.');
+  const next = structuredClone(state);
+  delete next.profile.equipped[slot];
+  return next;
+}
+export function resetEquipment(state: ProgressionState): ProgressionState {
+  const next = structuredClone(state);
+  next.profile.equipped = { outfit: 'origin-suit' };
+  return next;
 }
 
 function validateCheckInTime(now: number): void {

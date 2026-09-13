@@ -3,11 +3,18 @@ import type { CaptureControl, CaptureMessage } from '@vyra/core';
 declare global { interface Window { ReactNativeWebView?: { postMessage(message: string): void } } }
 export function parseCaptureControl(value: unknown): CaptureControl | null {
   try {
+    if (typeof value === 'string' && value.length > 2000) return null;
     const input = typeof value === 'string' ? JSON.parse(value) as unknown : value;
     if (!input || typeof input !== 'object') return null;
     const control = input as Record<string, unknown>;
     if (control.type !== 'capture.configure' || ![null, 'squat', 'pushup'].includes(control.exercise as string | null) || typeof control.enabled !== 'boolean' || typeof control.reset !== 'boolean') return null;
-    return { type: 'capture.configure', exercise: control.exercise as CaptureControl['exercise'], enabled: control.enabled, reset: control.reset };
+    if (control.poseStream !== undefined && typeof control.poseStream !== 'boolean') return null;
+    if (control.debugOverlay !== undefined && typeof control.debugOverlay !== 'boolean') return null;
+    return {
+      type: 'capture.configure', exercise: control.exercise as CaptureControl['exercise'], enabled: control.enabled, reset: control.reset,
+      ...(control.poseStream !== undefined ? { poseStream: control.poseStream as boolean } : {}),
+      ...(control.debugOverlay !== undefined ? { debugOverlay: control.debugOverlay as boolean } : {}),
+    };
   } catch { return null; }
 }
 

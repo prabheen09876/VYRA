@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import type { MatchMode } from '@vyra/core';
@@ -20,6 +20,14 @@ export default function ArenaScreen() {
   const focused = useRef(false);
   const { width } = useWindowDimensions();
   const searching = matchmakingStatus === 'searching';
+  useEffect(() => {
+    if (!pending && !searching && (params.mode === 'solo' || params.mode === 'pvp')) setMode(params.mode);
+  }, [params.mode, pending, searching]);
+  const chooseMode = (next: MatchMode) => {
+    if (pending || searching) return;
+    setMode(next); setError(null);
+    router.setParams({ mode: next });
+  };
   useFocusEffect(useCallback(() => {
     focused.current = true;
     setPending(null);
@@ -38,6 +46,7 @@ export default function ArenaScreen() {
   const begin = async (joining = false) => {
     if (pending || searching) return;
     if (!profile) { router.push('/profile'); return; }
+    if (!profile.fitness) { router.push('/onboarding'); return; }
     if (!joining && mode === 'solo' && !calibrated) {
       router.push({ pathname: '/calibrate', params: { next: 'arena', mode, room: joining ? room : '' } });
       return;
@@ -56,6 +65,7 @@ export default function ArenaScreen() {
   const beginRandom = async () => {
     if (pending || searching) return;
     if (!profile) { router.push('/profile'); return; }
+    if (!profile.fitness) { router.push('/onboarding'); return; }
     const attempt = ++activeAttempt.current;
     setPending('random'); setError(null);
     try {
@@ -67,55 +77,53 @@ export default function ArenaScreen() {
       if (focused.current && attempt === activeAttempt.current) setPending(null);
     }
   };
-  return <Screen noNav back={() => router.replace('/')}>
+  return <Screen>
     <TestModeBadge />
-    {/* `ember` reads as heat/effort, which is what this screen is about — and it ties the page
-        label to the head-to-head card below, which carries the same hue. 5.4:1 on the Pill's
-        own glass over the page, so it clears 4.5:1 at the Pill's 11px. */}
-    <View style={layout.section}><Pill color={colors.ember}>The arena</Pill><Heading size={42}>Your effort is{'\n'}your superpower.</Heading><Copy>Three rounds. Squats for guard, push-ups for attack. Move well and go at your own pace.</Copy></View>
+    <View style={layout.section}><Pill color={colors.brand}>The arena</Pill><Heading size={42}>Choose how you play.</Heading><Copy>Train against a bot, find an opponent, or invite a friend. Three rounds of real squats and push-ups.</Copy></View>
     {!profile && <Notice title="Create your player first" action={() => router.push('/profile')} actionLabel="Open profile">Your profile saves the XP and collectibles you earn.</Notice>}
-    <View style={[styles.modes, width >= 750 && { flexDirection: 'row' }]}>
+    {profile && !profile.fitness && <Notice title="Set your goal before you play" tone="info" action={() => router.push('/onboarding')} actionLabel="Set my goal">Choose your character and starting measurements to connect workouts with your progress.</Notice>}
+    <View style={styles.modes}>
       {([
-        // Each mode carries a fixed identity hue (it does not change with selection): orchid `brand`
-        // for the default solo path, red `ember` for the head-to-head one. The hue is carried by the
-        // 49px symbol and the selected border/ring only — both are large text or UI boundary, so 3:1
-        // applies and both clear it (brand 4.59:1, ember 5.06:1 over the SELECTED card fill, which is
-        // glassStrong, not glass). It is deliberately NOT carried by the 11px tag Pill: see below.
-        { id: 'solo', title: 'Solo training', symbol: '◈', detail: 'Face a transparent training bot. Find your rhythm and earn real progress.', color: colors.brand, tag: 'You + training bot' },
-        { id: 'pvp', title: 'Private 1v1', symbol: '◇', detail: 'Create a room and invite one friend. Your cameras count the reps. Your effort decides the round.', color: colors.ember, tag: 'You + a friend' },
-      ] as const).map(item => <Pressable key={item.id} accessibilityRole="radio" accessibilityState={{ checked: mode === item.id }} onPress={() => setMode(item.id)} style={[styles.mode, mode === item.id && { borderColor: item.color, backgroundColor: colors.glassStrong }]}>
-        <View style={layout.split}><Text style={[styles.symbol, { color: item.color }]}>{item.symbol}</Text><View style={[styles.radio, mode === item.id && { borderColor: item.color, borderWidth: 6 }]} /></View>
-        {/* The tag Pill does NOT take `item.color`. Pill paints its own `colors.glass` on top of the
-            card, and when the card is selected that card is already `glassStrong` — two translucent
-            layers, so the real backdrop is rgb(35,25,48), not the bare rgb(15,11,23). `brand` lands
-            at 4.24:1 there and fails 4.5:1 at the Pill's 11px, and solo is selected on first paint.
-            `muted` is 6.25:1 selected / 6.80:1 unselected and keeps the orchid cast. */}
-        <Text style={styles.modeTitle}>{item.title}</Text><Text style={styles.modeCopy}>{item.detail}</Text><Pill color={colors.muted}>{item.tag}</Pill>
+        { id: 'solo', title: 'Solo', symbol: '◈', detail: 'Train against a bot. Build your rhythm and earn progress at your own pace.', compact: 'Practise against a bot.', tag: 'Your own pace' },
+        { id: 'pvp', title: 'Multiplayer', symbol: '◇', detail: 'Find an opponent online or invite a friend. Your real reps decide the round.', compact: 'Find a rival or invite a friend.', tag: 'Online 1v1' },
+      ] as const).map(item => <Pressable key={item.id} accessibilityRole="radio" accessibilityLabel={item.title} accessibilityState={{ checked: mode === item.id, disabled: !!pending || searching }} disabled={!!pending || searching} onPress={() => chooseMode(item.id)} style={[styles.mode, width < 750 && styles.modeCompact, mode === item.id && styles.modeSelected]}>
+        <View style={layout.split}><Text style={[styles.symbol, width < 750 && styles.symbolCompact, { color: mode === item.id ? colors.brand : colors.muted }]}>{item.symbol}</Text><View style={[styles.radio, mode === item.id && styles.radioSelected]} /></View>
+        <Text style={[styles.modeTitle, width < 750 && styles.modeTitleCompact]}>{item.title}</Text><Text style={styles.modeCopy}>{width >= 750 ? item.detail : item.compact}</Text><Pill color={colors.muted}>{item.tag}</Pill>
       </Pressable>)}
     </View>
     {error && <Notice title="Could not enter the arena">{error}</Notice>}
     {searching && <Notice tone="info" title="Searching for an opponent…" action={cancelSearch} actionLabel="Cancel search">We’ll open your room when an opponent is found. You can prepare your camera there before getting ready.</Notice>}
-    <View style={styles.actions}>
-      <Button onPress={() => begin()} loading={pending === 'create'} disabled={!!pending || searching} style={{ flex: 1 }}>{!profile ? 'Create your player' : mode === 'pvp' ? 'Create private room' : !calibrated ? 'Prepare my camera' : 'Start solo training'}</Button>
-      {mode === 'pvp' && !!profile && <Button variant="secondary" onPress={beginRandom} loading={pending === 'random'} disabled={!!pending || searching} style={{ flex: 1 }}>Battle with Randoms</Button>}
+    {mode === 'pvp' && <Copy style={styles.matchmakingHint}>Find your opponent first. You’ll prepare your camera together in the lobby.</Copy>}
+    <View style={[styles.actions, width < 600 && { flexDirection: 'column' }]}>
+      {mode === 'pvp' ? <>
+        <Button onPress={beginRandom} loading={pending === 'random'} disabled={!!pending || searching} style={{ flex: 1 }}>Find an opponent</Button>
+        <Button variant="secondary" onPress={() => begin()} loading={pending === 'create'} disabled={!!pending || searching} style={{ flex: 1 }}>Create private room</Button>
+      </> : <Button onPress={() => begin()} loading={pending === 'create'} disabled={!!pending || searching} style={{ flex: 1 }}>{!profile ? 'Create your player' : !calibrated ? 'Prepare my camera' : 'Start solo training'}</Button>}
     </View>
     <View style={styles.rules}><Text style={styles.ruleText}>Squats add guard</Text><View style={styles.ruleDot} /><Text style={styles.ruleText}>Push-ups deal damage</Text><View style={styles.ruleDot} /><Text style={styles.ruleText}>Stop any time</Text></View>
-    <View style={styles.join}>
+    {!searching && <Button variant="quiet" onPress={() => router.push('/train')} disabled={!!pending}>Practise with a live avatar</Button>}
+    {mode === 'pvp' && <View style={styles.join}>
       <Heading size={25}>Have a room code?</Heading><Copy>Join the private room your friend created.</Copy>
       <View style={[layout.row, { alignItems: 'stretch' }]}><TextInput accessibilityLabel="Private room code" placeholder="ROOM CODE" placeholderTextColor={colors.faint} autoCapitalize="characters" autoCorrect={false} maxLength={12} value={room} onChangeText={setRoom} style={[layout.input, { flex: 1, letterSpacing: 3, fontWeight: '700' }]} /><Button variant="secondary" onPress={() => begin(true)} disabled={!room.trim() || !!pending || searching} loading={pending === 'join'}>Join room</Button></View>
-    </View>
+    </View>}
   </Screen>;
 }
 const styles = StyleSheet.create({
-  modes: { gap: 18, marginBottom: 22 }, actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 8 },
+  modes: { flexDirection: 'row', gap: 14, marginBottom: 22 }, actions: { flexDirection: 'row', gap: 14, marginTop: 8 },
   mode: { flex: 1, borderWidth: 1, borderColor: colors.line, borderRadius: radii.xl, padding: 25, gap: 14, backgroundColor: colors.glass },
+  modeCompact: { padding: 16, gap: 10, borderRadius: radii.lg },
+  modeSelected: { borderColor: colors.brand, backgroundColor: colors.glassStrong },
   symbol: { fontSize: 49, lineHeight: 58 },
+  symbolCompact: { fontSize: 32, lineHeight: 38 },
   // Unchecked, this ring is the ONLY thing that draws the control, so 1.4.11 wants 3:1 against the
   // card behind it. `lineStrong` manages 1.84 there; `lineControl` flattens to 3.28:1 over the
   // card's glass fill. Checked, the ring is overridden inline with the mode's own hue.
   radio: { width: 23, height: 23, borderRadius: 12, borderWidth: 2, borderColor: colors.lineControl },
+  radioSelected: { borderColor: colors.brand, borderWidth: 6 },
   modeTitle: { fontFamily: fonts.display, color: colors.text, fontSize: 29, fontWeight: displayWeight.heavy, letterSpacing: -0.9 },
+  modeTitleCompact: { fontSize: 24 },
   modeCopy: { fontFamily: fonts.body, color: colors.muted, fontSize: 15, lineHeight: 23, minHeight: 46 },
+  matchmakingHint: { marginBottom: 10 },
   rules: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, flexWrap: 'wrap', paddingVertical: 20 },
   ruleText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12 }, ruleDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: colors.muted },
   join: { borderTopWidth: 1, borderTopColor: colors.line, marginTop: 12, paddingTop: 30, gap: 16, maxWidth: 650 },

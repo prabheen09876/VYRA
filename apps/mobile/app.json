@@ -7,6 +7,7 @@
     "orientation": "default",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#05070A",
+    "icon": "./assets/brand/icon.png",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.vyra.fitness",
@@ -16,13 +17,18 @@
     },
     "android": {
       "package": "app.vyra.fitness",
-      "permissions": ["CAMERA"]
+      "permissions": ["CAMERA"],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/adaptive-icon.png",
+        "backgroundColor": "#05070A"
+      }
     },
     "web": {
       "bundler": "metro",
       "output": "single",
       "name": "VYRA",
-      "themeColor": "#05070A"
+      "themeColor": "#05070A",
+      "favicon": "./assets/brand/favicon.png"
     },
     "plugins": [
       "expo-router",

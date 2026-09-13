@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { CaptureControl, CaptureMessage, Exercise } from '@vyra/core';
+import { emptyCapturePose, LIVE_POSE_MAX_AGE_MS, type CaptureCameraState, type CaptureControl, type CaptureMessage, type CapturePoseMessage, type Exercise } from '@vyra/core';
 import CaptureFrame from './CaptureFrame';
+import TrackingFeedback from './TrackingFeedback';
 import { useApp } from '../state/AppProvider';
 import { colors, displayWeight, fonts } from '../theme';
 import { useScreenFocus } from '../lib/useScreenFocus';
@@ -13,17 +14,41 @@ interface Props {
   resetKey: string;
   onRep: (message: Extract<CaptureMessage, { type: 'capture.rep' }>) => void;
   onTracking?: (message: Extract<CaptureMessage, { type: 'capture.tracking' }>) => void;
+  onPose?: (message: CapturePoseMessage) => void;
+  onCameraState?: (state: CaptureCameraState) => void;
+  debugOverlay?: boolean;
 }
 
-export default function CaptureSurface({ exercise, enabled, suspended = false, resetKey, onRep, onTracking }: Props) {
+export default function CaptureSurface({ exercise, enabled, suspended = false, resetKey, onRep, onTracking, onPose, onCameraState, debugOverlay = false }: Props) {
   const { session, announce } = useApp();
   const focused = useScreenFocus();
   const [attempt, setAttempt] = useState(0);
   const [resumeRequired, setResumeRequired] = useState(false);
   const [ready, setReady] = useState<Extract<CaptureMessage, { type: 'capture.ready' }> | null>(null);
   const [tracking, setTracking] = useState<Extract<CaptureMessage, { type: 'capture.tracking' }> | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const lastTrackingAt = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const lastCue = useRef({ text: '', at: 0 });
+  const poseHandler = useRef(onPose);
+  const cameraHandler = useRef(onCameraState);
+  poseHandler.current = onPose;
+  cameraHandler.current = onCameraState;
+  useEffect(() => {
+    setTracking(null);
+    lastTrackingAt.current = 0;
+    poseHandler.current?.(emptyCapturePose());
+    return () => { poseHandler.current?.(emptyCapturePose()); };
+  }, [focused, suspended, resetKey, attempt]);
+  useEffect(() => {
+    if (!focused || suspended || resumeRequired || !ready) return;
+    const timer = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(timer);
+  }, [focused, suspended, resumeRequired, ready]);
+  useEffect(() => {
+    if (!focused || suspended) cameraHandler.current?.('stopped');
+    return () => { cameraHandler.current?.('stopped'); };
+  }, [focused, suspended, attempt]);
   useEffect(() => {
     if (!focused) {
       setResumeRequired(true);
@@ -31,26 +56,34 @@ export default function CaptureSurface({ exercise, enabled, suspended = false, r
       setTracking(null);
     }
   }, [focused]);
-  useEffect(() => {
-    if (ready || !focused || suspended || resumeRequired) return;
-    const timer = setTimeout(() => setError('Movement detection did not start. Check that the camera page and model assets are available, then restart the camera.'), 45000);
-    return () => clearTimeout(timer);
-  }, [ready, attempt, focused, suspended, resumeRequired]);
   const control = useMemo<CaptureControl>(() => ({
-    type: 'capture.configure', exercise, enabled, reset: true,
-  }), [exercise, enabled, resetKey]);
+    type: 'capture.configure', exercise, enabled, reset: true, poseStream: !!onPose, debugOverlay,
+  }), [exercise, enabled, resetKey, !!onPose, debugOverlay]);
   const receive = (message: CaptureMessage) => {
     if (message.type === 'capture.ready') { setReady(message); setError(null); }
-    else if (message.type === 'capture.error') setError(message.message);
+    else if (message.type === 'capture.camera') {
+      if (message.state !== 'running') {
+        setReady(null); setTracking(null); lastTrackingAt.current = 0;
+        poseHandler.current?.(emptyCapturePose());
+      }
+      onCameraState?.(message.state);
+    }
+    else if (message.type === 'capture.error') { setError(message.message); setTracking(null); lastTrackingAt.current = 0; }
     else if (message.type === 'capture.tracking') {
+      lastTrackingAt.current = Date.now();
+      setNow(lastTrackingAt.current);
       setTracking(message);
-      if (enabled && !suspended) onTracking?.(message);
+      if ((enabled || onPose) && !suspended && focused && !resumeRequired) onTracking?.(message);
       if (enabled && message.cue && message.cue !== lastCue.current.text && Date.now() - lastCue.current.at > 6500) {
         lastCue.current = { text: message.cue, at: Date.now() };
         announce(message.cue);
       }
-    } else if (message.type === 'capture.rep' && !suspended && focused && !resumeRequired) onRep(message);
+    } else if (message.type === 'capture.pose' && !suspended && focused && !resumeRequired) onPose?.(message);
+    else if (message.type === 'capture.rep' && enabled && message.exercise === exercise && !suspended && focused && !resumeRequired) onRep(message);
   };
+  const trackingFresh = !!ready && !error && !!tracking && now >= lastTrackingAt.current && now - lastTrackingAt.current <= LIVE_POSE_MAX_AGE_MS;
+  const liveTracking = trackingFresh ? tracking : null;
+  const stale = !!ready && !!tracking && !trackingFresh && !error;
   if (!session.apiUrl) return <View style={styles.unavailable}>
     <Text style={styles.title}>Connect your server first</Text>
     <Text style={styles.copy}>Set the VYRA server address in Profile to load the camera.</Text>
@@ -74,13 +107,14 @@ export default function CaptureSurface({ exercise, enabled, suspended = false, r
           theme, so it carries the same two values as literals: apps/capture/src/main.ts strokes
           '#3D7BFF' / '#FF5A5F' and styles.css sets the badge dot from --track / --alert. All three
           read one tracking state — re-tint them together or the same state shows two colours. */}
-      <View style={[styles.dot, { backgroundColor: tracking?.visible ? colors.spark : colors.danger }]} />
+      <View style={[styles.dot, { backgroundColor: liveTracking?.visible ? colors.spark : colors.danger }]} />
       <Text style={styles.statusText}>
-        {error ? 'Camera needs attention' : !ready ? 'Loading movement detection…' : tracking?.cue || 'Stand back so your whole body is visible.'}
+        {error ? 'Camera needs attention' : stale ? 'Tracking paused. Move into frame or restart your camera.' : tracking?.cue || (!ready ? 'Enable the camera when you are ready to move.' : 'Stand back so your whole body is visible.')}
       </Text>
     </View>
+    <TrackingFeedback tracking={liveTracking} />
     <View style={styles.footnote}>
-      <Text style={styles.modelText}>{ready ? ready.inferenceMode === 'learned' ? 'Team-trained movement model' : 'Rule-based movement baseline' : 'On-device camera'}</Text>
+      <Text style={styles.modelText}>{debugOverlay ? 'Live body tracking' : 'On-device rep tracking'}</Text>
       <Text style={styles.modelText}>Video stays on this device</Text>
     </View>
     {error && <View style={styles.error}>

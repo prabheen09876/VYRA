@@ -12,8 +12,9 @@ function Model(props: HeroViewProps & { reducedMotion: boolean; rotation: number
   const model = Array.isArray(result) ? result[0]! : result;
   const presentation = CHARACTER_PRESENTATIONS[character.id];
   useEffect(props.onReady, [props.onReady, model]);
-  return <HeroScene source={model.scene} equipment={props.equipment} pose={props.pose} active={props.active}
-    reducedMotion={props.reducedMotion} rotation={props.rotation} normalization={presentation} framing={presentation.framing} />;
+  return <HeroScene source={model.scene} characterId={character.id} equipment={props.equipment} pose={props.pose} active={props.active}
+    reducedMotion={props.reducedMotion} rotation={props.rotation} normalization={presentation} livePose={props.livePose}
+    framing={props.livePose ? { fitHeight: 2.6, fitWidth: 2.5, centerY: 1.05 } : presentation.framing} />;
 }
 export function HeroView({ active = true, ...props }: HeroViewProps) {
   const character = characterFor(props.characterId);
@@ -32,8 +33,8 @@ export function HeroView({ active = true, ...props }: HeroViewProps) {
     onPanResponderGrant:()=>{dragStart.current=rotationRef.current;},
     onPanResponderMove:(_,g)=>setRotation(dragStart.current+g.dx*.012)
   }),[]);
-  return <View accessible accessibilityLabel={`${character.name}, ${props.stage} stage. Drag to rotate.`} style={[{height:340,width:'100%'},props.style]} {...pan.panHandlers}>
-    <HeroRenderBoundary resetKey={selection}><Canvas frameloop={active && !reducedMotion?'always':'demand'} camera={{position:[0,.94,6.8],fov:32}}>
+  return <View accessible accessibilityLabel={`${character.name}, ${props.stage} stage. ${props.livePose ? 'Live training avatar.' : 'Drag to rotate.'}`} style={[{height:340,width:'100%'},props.style]} {...(props.livePose ? {} : pan.panHandlers)}>
+    <HeroRenderBoundary resetKey={selection}><Canvas frameloop={active && (!reducedMotion || props.livePose)?'always':'demand'} camera={{position:[0,.94,6.8],fov:32}}>
       <Suspense fallback={null}><Model {...props} active={active} reducedMotion={reducedMotion} rotation={rotation} onReady={onReady}/></Suspense>
     </Canvas>
       {loaded !== selection && <ModelLoading label={character.name} />}

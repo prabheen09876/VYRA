@@ -7,6 +7,7 @@ import { Button, Copy, Heading, Loading, Notice, Pill, Screen, Stat, layout } fr
 import { useApp } from '../src/state/AppProvider';
 import { errorMessage } from '../src/lib/api';
 import { alpha, colors, displayWeight, fonts, radii } from '../src/theme';
+import BrandLogo from '../src/components/BrandLogo';
 
 export default function ProfileScreen() {
   const { profile, session, booting, busy, connect, connectionError, refreshProfile, setPreferences } = useApp();
@@ -33,7 +34,7 @@ export default function ProfileScreen() {
           {profile.fitness ? <><FitnessProgressPanel profile={profile} /><Button onPress={() => router.push('/check-in')}>{progress?.checkInDue ? 'Record your weekly check-in' : 'Measurements & check-in history'}</Button></> : <Notice title="Set your starting goal" tone="info" action={() => router.push('/onboarding')} actionLabel="Set up my fitness journey">Add a goal, starting measurements, and a character before your next workout. Your saved XP and earned progress stay with you.</Notice>}
           <View style={styles.records}><Record label="Valid repetitions" value={profile.totalReps} /><Record label="Qualified workouts" value={profile.qualifiedMatches} /><Record label="Active days this week" value={profile.weeklyActiveDays} /><Record label="Collectibles owned" value={profile.ownedCosmetics.length} /></View>
           <Button variant="secondary" onPress={() => router.push(profile.fitness ? '/collection' : '/onboarding')}>Choose or showcase my character</Button>
-        </> : <View style={styles.welcome}><View style={styles.welcomeSymbol}><Text style={styles.welcomeGlyph}>V</Text></View><Heading size={30}>Start small.{'\n'}Become something epic.</Heading><Copy>Choose a fitness goal and character, then grow through workouts and target progress. Your character’s physique is a game reward, not a measurement of your body.</Copy><View style={styles.promise}><Text style={styles.promiseText}>Six characters to choose from</Text><Text style={styles.promiseText}>Four evolutions, from Starter to Elite</Text><Text style={styles.promiseText}>No paid power-ups</Text></View></View>}
+        </> : <View style={styles.welcome}><View style={styles.welcomeSymbol}><BrandLogo size={62} /></View><Heading size={30}>Start small.{'\n'}Become something epic.</Heading><Copy>Choose a fitness goal and character, then grow through workouts and target progress. Your character’s physique is a game reward, not a measurement of your body.</Copy><View style={styles.promise}><Text style={styles.promiseText}>Six characters to choose from</Text><Text style={styles.promiseText}>Four evolutions, from Starter to Elite</Text><Text style={styles.promiseText}>No paid power-ups</Text></View></View>}
       </View>
       <View style={[styles.settings, { flex: 1 }]}>
         <View style={layout.panel}><Heading size={25}>{profile ? 'Connection' : 'Create your player'}</Heading>
@@ -78,6 +79,6 @@ const styles = StyleSheet.create({
   preferences: { gap: 21, paddingHorizontal: 2 }, setting: { flexDirection: 'row', gap: 20, alignItems: 'center' }, settingCopy: { flex: 1, gap: 5 },
   settingTitle: { fontFamily: fonts.body, color: colors.text, fontWeight: '600', fontSize: 15 }, settingDescription: { fontFamily: fonts.body, color: colors.muted, fontSize: 13, lineHeight: 21 },
   privacy: { gap: 8, paddingTop: 20, borderTopWidth: 1, borderTopColor: colors.line },
-  welcome: { gap: 25, paddingVertical: 10 }, welcomeSymbol: { height: 100, width: 92, borderRadius: radii.lg, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-6deg' }] },
-  welcomeGlyph: { fontFamily: fonts.display, fontSize: 59, fontWeight: displayWeight.heavy, color: colors.brand }, promise: { gap: 14, marginTop: 5 }, promiseText: { color: colors.text, fontFamily: fonts.body, fontSize: 16 },
+  welcome: { gap: 25, paddingVertical: 10 }, welcomeSymbol: { height: 100, width: 92, borderRadius: radii.lg, backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
+  promise: { gap: 14, marginTop: 5 }, promiseText: { color: colors.text, fontFamily: fonts.body, fontSize: 16 },
 });

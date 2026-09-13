@@ -1,6 +1,6 @@
 # Character assets
 
-The app now uses the generated character GLBs for both saved progression and character browsing. Character choice is independent of earned fitness progress.
+The app uses the generated character GLBs for saved progression and character browsing. Character choice is independent of earned fitness progress. [Character cosmetics](character-cosmetics.md) describes visual previews, equipment controls, and their validation.
 
 | Character ID | Display name | Progression source | Rig / source animation clips |
 | --- | --- | --- | --- |
@@ -17,15 +17,19 @@ New fitness progression ends at **Elite**, with Starter, Developing, Strong, and
 
 ## Rendering
 
-`HeroView` and `HeroShowcase` accept `characterId` alongside the existing `stage` prop. Missing character IDs fall back to Goku. Web and native use the same generated static asset map in `apps/mobile/src/lib/characterAssets.ts`.
+`HeroView` and `HeroShowcase` accept `characterId`, `stage`, and `equipment`. Missing character IDs fall back to Goku. Web and native use the same generated static asset map in `apps/mobile/src/lib/characterAssets.ts`. The homepage also passes the selected character ID and saved equipment through `CharacterGallery`/`CharacterShowcase`, so all six characters use the same cosmetic rendering path there and in collection and results views.
 
 The registry references all 30 files so Expo can publish them during web export and package them for native. Only the selected character and stage are downloaded and decoded by `useGLTF`; there is no full-roster preload. Downloaded models are retained in the loader's cache for subsequent previews.
 
 Each character family has one fixed normalization and camera envelope across all its stages. The generated normalization wraps the imported scene, preserving its authored root transforms and skin bind matrices. Physique changes remain visible because the viewer does not independently resize every stage to fit its width. Goku's authored heading differs from the other models, so its orientation is configured separately. The homepage keeps its existing portrait crop and flare treatment.
 
-`SkeletonUtils.clone` keeps cloned meshes attached to cloned bones. Each viewer clones its materials and releases those materials and its skeleton bone textures on cleanup, while cached source geometry and textures remain intact. Imported material settings and embedded texture bytes are retained. The old Vanguard-specific skin recolor and arm posing are opt-in and are not applied to these imported characters.
+`SkeletonUtils.clone` keeps cloned meshes attached to cloned bones. Each viewer works on private material clones. Ion skin adds a blue shader finish that retains the source texture's light/detail, with material adjustments on supported standard materials; it does not rewrite embedded images or the cached source materials. The original look retains the imported material settings.
 
-All source clips remain inside the GLBs. The showcase displays the authored rest pose with subtle whole-character motion; it does not autoplay a walk or substitute procedural limb movement for a missing idle clip. This integration does not create rigs or animations for static models.
+Champion flex rotates the existing arm bones on Base Male and Nami. For Goku, Base Female, Mikasa, and Sakura, it deforms private copies of the arm geometry using character-specific landmarks, topology labels, and blended weights. Pulse bracers use tapered elliptical sleeves fitted to the forearms in the displayed pose. Nova aura scales with the character's display height. All six Elite characters have been checked in the browser; geometry regressions cover Starter and Elite in every family.
+
+Cleanup releases the viewer's material clones, skeleton bone textures, and generated or deformed cosmetic geometry. Cached source geometry and textures remain available to other viewers. Closing an unsaved preview restores the saved equipment; restoring the original look removes effects without changing the earned stage.
+
+All source clips remain inside the GLBs. The default showcase uses the authored rest pose with subtle whole-character motion; Champion flex applies its cosmetic pose when selected or equipped. It does not autoplay Nami's walk, create a full rig for a static model, or add animation clips.
 
 ## Reproduce and verify
 
@@ -43,6 +47,8 @@ The generator copies each GLB byte for byte, crops six authentic portrait PNGs f
 
 The read-only check verifies every runtime GLB against its source checksum, requires five distinct position streams for every family, checks source clip names at every stage, verifies cloned skeleton ownership, and checks aligned ground/crown bounds after applying the shared family normalization. Its image decoder is stubbed for geometry inspection; the card PNGs come from real Blender renders. Regression tests additionally compare actual source and fitted skinned vertex positions for Base Male and Nami, including Nami's Walking clip at 0.4 seconds. Browser and physical-device rendering/performance checks remain separate from these tests.
 
+The [cosmetic verification workflow](character-cosmetics.md#verification) adds posed-geometry review and equipment API checks. Asset integrity tests alone do not establish correct cosmetic placement or shader appearance. Browser Ion preview/comparison has been observed; broader pose QA is still in progress.
+
 All 30 GLBs total **101.82 MB** (decimal); only the requested file is fetched on web. Per-file sizes are approximately 10.57 MB for Goku, 0.57 MB for Base Male, 0.62 MB for Base Female, 1.95 MB for Mikasa, 3.79 MB for Nami, and 2.88 MB for Sakura. Six portrait cards total approximately 0.88 MB. Goku's dense mesh is the main candidate for future device performance profiling; the viewer caps web pixel ratio at 1.5.
 
 ## Source credits and known model limitations
@@ -56,4 +62,4 @@ Every runtime GLB retains its embedded attribution. Each runtime family also inc
 - [Nami source, animation metadata repair, and modification notice](../resources/female-name-progression/README.md)
 - [Sakura source, material conversion, and modification notice](../resources/female-sakura-progression/README.md)
 
-The progression READMEs document existing clothing intersections and animation limitations. The runtime uses those validated derivatives without further geometry, texture, or material conversion.
+The progression READMEs document existing clothing intersections and animation limitations. Runtime GLBs remain byte-for-byte copies of those derivatives. Cosmetic shaders, generated accessories, and posed geometry are applied to viewer-owned copies at runtime; original resource files and their embedded textures, rigs, and clips remain unchanged.

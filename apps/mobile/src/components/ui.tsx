@@ -2,9 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, usePathname } from 'expo-router';
+import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import { alpha, colors, displayWeight, fonts, glow, radii, type } from '../theme';
 import { useApp } from '../state/AppProvider';
+import BrandLogo from './BrandLogo';
 
 /**
  * Solid right-pointing triangle, built from borders rather than a glyph. U+25B6/U+25B8 are absent
@@ -71,15 +72,24 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
   noNav?: boolean; back?: () => void; style?: StyleProp<ViewStyle>; backdrop?: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const params = useLocalSearchParams<{ mode?: string }>();
   const { width } = useWindowDimensions();
   const { profile, session } = useApp();
   const wide = width >= 850;
   const nav = [
     { path: '/', title: 'My hero' },
+    { path: '/arena', title: 'Multiplayer' },
     { path: '/collection', title: 'Collection' },
+    { path: '/exercises', title: 'Exercises' },
     { path: '/profile', title: 'Profile' },
   ] as const;
-  const navMarks = { '/': '◈', '/collection': '◇', '/profile': '◎' } as const;
+  const navMarks = { '/': '◈', '/arena': 'VS', '/collection': '◇', '/exercises': '▦', '/profile': '◎' } as const;
+  const activePath = pathname === '/arena' && params.mode !== 'pvp' ? '' : pathname;
+  const openNav = (path: typeof nav[number]['path']) => {
+    if (path === '/arena') {
+      if (activePath !== '/arena') router.push({ pathname: '/arena', params: { mode: 'pvp' } });
+    } else if (pathname !== path) router.push(path);
+  };
   return <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
     {/* Default top-of-page wash for screens that don't mount a full SpaceBackdrop. Cool blue at a
         very low alpha — the `hazeSoft` hue, thinned further because this sits directly under the
@@ -88,13 +98,13 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
     <View style={styles.header}>
       <View style={styles.headerInner}>
         <Pressable accessibilityRole="button" accessibilityLabel={back ? 'Go back' : 'VYRA home'} onPress={back || (() => { if (pathname !== '/') router.push('/'); })} style={styles.brandHit}>
-          {back ? <Text style={styles.back}>‹</Text> : <View style={styles.brandIcon}><View style={styles.brandSlash} /><View style={[styles.brandSlash, styles.brandSlashSecond]} /></View>}
+          {back ? <Text style={styles.back}>‹</Text> : <BrandLogo />}
           <Text style={styles.wordmark}>{back ? 'BACK' : 'VYRA'}</Text>
         </Pressable>
         {wide && !noNav && <View style={styles.desktopNav}>{nav.map(item =>
-          <Pressable key={item.path} accessibilityRole="button" accessibilityState={{ selected: pathname === item.path }} onPress={() => { if (pathname !== item.path) router.push(item.path); }} style={styles.desktopNavItem}>
-            <Text style={[styles.navText, pathname === item.path && styles.navTextActive]}>{item.title}</Text>
-            <View style={[styles.navIndicator, pathname === item.path && styles.navIndicatorActive]} />
+          <Pressable key={item.path} accessibilityRole="button" accessibilityState={{ selected: activePath === item.path }} onPress={() => openNav(item.path)} style={[styles.desktopNavItem, item.path === '/arena' && styles.multiplayerNav]}>
+            <Text style={[styles.navText, activePath === item.path && styles.navTextActive, item.path === '/arena' && styles.multiplayerNavText]}>{item.title}</Text>
+            <View style={[styles.navIndicator, activePath === item.path && styles.navIndicatorActive]} />
           </Pressable>
         )}</View>}
         {/* Mirrors brandHit's minWidth so the centred nav is centred on the PAGE, not on whatever
@@ -111,9 +121,9 @@ export function Screen({ children, noNav = false, back, style, backdrop }: React
     </ScrollView>
     {!wide && !noNav && <SafeAreaView edges={['bottom']} style={styles.bottomNav}>
       <View style={styles.bottomRow}>{nav.map(item =>
-        <Pressable key={item.path} accessibilityRole="button" accessibilityState={{ selected: pathname === item.path }} onPress={() => { if (pathname !== item.path) router.push(item.path); }} style={styles.bottomItem}>
-          <Text style={[styles.navMark, { color: pathname === item.path ? colors.brand : colors.faint }]}>{navMarks[item.path]}</Text>
-          <Text style={[styles.navText, { fontSize: 11, color: pathname === item.path ? colors.text : colors.faint }]}>{item.title}</Text>
+        <Pressable key={item.path} accessibilityRole="button" accessibilityState={{ selected: activePath === item.path }} onPress={() => openNav(item.path)} style={[styles.bottomItem, item.path === '/arena' && styles.multiplayerBottomItem]}>
+          <Text style={[styles.navMark, { color: activePath === item.path || item.path === '/arena' ? colors.brand : colors.faint }, item.path === '/arena' && styles.versusMark]}>{navMarks[item.path]}</Text>
+          <Text style={[styles.navText, { fontSize: 10, letterSpacing: 0.3, color: activePath === item.path || item.path === '/arena' ? colors.text : colors.faint }]}>{item.title}</Text>
         </Pressable>
       )}</View>
     </SafeAreaView>}
@@ -175,17 +185,16 @@ const styles = StyleSheet.create({
   atmosphere: { position: 'absolute', top: 0, left: 0, right: 0, height: 420 },
   header: { paddingHorizontal: 24, borderBottomWidth: HEADER_BORDER, borderBottomColor: colors.line },
   headerInner: { width: '100%', maxWidth: 1320, alignSelf: 'center', minHeight: HEADER_HEIGHT, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  brandHit: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 11, minWidth: 100 },
-  headerTail: { minWidth: 100, alignItems: 'flex-end' },
-  brandIcon: { width: 24, height: 28, flexDirection: 'row' },
-  brandSlash: { width: 9, height: 25, backgroundColor: colors.brand, transform: [{ rotate: '-24deg' }], borderRadius: 2 },
-  brandSlashSecond: { transform: [{ rotate: '24deg' }], backgroundColor: colors.text, marginLeft: 5 },
+  brandHit: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 11, minWidth: 112 },
+  headerTail: { minWidth: 112, alignItems: 'flex-end' },
   wordmark: { fontFamily: fonts.display, fontSize: 22, fontWeight: displayWeight.heavy, letterSpacing: 1.5, color: colors.text },
   back: { color: colors.brand, fontSize: 38, lineHeight: 42 },
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.glass, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.lineStrong },
   avatarText: { fontFamily: fonts.body, fontWeight: '700', fontSize: 16, color: colors.text },
-  desktopNav: { flexDirection: 'row', gap: 34 },
+  desktopNav: { flexDirection: 'row', alignItems: 'center', gap: 24 },
   desktopNavItem: { minHeight: 44, justifyContent: 'center', alignItems: 'stretch', gap: 9 },
+  multiplayerNav: { borderWidth: 1, borderColor: colors.brand, backgroundColor: colors.glassStrong, borderRadius: 12, paddingHorizontal: 14, paddingTop: 7, paddingBottom: 5 },
+  multiplayerNavText: { color: colors.accent, fontWeight: '700' },
   navIndicator: { height: 2, borderRadius: 1, backgroundColor: 'transparent' },
   navIndicatorActive: { backgroundColor: colors.brand, ...glow(colors.brand, 10, 0.9) },
   navText: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, fontWeight: '600', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 1.9 },
@@ -195,6 +204,8 @@ const styles = StyleSheet.create({
   bottomNav: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: colors.backgroundElevated, borderTopColor: colors.line, borderTopWidth: 1 },
   bottomRow: { flexDirection: 'row', justifyContent: 'space-around', minHeight: 76 },
   bottomItem: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 4, minHeight: 64 },
+  multiplayerBottomItem: { backgroundColor: colors.glassStrong, borderTopWidth: 2, borderTopColor: colors.brand },
+  versusMark: { fontFamily: fonts.display, fontSize: 22, fontWeight: displayWeight.heavy },
   navMark: { fontSize: 23, lineHeight: 27 },
   button: { minHeight: 56, paddingHorizontal: 30, paddingVertical: 16, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'transparent', flexDirection: 'row', gap: 12 },
   // White fill + `ink` label is 20.42:1 — the highest contrast any pairing in this palette can

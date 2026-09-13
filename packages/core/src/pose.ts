@@ -93,6 +93,12 @@ export function classifyBaseline(features: number[], exercise: Exercise): StageP
 
 export interface CounterInput { timestamp: number; stage: MovementStage; visible: boolean; confidence: number; formScore: number }
 export interface CompletedRep { exercise: Exercise; confidence: number; formScore: number }
+// Two observed samples reject a single-frame glitch without requiring a long
+// endpoint hold on the 5–15 fps camera path. Time guards still bound the full rep.
+const ENDPOINT_MIN_FRAMES = 2;
+const ENDPOINT_DWELL_MS = 80;
+// Slow, controlled lowering can remain between endpoints for several seconds.
+const MAX_TRANSITION_MS = 6000;
 /** Debounced top -> bottom -> top cycles. A lost/late frame or phase change disarms the cycle. */
 export class CompleteCycleCounter {
   private exercise: Exercise | null = null;
@@ -129,7 +135,7 @@ export class CompleteCycleCounter {
     if (this.state !== 'unarmed' && frame.timestamp - this.cycleStarted > 15000) { this.reset(); return null; }
     if (frame.stage === 'other') {
       this.candidate = 'other'; this.candidateFrames = 0;
-      if (this.state !== 'unarmed' && frame.timestamp - this.lastRelevant > 2200) this.reset();
+      if (this.state !== 'unarmed' && frame.timestamp - this.lastRelevant > MAX_TRANSITION_MS) this.reset();
       return null;
     }
     if (frame.confidence < 0.65) { this.reset(); return null; }
@@ -138,7 +144,7 @@ export class CompleteCycleCounter {
     else this.candidateFrames += 1;
     this.confidence = Math.min(this.confidence, frame.confidence);
     if (this.state !== 'unarmed') this.formScore = Math.min(this.formScore, clamp(frame.formScore, 0, 100));
-    if (this.candidateFrames < 3 || frame.timestamp - this.candidateSince < 140) return null;
+    if (this.candidateFrames < ENDPOINT_MIN_FRAMES || frame.timestamp - this.candidateSince < ENDPOINT_DWELL_MS) return null;
     if (this.state === 'unarmed' && frame.stage === top) {
       this.state = 'top'; this.cycleStarted = frame.timestamp; this.confidence = frame.confidence; this.formScore = clamp(frame.formScore, 0, 100);
     } else if (this.state === 'top' && frame.stage === bottom && frame.timestamp - this.cycleStarted >= 250) {

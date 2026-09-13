@@ -47,6 +47,41 @@ describe('complete movement cycles', () => {
     expect(stage(counter, 'squat_bottom', [700,800,900])).toHaveLength(0);
     expect(stage(counter, 'squat_top', [1200,1300,1400,1500,1600])).toEqual([{ exercise: 'squat', confidence: 0.95, formScore: 88 }]);
   });
+  it.each([5, 10])('counts complete reps with brief endpoint holds at %i fps', fps => {
+    for (const exercise of ['squat', 'pushup'] as const) {
+      const counter = new CompleteCycleCounter();
+      counter.configure({ type: 'capture.configure', exercise, enabled: true, reset: true });
+      const sequence: MovementStage[] = [
+        ...Array<MovementStage>(3).fill(`${exercise}_top`),
+        ...Array<MovementStage>(3).fill('other'),
+        ...Array<MovementStage>(2).fill(`${exercise}_bottom`),
+        ...Array<MovementStage>(3).fill('other'),
+        ...Array<MovementStage>(4).fill(`${exercise}_top`),
+      ];
+      const reps = sequence.map((name, index) => counter.update({
+        timestamp: 100 + index * 1000 / fps, stage: name, visible: true, confidence: 0.95, formScore: 88,
+      })).filter(Boolean);
+      expect(reps).toEqual([{ exercise, confidence: 0.95, formScore: 88 }]);
+    }
+  });
+  it('allows a controlled three-second descent and ascent', () => {
+    const counter = makeCounter();
+    stage(counter, 'squat_top', [100,200,300]);
+    stage(counter, 'other', Array.from({ length: 30 }, (_, index) => 400 + index * 100));
+    stage(counter, 'squat_bottom', [3400,3500,3600]);
+    stage(counter, 'other', Array.from({ length: 30 }, (_, index) => 3700 + index * 100));
+    expect(stage(counter, 'squat_top', [6700,6800,6900])).toHaveLength(1);
+  });
+  it('rejects a one-frame endpoint glitch and a prolonged unrelated movement', () => {
+    const counter = makeCounter();
+    stage(counter, 'squat_top', [100,200,300]);
+    stage(counter, 'squat_bottom', [700]);
+    stage(counter, 'other', [800,900,1000]);
+    expect(stage(counter, 'squat_top', [1200,1300,1400])).toHaveLength(0);
+    stage(counter, 'other', Array.from({ length: 70 }, (_, index) => 1500 + index * 100));
+    stage(counter, 'squat_bottom', [8500,8600,8700]);
+    expect(stage(counter, 'squat_top', [9000,9100,9200])).toHaveLength(0);
+  });
   it('does not count starting at the bottom or an incomplete cycle', () => {
     const counter = makeCounter();
     expect(stage(counter, 'squat_bottom', [100,200,300])).toHaveLength(0);
